@@ -17,6 +17,7 @@ import {
 } from "./runtimeConfig";
 import { pingDatabase } from "./db";
 
+// Sicherstellen, dass alle nötigen Umgebungsvariablen da sind
 assertRuntimeConfig();
 
 const app = express();
@@ -28,10 +29,12 @@ declare module "http" {
   }
 }
 
+// Sicherheits-Header (CSP deaktiviert für einfacheres Deployment)
 app.use(helmet({
   contentSecurityPolicy: false,
 }));
 
+// Rate Limiting: Verhindert, dass der Server überlastet wird
 const apiLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 100,
@@ -63,6 +66,7 @@ app.use(
 
 app.use(express.urlencoded({ extended: false }));
 
+// Health-Checks für Render.com
 app.get("/healthz", (_req, res) => {
   res.status(200).json({ status: "ok" });
 });
@@ -76,6 +80,7 @@ app.get("/api/health", (_req, res) => {
   });
 });
 
+// Prüft, ob Datenbank und Upload-Ordner bereit sind
 async function getReadinessState() {
   const checks: Array<{ name: string; ok: boolean; detail?: string }> = [];
 
@@ -125,6 +130,7 @@ app.get("/api/ready", async (_req, res) => {
   res.status(readiness.ok ? 200 : 503).json(readiness);
 });
 
+// Hilfsfunktion für saubere Logs
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
     hour: "numeric",
@@ -136,6 +142,7 @@ export function log(message: string, source = "express") {
   console.log(`${formattedTime} [${source}] ${message}`);
 }
 
+// Logging-Middleware für API-Anfragen
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -150,15 +157,19 @@ app.use((req, res, next) => {
   next();
 });
 
+// Haupt-Startsequenz
 (async () => {
+  // Routen registrieren
   await registerRoutes(httpServer, app);
 
+  // Datenbank mit Startdaten befüllen (Seed)
   try {
     await seedDatabase();
   } catch (err) {
     console.error("Seed error:", err);
   }
 
+  // Zentraler Fehler-Handler
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
@@ -172,9 +183,7 @@ app.use((req, res, next) => {
     return res.status(status).json({ message });
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
+  // Frontend ausliefern: In Produktion statisch, sonst via Vite (Development)
   if (process.env.NODE_ENV === "production") {
     serveStatic(app);
   } else {
@@ -182,10 +191,7 @@ app.use((req, res, next) => {
     await setupVite(httpServer, app);
   }
 
-  // ALWAYS serve the app on the port specified in the environment variable PORT
-  // Other ports are firewalled. Default to 5000 if not specified.
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
+  // Den Server auf dem von Render zugewiesenen Port starten
   const port = parseInt(process.env.PORT || "5000", 10);
   httpServer.listen(
     {
