@@ -1,6 +1,6 @@
 import { PREVIEW_MODE } from "./preview.ts";
 
-export type AuthProvider = "preview" | "replit" | "oidc";
+export type AuthProvider = "preview" | "replit" | "oidc" | "local";
 export type UploadProvider = "preview" | "replit" | "local";
 export type RuntimeConfigIssue = {
   field: string;
@@ -22,7 +22,7 @@ function trimTrailingSlash(value: string | undefined) {
 
 function resolveAuthProvider(): Exclude<AuthProvider, "preview"> {
   const configured = normalizeEnv(process.env.AUTH_PROVIDER);
-  if (configured === "replit" || configured === "oidc") {
+  if (configured === "replit" || configured === "oidc" || configured === "local") {
     return configured;
   }
 
