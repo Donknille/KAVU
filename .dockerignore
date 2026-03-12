@@ -1,0 +1,13 @@
+.git
+.gitignore
+node_modules
+dist
+uploads
+.env
+.env.local
+.env.production
+.chrome-employee-view
+.codex-preview*
+attached_assets
+.local
+.config
