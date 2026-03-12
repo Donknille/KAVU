@@ -126,6 +126,10 @@ function getGenericCallbackUrl() {
   );
 }
 
+function getLocalAuthUserId() {
+  return process.env.LOCAL_AUTH_USER_ID?.trim() || "local-admin-user";
+}
+
 export async function setupAuth(app: Express) {
   if (PREVIEW_MODE) {
     app.use((req: any, _res, next) => {
@@ -151,11 +155,38 @@ export async function setupAuth(app: Express) {
   }
 
   app.set("trust proxy", TRUST_PROXY ? 1 : 0);
+
+  if (AUTH_PROVIDER === "local") {
+    app.use((req: any, _res, next) => {
+      req.user = {
+        claims: { sub: getLocalAuthUserId() },
+        access_token: "local-access-token",
+        refresh_token: "local-refresh-token",
+        expires_at: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 365,
+      };
+      req.isAuthenticated = () => true;
+      req.logout = (cb?: () => void) => cb?.();
+      next();
+    });
+
+    app.get("/api/login", (_req, res) => {
+      res.redirect("/");
+    });
+
+    app.get("/api/callback", (_req, res) => {
+      res.redirect("/");
+    });
+
+    app.get("/api/logout", (_req, res) => {
+      res.redirect("/");
+    });
+
+    return;
+  }
+
   app.use(getSession());
   app.use(passport.initialize());
   app.use(passport.session());
-
-  const config = await getOidcConfig();
 
   const verify: VerifyFunction = async (
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
@@ -171,6 +202,7 @@ export async function setupAuth(app: Express) {
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
   if (AUTH_PROVIDER === "replit") {
+    const config = await getOidcConfig();
     const registeredStrategies = new Set<string>();
 
     const ensureStrategy = (domain: string) => {
@@ -220,6 +252,7 @@ export async function setupAuth(app: Express) {
     return;
   }
 
+  const config = await getOidcConfig();
   const strategyName = "oidc";
 
   passport.use(
