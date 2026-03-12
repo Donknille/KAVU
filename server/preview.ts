@@ -11,6 +11,10 @@ function hasConfiguredAuthProvider() {
     return Boolean(process.env.OIDC_ISSUER_URL && process.env.OIDC_CLIENT_ID);
   }
 
+  if (provider === "local") {
+    return true;
+  }
+
   return Boolean(
     process.env.REPL_ID ||
       (process.env.OIDC_ISSUER_URL && process.env.OIDC_CLIENT_ID),
