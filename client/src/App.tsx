@@ -12,6 +12,8 @@ import NotFound from "@/pages/not-found";
 import { applyPreviewIdentityFromUrl } from "@/lib/preview-session";
 
 const LandingPage = lazy(() => import("@/pages/LandingPage"));
+const AdminAuthPage = lazy(() => import("@/pages/AdminAuthPage"));
+const EmployeeLoginPage = lazy(() => import("@/pages/EmployeeLoginPage"));
 const SetupPage = lazy(() => import("@/pages/SetupPage"));
 const ChangePasswordPage = lazy(() => import("@/pages/ChangePasswordPage"));
 const AdminDashboard = lazy(() => import("@/pages/AdminDashboard"));
@@ -55,13 +57,39 @@ function AdminRouter() {
   );
 }
 
-function EmployeeRouter() {
+function PublicRouter() {
+  return (
+    <Suspense fallback={<PageFallback />}>
+      <Switch>
+        <Route path="/" component={LandingPage} />
+        <Route path="/login/admin">
+          {() => <AdminAuthPage mode="login" />}
+        </Route>
+        <Route path="/register/admin">
+          {() => <AdminAuthPage mode="register" />}
+        </Route>
+        <Route path="/login/employee" component={EmployeeLoginPage} />
+        <Route component={NotFound} />
+      </Switch>
+    </Suspense>
+  );
+}
+
+type EmployeeRouterProps = {
+  employee: any;
+  company: any;
+};
+
+function EmployeeRouter({ employee, company }: EmployeeRouterProps) {
   return (
     <Suspense fallback={<PageFallback />}>
       <Switch>
         <Route path="/" component={EmployeeDayView} />
         <Route path="/assignment/:id" component={AssignmentDetail} />
         <Route path="/assignments" component={EmployeeDayView} />
+        <Route path="/account/password">
+          {() => <ChangePasswordPage employee={employee} company={company} required={false} />}
+        </Route>
         <Route component={NotFound} />
       </Switch>
     </Suspense>
@@ -96,7 +124,11 @@ function AuthenticatedApp() {
   if (meData?.requiresPasswordChange) {
     return (
       <Suspense fallback={<PageFallback />}>
-        <ChangePasswordPage employee={meData?.employee} company={meData?.company} />
+        <ChangePasswordPage
+          employee={meData?.employee}
+          company={meData?.company}
+          required
+        />
       </Suspense>
     );
   }
@@ -107,7 +139,11 @@ function AuthenticatedApp() {
   return (
     <EmployeeOfflineQueueProvider employeeId={employee?.id} enabled={role === "employee"}>
       <AppShell role={role} employee={employee}>
-        {role === "admin" ? <AdminRouter /> : <EmployeeRouter />}
+        {role === "admin" ? (
+          <AdminRouter />
+        ) : (
+          <EmployeeRouter employee={meData?.employee} company={meData?.company} />
+        )}
       </AppShell>
     </EmployeeOfflineQueueProvider>
   );
@@ -118,7 +154,7 @@ function App() {
     applyPreviewIdentityFromUrl();
   }, []);
 
-  const { user, isLoading, isAuthenticated } = useAuth();
+  const { isLoading, isAuthenticated } = useAuth();
 
   if (isLoading) {
     return (
@@ -132,11 +168,7 @@ function App() {
   }
 
   if (!isAuthenticated) {
-    return (
-      <Suspense fallback={<PageFallback />}>
-        <LandingPage />
-      </Suspense>
-    );
+    return <PublicRouter />;
   }
 
   return <AuthenticatedApp />;

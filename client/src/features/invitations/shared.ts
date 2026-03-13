@@ -55,6 +55,18 @@ export function getInviteReturnPath(inviteToken: string | null) {
   return inviteToken ? `/?invite=${encodeURIComponent(inviteToken)}` : "/";
 }
 
+export function withInviteToken(path: string, inviteToken: string | null) {
+  if (!inviteToken) {
+    return path;
+  }
+
+  const [pathname, query = ""] = path.split("?", 2);
+  const params = new URLSearchParams(query);
+  params.set("invite", inviteToken);
+  const nextQuery = params.toString();
+  return nextQuery ? `${pathname}?${nextQuery}` : pathname;
+}
+
 export function getInvitationDeliverySummary(invitation: InvitationRecord) {
   if (invitation.lastSendError) {
     return {

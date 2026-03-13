@@ -92,6 +92,16 @@ const INITIAL_EMPLOYEE_FORM = {
   sendCredentialsToAdmin: false,
 };
 
+async function invalidateEmployeeAdminQueries() {
+  await queryClient.invalidateQueries({ queryKey: ["/api/employees"] });
+  await queryClient.invalidateQueries({ queryKey: ["/api/me"] });
+  await queryClient.invalidateQueries({
+    predicate: (query) =>
+      typeof query.queryKey[0] === "string" &&
+      query.queryKey[0].startsWith("/api/planning/board"),
+  });
+}
+
 async function copyCredentials(access: EmployeeAccessPayload) {
   const payload = [
     `Betriebscode: ${access.companyAccessCode}`,
@@ -122,8 +132,7 @@ export default function EmployeesList() {
     mutationFn: async (data: typeof form) =>
       apiRequestJson<EmployeeMutationResponse>("POST", "/api/employees", data),
     onSuccess: async (result) => {
-      await queryClient.invalidateQueries({ queryKey: ["/api/employees"] });
-      await queryClient.invalidateQueries({ queryKey: ["/api/me"] });
+      await invalidateEmployeeAdminQueries();
       setShowCreate(false);
       setForm(INITIAL_EMPLOYEE_FORM);
       setIssuedAccess(result.access ? result : null);
@@ -147,8 +156,7 @@ export default function EmployeesList() {
         sendCredentialsToAdmin: false,
       }),
     onSuccess: async (result) => {
-      await queryClient.invalidateQueries({ queryKey: ["/api/employees"] });
-      await queryClient.invalidateQueries({ queryKey: ["/api/me"] });
+      await invalidateEmployeeAdminQueries();
       setIssuedAccess(result);
       toast({
         title: "Neue Zugangsdaten erzeugt",
@@ -178,8 +186,8 @@ export default function EmployeesList() {
   const toggleMutation = useMutation({
     mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) =>
       apiRequest("PATCH", `/api/employees/${id}`, { isActive }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/employees"] });
+    onSuccess: async () => {
+      await invalidateEmployeeAdminQueries();
     },
   });
 

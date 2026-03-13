@@ -20,6 +20,7 @@ import {
   Calendar,
   ClipboardList,
   HardHat,
+  KeyRound,
   LogOut,
   Sun,
   Users,
@@ -70,7 +71,12 @@ export function AppShell({ children, role, employee }: AppShellProps) {
   const { isOnline, pendingCount, conflictCount } = useEmployeeOfflineQueue();
   const activeItem = items.find((item) => isItemActive(location, item.url, role)) ?? items[0];
   const isEmployeeAssignmentRoute = role === "employee" && location.startsWith("/assignment/");
-  const mobileTitle = isEmployeeAssignmentRoute ? "Einsatz" : activeItem?.title;
+  const isEmployeePasswordRoute = role === "employee" && location === "/account/password";
+  const mobileTitle = isEmployeeAssignmentRoute
+    ? "Einsatz"
+    : isEmployeePasswordRoute
+      ? "Passwort"
+      : activeItem?.title;
 
   const style = {
     "--sidebar-width": "13rem",
@@ -79,7 +85,7 @@ export function AppShell({ children, role, employee }: AppShellProps) {
 
   return (
     <SidebarProvider style={style as CSSProperties}>
-      <div className="flex h-screen w-full">
+      <div className="flex h-screen h-[100dvh] w-full overflow-hidden">
         <Sidebar collapsible="icon">
           <SidebarHeader className="border-b p-0">
             <div className="flex items-center gap-2 px-3 py-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2">
@@ -169,6 +175,19 @@ export function AppShell({ children, role, employee }: AppShellProps) {
                   )}
                 </div>
               </div>
+              {role === "employee" && (
+                <Button
+                  asChild
+                  variant={isEmployeePasswordRoute ? "secondary" : "ghost"}
+                  size="sm"
+                  className="h-7 gap-1.5 px-2 text-xs group-data-[collapsible=icon]:h-7 group-data-[collapsible=icon]:w-7 group-data-[collapsible=icon]:px-0"
+                >
+                  <Link href="/account/password" data-testid="button-open-change-password">
+                    <KeyRound className="h-3.5 w-3.5 shrink-0" />
+                    <span className="group-data-[collapsible=icon]:hidden">Passwort</span>
+                  </Link>
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="icon"
@@ -185,7 +204,7 @@ export function AppShell({ children, role, employee }: AppShellProps) {
           <SidebarRail />
         </Sidebar>
 
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <header className="flex items-center gap-3 border-b px-3 py-2 md:hidden">
             <SidebarTrigger data-testid="button-sidebar-toggle" />
             <div className="min-w-0 flex-1">
@@ -211,7 +230,9 @@ export function AppShell({ children, role, employee }: AppShellProps) {
             </div>
           )}
 
-          <main className="flex-1 overflow-auto">{children}</main>
+          <main className="app-shell-scroll min-h-0 flex-1 overflow-y-auto">
+            {children}
+          </main>
 
           {role === "employee" && !isEmployeeAssignmentRoute && (
             <nav className="safe-area-bottom flex border-t bg-background md:hidden">
