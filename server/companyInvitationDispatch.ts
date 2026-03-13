@@ -1,15 +1,15 @@
-import type { CompanyInvitation } from "../shared/schema.ts";
-import { createInvitationLink } from "./companyInvitations";
+import type { CompanyInvitation } from "../shared/schema.js";
+import { createInvitationLink } from "./companyInvitations.js";
 import {
   sendCompanyInvitationEmail,
   type InvitationEmailDeliveryResult,
-} from "./companyInvitationDelivery";
+} from "./companyInvitationDelivery.js";
 import {
   resolveBaseUrl,
   toAdminInvitationPayload,
   type AdminInvitationPayload,
-} from "./companyInvitationApi";
-import { storage } from "./storage";
+} from "./companyInvitationApi.js";
+import { storage } from "./storage.js";
 
 export type CompanyInvitationMutationResponse = {
   invitation: AdminInvitationPayload;

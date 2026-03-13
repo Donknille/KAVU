@@ -1,33 +1,33 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { z } from "zod";
-import { storage } from "./storage";
-import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
+import { storage } from "./storage.js";
+import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth/index.js";
 import {
   isUserTenantConflict,
   USER_TENANT_CONFLICT_MESSAGE,
-} from "./tenantErrors";
+} from "./tenantErrors.js";
 import {
   isInvitationExpired,
   normalizeInvitationEmail,
-} from "./companyInvitations";
-import { buildCompanyInvitationMutationResponse } from "./companyInvitationDispatch";
-import { sendEmployeeAccessEmail } from "./employeeAccessDelivery";
+} from "./companyInvitations.js";
+import { buildCompanyInvitationMutationResponse } from "./companyInvitationDispatch.js";
+import { sendEmployeeAccessEmail } from "./employeeAccessDelivery.js";
 import {
   createCompanyInvitationSchema,
   getCurrentUserEmail,
   toAdminInvitationPayload,
   toInvitationPreviewPayload,
-} from "./companyInvitationApi";
+} from "./companyInvitationApi.js";
 import {
   insertJobSchema,
   insertAssignmentSchema,
   insertIssueReportSchema,
-} from "../shared/schema.ts";
+} from "../shared/schema.js";
 import {
   createPlanningBoardReadModel,
   getPlanningDaysInRange,
-} from "../shared/planningBoard.ts";
+} from "../shared/planningBoard.js";
 import {
   PREVIEW_ADMIN_EMPLOYEE_ID,
   PREVIEW_COMPANY_ID,
@@ -37,7 +37,7 @@ import {
   getCookieValue,
   normalizePreviewEmployeeToken,
   toPreviewEmployeeSlug,
-} from "./preview";
+} from "./preview.js";
 
 function toDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;

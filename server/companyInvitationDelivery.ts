@@ -1,10 +1,10 @@
-import type { Company, CompanyInvitation } from "../shared/schema.ts";
+import type { Company, CompanyInvitation } from "../shared/schema.js";
 import {
   INVITATION_EMAIL_FROM,
   INVITATION_EMAIL_PROVIDER,
   INVITATION_EMAIL_REPLY_TO,
   RESEND_API_KEY,
-} from "./runtimeConfig";
+} from "./runtimeConfig.js";
 
 export type InvitationEmailDeliveryStatus = "sent" | "logged" | "manual" | "failed";
 

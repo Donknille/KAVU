@@ -1,5 +1,5 @@
 import { randomBytes, randomUUID } from "node:crypto";
-import { hashPassword, verifyPassword } from "./passwords";
+import { hashPassword, verifyPassword } from "./passwords.js";
 
 const COMPANY_ACCESS_CODE_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
 const TEMP_PASSWORD_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";

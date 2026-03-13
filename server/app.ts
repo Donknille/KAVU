@@ -2,12 +2,12 @@ import express, { type NextFunction, type Request, type Response } from "express
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { createServer } from "http";
-import { pingDatabase } from "./db";
-import { PREVIEW_MODE } from "./preview";
-import { registerRoutes } from "./routes";
-import { seedDatabase } from "./seed";
-import { serveStatic } from "./static";
-import { assertRuntimeConfig, AUTH_PROVIDER } from "./runtimeConfig";
+import { pingDatabase } from "./db.js";
+import { PREVIEW_MODE } from "./preview.js";
+import { registerRoutes } from "./routes.js";
+import { seedDatabase } from "./seed.js";
+import { serveStatic } from "./static.js";
+import { assertRuntimeConfig, AUTH_PROVIDER } from "./runtimeConfig.js";
 
 assertRuntimeConfig();
 
@@ -160,7 +160,7 @@ async function bootstrapApp() {
       if (process.env.NODE_ENV === "production") {
         serveStatic(app);
       } else if (!process.env.VERCEL) {
-        const { setupVite } = await import("./vite");
+        const { setupVite } = await import("./vite.js");
         await setupVite(httpServer, app);
       }
     })().catch((error) => {

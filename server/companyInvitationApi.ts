@@ -3,11 +3,11 @@ import {
   insertCompanyInvitationSchema,
   type Company,
   type CompanyInvitation,
-} from "../shared/schema.ts";
-import { isInvitationExpired } from "./companyInvitations";
-import { PREVIEW_AUTH_USER, PREVIEW_MODE } from "./preview";
-import { authStorage } from "./replit_integrations/auth";
-import { APP_BASE_URL } from "./runtimeConfig";
+} from "../shared/schema.js";
+import { isInvitationExpired } from "./companyInvitations.js";
+import { PREVIEW_AUTH_USER, PREVIEW_MODE } from "./preview.js";
+import { authStorage } from "./replit_integrations/auth/index.js";
+import { APP_BASE_URL } from "./runtimeConfig.js";
 
 export const createCompanyInvitationSchema = insertCompanyInvitationSchema
   .omit({ companyId: true, expiresAt: true })

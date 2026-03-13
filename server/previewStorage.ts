@@ -17,20 +17,20 @@ import {
   type IssueReport,
   type Job,
   type TimeEntry,
-} from "../shared/schema.ts";
+} from "../shared/schema.js";
 import {
   PREVIEW_ADMIN_EMPLOYEE_ID,
   PREVIEW_ADMIN_USER_ID,
   PREVIEW_COMPANY_ID,
-} from "./preview.ts";
-import { UserTenantConflictError } from "./tenantErrors.ts";
+} from "./preview.js";
+import { UserTenantConflictError } from "./tenantErrors.js";
 import {
   createInvitationToken,
   getInvitationExpiry,
   hashInvitationToken,
   isInvitationExpired,
   normalizeInvitationEmail,
-} from "./companyInvitations.ts";
+} from "./companyInvitations.js";
 import {
   buildEmployeeLoginCandidates,
   createLocalUserId,
@@ -40,7 +40,7 @@ import {
   normalizeCompanyAccessCode,
   normalizeEmployeeLoginId,
   verifyEmployeePassword,
-} from "./employeeAccess.ts";
+} from "./employeeAccess.js";
 import type {
   AcceptCompanyInvitationData,
   CompanyInvitationWithToken,
@@ -48,7 +48,7 @@ import type {
   CreateCompanyInvitationData,
   LocalEmployeeAuthenticationData,
   ProvisionEmployeeAccessData,
-} from "./storage.ts";
+} from "./storage.js";
 
 type CreateJobData = Omit<InsertJob, "jobNumber">;
 

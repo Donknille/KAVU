@@ -24,19 +24,19 @@ import {
   type BreakEntry,
   type IssueReport,
   type InsertIssueReport,
-} from "../shared/schema.ts";
-import { db } from "./db";
-import { PREVIEW_MODE } from "./preview";
-import { PreviewStorage } from "./previewStorage";
+} from "../shared/schema.js";
+import { db } from "./db.js";
+import { PREVIEW_MODE } from "./preview.js";
+import { PreviewStorage } from "./previewStorage.js";
 import { eq, and, gte, lte, or, like, desc, asc, isNull, sql, inArray } from "drizzle-orm";
-import { UserTenantConflictError } from "./tenantErrors";
+import { UserTenantConflictError } from "./tenantErrors.js";
 import {
   createInvitationToken,
   getInvitationExpiry,
   hashInvitationToken,
   isInvitationExpired,
   normalizeInvitationEmail,
-} from "./companyInvitations";
+} from "./companyInvitations.js";
 import {
   buildEmployeeLoginCandidates,
   createLocalUserId,
@@ -46,8 +46,8 @@ import {
   normalizeCompanyAccessCode,
   normalizeEmployeeLoginId,
   verifyEmployeePassword,
-} from "./employeeAccess";
-import { authStorage } from "./replit_integrations/auth/storage";
+} from "./employeeAccess.js";
+import { authStorage } from "./replit_integrations/auth/storage.js";
 
 type CreateJobData = Omit<InsertJob, "jobNumber">;
 export type CreateCompanyWithAdminData = {

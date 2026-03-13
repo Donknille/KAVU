@@ -1,4 +1,4 @@
-export * from "./models/auth.ts";
+export * from "./models/auth.js";
 
 import { sql, relations } from "drizzle-orm";
 import {
@@ -16,7 +16,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-import { users } from "./models/auth.ts";
+import { users } from "./models/auth.js";
 
 export const roleEnum = pgEnum("role", ["admin", "employee"]);
 export const jobStatusEnum = pgEnum("job_status", [

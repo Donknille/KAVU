@@ -6,9 +6,9 @@ import session from "express-session";
 import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
-import { authStorage } from "./storage";
-import { getPreviewSessionUser, PREVIEW_MODE } from "../../preview";
-import { storage } from "../../storage";
+import { authStorage } from "./storage.js";
+import { getPreviewSessionUser, PREVIEW_MODE } from "../../preview.js";
+import { storage } from "../../storage.js";
 import {
   APP_BASE_URL,
   AUTH_PROVIDER,
@@ -23,7 +23,7 @@ import {
   OIDC_SIGNUP_HINT,
   OIDC_SCOPE,
   TRUST_PROXY,
-} from "../../runtimeConfig";
+} from "../../runtimeConfig.js";
 
 declare module "express-session" {
   interface SessionData {

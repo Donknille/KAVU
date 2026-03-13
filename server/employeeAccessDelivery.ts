@@ -1,11 +1,11 @@
-import type { Company, Employee } from "../shared/schema.ts";
+import type { Company, Employee } from "../shared/schema.js";
 import {
   INVITATION_EMAIL_FROM,
   INVITATION_EMAIL_PROVIDER,
   INVITATION_EMAIL_REPLY_TO,
   RESEND_API_KEY,
-} from "./runtimeConfig";
-import type { LocalEmployeeAccess } from "./storage";
+} from "./runtimeConfig.js";
+import type { LocalEmployeeAccess } from "./storage.js";
 
 export type EmployeeAccessDeliveryStatus = "sent" | "logged" | "manual" | "failed" | "skipped";
 

@@ -1,4 +1,4 @@
-import { PREVIEW_MODE } from "./preview.ts";
+import { PREVIEW_MODE } from "./preview.js";
 
 export type AuthProvider = "preview" | "replit" | "oidc" | "local" | "app";
 export type InvitationEmailProvider = "disabled" | "log" | "resend";

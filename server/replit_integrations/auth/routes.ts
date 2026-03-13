@@ -1,8 +1,8 @@
 import type { Express } from "express";
 import { z } from "zod";
-import { authStorage } from "./storage";
-import { isAuthenticated } from "./replitAuth";
-import { hashPassword, verifyPassword } from "../../passwords";
+import { authStorage } from "./storage.js";
+import { isAuthenticated } from "./replitAuth.js";
+import { hashPassword, verifyPassword } from "../../passwords.js";
 import {
   PREVIEW_AUTH_USER,
   PREVIEW_COMPANY_ID,
@@ -11,8 +11,8 @@ import {
   PREVIEW_MODE,
   toPreviewEmployeeSlug,
   normalizePreviewEmployeeToken,
-} from "../../preview";
-import { storage } from "../../storage";
+} from "../../preview.js";
+import { storage } from "../../storage.js";
 
 const passwordRegistrationSchema = z.object({
   email: z.string().trim().email().max(255),

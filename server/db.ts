@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
 // WICHTIG: Die Endung .ts beim Import entfernen, damit Node/TypeScript keine Probleme bekommt
-import * as schema from "../shared/schema";
+import * as schema from "../shared/schema.js";
 
 const { Pool } = pg;
 const connectionString = process.env.DATABASE_URL;

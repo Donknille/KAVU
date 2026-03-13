@@ -1,4 +1,4 @@
-import { db } from "./db";
+import { db } from "./db.js";
 import {
   companies,
   employees,
@@ -7,10 +7,10 @@ import {
   assignmentWorkers,
   timeEntries,
   issueReports,
-} from "../shared/schema.ts";
+} from "../shared/schema.js";
 import { eq, sql } from "drizzle-orm";
-import { PREVIEW_MODE } from "./preview";
-import { ENABLE_DEMO_SEED } from "./runtimeConfig";
+import { PREVIEW_MODE } from "./preview.js";
+import { ENABLE_DEMO_SEED } from "./runtimeConfig.js";
 
 export async function seedDatabase() {
   if (PREVIEW_MODE || !ENABLE_DEMO_SEED) return;

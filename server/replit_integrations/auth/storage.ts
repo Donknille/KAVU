@@ -1,5 +1,5 @@
 import { users, type User, type UpsertUser } from "@shared/models/auth";
-import { db } from "../../db";
+import { db } from "../../db.js";
 import { eq } from "drizzle-orm";
 
 function normalizeUserEmail(value: string | null | undefined) {
