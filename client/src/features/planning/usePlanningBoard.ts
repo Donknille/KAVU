@@ -60,6 +60,20 @@ const EMPTY_PLANNING_BOARD: PlanningBoardResponse = {
   daySummaries: [],
 };
 
+type TeamFilterMode = "all" | "unassigned" | "free-focus";
+
+type TeamOverviewEntry = {
+  employee: PlanEmployee;
+  scheduledDays: string[];
+  focusAssigned: boolean;
+  unassignedInWindow: boolean;
+  fullyBookedInWindow: boolean;
+  section: "unassigned" | "free-focus" | "scheduled-focus";
+  badgeLabel: string;
+  badgeTone: "neutral" | "free" | "scheduled";
+  detailLabel: string;
+};
+
 export function usePlanningBoard() {
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -74,6 +88,7 @@ export function usePlanningBoard() {
   const [busyLabel, setBusyLabel] = useState<string | null>(null);
   const [backlogSearch, setBacklogSearch] = useState("");
   const [teamSearch, setTeamSearch] = useState("");
+  const [teamFilter, setTeamFilter] = useState<TeamFilterMode>("all");
 
   const visibleDays = getVisibleDays(weekStart, viewSpan);
   const planningBoardUrl = `/api/planning/board?startDate=${visibleDays[0]}&endDate=${
@@ -99,7 +114,21 @@ export function usePlanningBoard() {
   const dayIndexByDate = new Map(visibleDays.map((date, index) => [date, index]));
   const selectedBlock = selectedBlockId ? blocksById.get(selectedBlockId) ?? null : null;
   const backlogList = filterJobs(backlogJobs, backlogSearch);
-  const employeeList = filterEmployees(activeEmployees, teamSearch);
+  const teamFocusDate =
+    selectedBlock && visibleDays.includes(selectedBlock.startDate)
+      ? selectedBlock.startDate
+      : visibleDays.includes(today)
+        ? today
+        : visibleDays[0];
+  const teamFocusLabel = teamFocusDate === today ? "Heute" : formatCompactDate(teamFocusDate);
+  const teamOverview = buildTeamOverview(activeEmployees, assignments, visibleDays, teamFocusDate);
+  const filteredTeamOverview = filterTeamOverview(teamOverview, teamSearch, teamFilter);
+  const teamSections = buildTeamSections(filteredTeamOverview, teamFocusLabel);
+  const teamSummary = {
+    freeOnFocusDay: teamOverview.filter((entry) => !entry.focusAssigned).length,
+    unassignedInWindow: teamOverview.filter((entry) => entry.unassignedInWindow).length,
+    fullyBookedInWindow: teamOverview.filter((entry) => entry.fullyBookedInWindow).length,
+  };
 
   useEffect(() => {
     if (selectedBlockId && !blocksById.has(selectedBlockId)) {
@@ -982,7 +1011,6 @@ export function usePlanningBoard() {
     busyLabel,
     collisionDetection,
     daySummaries: planningBoard.daySummaries,
-    employeeList,
     getEmployeeAvailability,
     handleDragCancel,
     handleDragEnd,
@@ -994,7 +1022,12 @@ export function usePlanningBoard() {
     selectedBlock,
     sensors,
     showCreateJobDialog,
+    teamFilter,
+    teamFocusDate,
+    teamFocusLabel,
     teamSearch,
+    teamSections,
+    teamSummary,
     isMobile,
     viewSpan,
     visibleDays,
@@ -1025,6 +1058,7 @@ export function usePlanningBoard() {
     },
     setBacklogSearch,
     setSelectedBlockId,
+    setTeamFilter,
     setTeamSearch,
     setViewSpan,
     updateJobForm,
@@ -1047,4 +1081,125 @@ function filterEmployees(employees: PlanEmployee[], searchTerm: string) {
     const haystack = `${employee.firstName} ${employee.lastName} ${employee.phone ?? ""}`.toLowerCase();
     return haystack.includes(normalizedSearch);
   });
+}
+
+function buildTeamOverview(
+  employees: PlanEmployee[],
+  assignments: PlanAssignment[],
+  visibleDays: string[],
+  focusDate: string
+): TeamOverviewEntry[] {
+  const visibleDaySet = new Set(visibleDays);
+
+  return employees
+    .map((employee) => {
+      const scheduledDays = uniqueSortedDates(
+        assignments
+          .filter(
+            (assignment) =>
+              visibleDaySet.has(assignment.assignmentDate) &&
+              (assignment.workers ?? []).some((worker) => worker.id === employee.id)
+          )
+          .map((assignment) => assignment.assignmentDate)
+      );
+      const scheduledCount = scheduledDays.length;
+      const focusAssigned = scheduledDays.includes(focusDate);
+      const unassignedInWindow = scheduledCount === 0;
+      const fullyBookedInWindow = visibleDays.length > 0 && scheduledCount >= visibleDays.length;
+
+      let section: TeamOverviewEntry["section"];
+      let badgeLabel: string;
+      let badgeTone: TeamOverviewEntry["badgeTone"];
+
+      if (unassignedInWindow) {
+        section = "unassigned";
+        badgeLabel = "Ohne Einsatz";
+        badgeTone = "neutral";
+      } else if (!focusAssigned) {
+        section = "free-focus";
+        badgeLabel = "Frei";
+        badgeTone = "free";
+      } else {
+        section = "scheduled-focus";
+        badgeLabel = "Eingeplant";
+        badgeTone = "scheduled";
+      }
+
+      const detailLabel = unassignedInWindow
+        ? "Im sichtbaren Zeitraum noch offen"
+        : fullyBookedInWindow
+          ? `An allen ${visibleDays.length} Tagen eingeplant`
+          : `${scheduledCount} von ${visibleDays.length} Tagen eingeplant`;
+
+      return {
+        employee,
+        scheduledDays,
+        focusAssigned,
+        unassignedInWindow,
+        fullyBookedInWindow,
+        section,
+        badgeLabel,
+        badgeTone,
+        detailLabel,
+      };
+    })
+    .sort((left, right) => {
+      const sectionOrder = {
+        unassigned: 0,
+        "free-focus": 1,
+        "scheduled-focus": 2,
+      } as const;
+      const sectionDelta = sectionOrder[left.section] - sectionOrder[right.section];
+      if (sectionDelta !== 0) {
+        return sectionDelta;
+      }
+      if (left.scheduledDays.length !== right.scheduledDays.length) {
+        return left.scheduledDays.length - right.scheduledDays.length;
+      }
+      return getEmployeeLabel(left.employee).localeCompare(getEmployeeLabel(right.employee));
+    });
+}
+
+function filterTeamOverview(
+  entries: TeamOverviewEntry[],
+  searchTerm: string,
+  teamFilter: TeamFilterMode
+) {
+  return entries.filter((entry) => {
+    const matchesSearch = filterEmployees([entry.employee], searchTerm).length > 0;
+    if (!matchesSearch) {
+      return false;
+    }
+
+    if (teamFilter === "unassigned") {
+      return entry.unassignedInWindow;
+    }
+    if (teamFilter === "free-focus") {
+      return !entry.focusAssigned;
+    }
+    return true;
+  });
+}
+
+function buildTeamSections(entries: TeamOverviewEntry[], focusLabel: string) {
+  return [
+    {
+      id: "unassigned",
+      title: "Nicht eingeteilt",
+      description: "Im sichtbaren Zeitraum ohne Einsatz.",
+      items: entries.filter((entry) => entry.section === "unassigned"),
+    },
+    {
+      id: "free-focus",
+      title: `${focusLabel} frei`,
+      description: "An diesem Tag verfuegbar, aber an anderen Tagen bereits eingeplant.",
+      items: entries.filter((entry) => entry.section === "free-focus"),
+    },
+    {
+      id: "scheduled-focus",
+      title: `${focusLabel} eingeplant`,
+      description: "Am Fokus-Tag bereits im Einsatz.",
+      items: entries.filter((entry) => entry.section === "scheduled-focus"),
+    },
+  ].filter((section) => section.items.length > 0);
 }

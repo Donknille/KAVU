@@ -24,7 +24,7 @@ import {
 } from "@/features/planning/components";
 import { type ViewSpan } from "@/features/planning/types";
 import { usePlanningBoard } from "@/features/planning/usePlanningBoard";
-import { VirtualGrid, VirtualStack } from "@/features/planning/virtual";
+import { VirtualStack } from "@/features/planning/virtual";
 import { formatRange, parseDateString, toDateStr } from "@/features/planning/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -229,7 +229,10 @@ export default function PlanView() {
                         month: "2-digit",
                       })}
                     </p>
-                    <p className="text-[9px] text-muted-foreground">{`${summary.assignments} ET`}</p>
+                    <div className="text-right text-[9px] text-muted-foreground">
+                      <p>{`${summary.assignments} ET`}</p>
+                      <p>{`${Math.max(0, planning.activeEmployees.length - summary.workers)} frei`}</p>
+                    </div>
                   </div>
                 </div>
               );
@@ -311,7 +314,7 @@ export default function PlanView() {
           <div>
             <p className="text-sm font-semibold">Team</p>
             <p className="text-xs text-muted-foreground">
-              Mitarbeitende fuer die Einsatzplanung
+              Sortiert nach Verfuegbarkeit fuer {planning.teamFocusLabel.toLowerCase()}.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -329,23 +332,61 @@ export default function PlanView() {
           placeholder="Mitarbeiter suchen..."
           className="mt-2 h-8"
         />
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {[
+            { id: "all", label: "Alle" },
+            { id: "free-focus", label: `${planning.teamFocusLabel} frei` },
+            { id: "unassigned", label: "Nicht eingeteilt" },
+          ].map((filter) => (
+            <Button
+              key={filter.id}
+              type="button"
+              size="sm"
+              variant={planning.teamFilter === filter.id ? "default" : "outline"}
+              className="h-7 rounded-full px-2.5 text-[11px]"
+              onClick={() => planning.setTeamFilter(filter.id as typeof planning.teamFilter)}
+            >
+              {filter.label}
+            </Button>
+          ))}
+        </div>
       </div>
-      <div className="h-[min(18vh,11rem)] p-2">
-        <VirtualGrid
-          items={planning.employeeList}
-          minColumnWidth={compactBoard ? 172 : 208}
-          rowHeight={compactBoard ? 80 : 88}
-          className="h-full overflow-y-auto pr-1"
-          renderItem={(employee) => (
-            <TeamMemberCard
-              key={employee.id}
-              employee={employee}
-              availability={planning.getEmployeeAvailability(employee.id)}
-              compact={compactBoard}
-            />
+      <ScrollArea className="h-[min(30vh,18rem)]">
+        <div className="space-y-3 p-2">
+          {planning.teamSections.length === 0 && (
+            <div className="rounded-2xl border border-dashed p-5 text-center text-sm text-muted-foreground">
+              Fuer den aktuellen Filter wurden keine Mitarbeitenden gefunden.
+            </div>
           )}
-        />
-      </div>
+          {planning.teamSections.map((section) => (
+            <div key={section.id} className="space-y-2">
+              <div className="flex items-center justify-between gap-2 px-1">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    {section.title}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">{section.description}</p>
+                </div>
+                <Badge variant="outline" className="rounded-full px-2 py-0.5 text-[10px]">
+                  {section.items.length}
+                </Badge>
+              </div>
+              <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+                {section.items.map((entry) => (
+                  <TeamMemberCard
+                    key={entry.employee.id}
+                    employee={entry.employee}
+                    badgeLabel={entry.badgeLabel}
+                    badgeTone={entry.badgeTone}
+                    detailLabel={entry.detailLabel}
+                    compact={compactBoard}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </ScrollArea>
     </Card>
   );
 
@@ -425,6 +466,15 @@ export default function PlanView() {
             <Badge variant="outline" className="gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium">
               <Users className="h-3 w-3" />
               {planning.activeEmployees.length} aktiv
+            </Badge>
+            <Badge variant="outline" className="rounded-full px-2 py-0.5 text-[11px] font-medium">
+              {planning.teamSummary.unassignedInWindow} ohne Einsatz
+            </Badge>
+            <Badge variant="outline" className="rounded-full px-2 py-0.5 text-[11px] font-medium">
+              {planning.teamSummary.freeOnFocusDay} {planning.teamFocusLabel.toLowerCase()} frei
+            </Badge>
+            <Badge variant="outline" className="rounded-full px-2 py-0.5 text-[11px] font-medium">
+              {planning.teamSummary.fullyBookedInWindow} durchgehend eingeplant
             </Badge>
           </div>
         </div>

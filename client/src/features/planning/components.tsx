@@ -160,11 +160,15 @@ export function BacklogJobCard({ job, compact }: { job: PlanJob; compact: boolea
 
 export function TeamMemberCard({
   employee,
-  availability,
+  badgeLabel,
+  badgeTone,
+  detailLabel,
   compact,
 }: {
   employee: PlanEmployee;
-  availability: EmployeeAvailability;
+  badgeLabel: string;
+  badgeTone: "neutral" | "free" | "scheduled";
+  detailLabel: string;
   compact?: boolean;
 }) {
   const {
@@ -183,18 +187,13 @@ export function TeamMemberCard({
   });
 
   const statusClass =
-    availability === "assigned"
-      ? "bg-emerald-100 text-emerald-800"
-      : availability === "scheduled"
-        ? "bg-amber-100 text-amber-800"
+    badgeTone === "free"
+      ? "bg-sky-100 text-sky-800"
+      : badgeTone === "scheduled"
+        ? "bg-emerald-100 text-emerald-800"
         : "bg-slate-100 text-slate-700";
 
-  const statusLabel =
-    availability === "assigned"
-      ? "Zugewiesen"
-      : availability === "scheduled"
-        ? "Schon geplant"
-        : "Frei";
+  const metaLine = [detailLabel, employee.phone].filter(Boolean).join(" | ");
 
   return (
     <button
@@ -225,11 +224,9 @@ export function TeamMemberCard({
           <p className={cn("truncate font-semibold leading-tight", compact ? "text-xs" : "text-[13px]")}>
             {getEmployeeLabel(employee)}
           </p>
-          {!compact && (
-            <p className="truncate text-[11px] text-muted-foreground">
-              {employee.phone || "Keine Telefonnummer"}
-            </p>
-          )}
+          <p className={cn("truncate text-muted-foreground", compact ? "text-[10px]" : "text-[11px]")}>
+            {metaLine}
+          </p>
         </div>
         <div className="flex items-center gap-1">
           <Badge
@@ -240,7 +237,7 @@ export function TeamMemberCard({
               statusClass
             )}
           >
-            {statusLabel}
+            {badgeLabel}
           </Badge>
           <span
             ref={setActivatorNodeRef}
