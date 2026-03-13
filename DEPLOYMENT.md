@@ -1,5 +1,47 @@
 # KAVU Deployment
 
+## Vercel deployment
+
+KAVU can be deployed on Vercel as a single Express function.
+
+Repository support now included:
+
+- root Express entry: `server.ts`
+- shared server bootstrap: `server/app.ts`
+- Vite client build goes to root `public/` on Vercel
+- `vercel.json` included
+
+Recommended Vercel settings:
+
+- Framework preset: `Express`
+- Install command: `npm ci`
+- Build command: `npm run build`
+- Output directory: leave empty
+
+Required env:
+
+```env
+NODE_ENV=production
+APP_BASE_URL=https://your-project.vercel.app
+DATABASE_URL=postgres://user:password@host:5432/kavu?sslmode=require
+SESSION_SECRET=replace-with-a-long-random-secret
+TRUST_PROXY=true
+COOKIE_SECURE=true
+COOKIE_SAME_SITE=lax
+AUTH_PROVIDER=app
+ENABLE_DEMO_SEED=0
+INVITATION_EMAIL_PROVIDER=disabled
+```
+
+Run once before the first deploy:
+
+```bash
+npm ci
+npm run db:push
+```
+
+See [VERCEL.md](./VERCEL.md) for the full Vercel checklist.
+
 ## Current production shape
 
 KAVU is currently prepared for standard hosting as a single Node service:
