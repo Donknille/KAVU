@@ -44,6 +44,9 @@ const authLimiter = rateLimit({
 
 app.use("/api/", apiLimiter);
 app.use("/api/login", authLimiter);
+app.use("/api/auth/register", authLimiter);
+app.use("/api/auth/login/password", authLimiter);
+app.use("/api/auth/employee-login", authLimiter);
 app.use("/api/setup", authLimiter);
 
 app.use(

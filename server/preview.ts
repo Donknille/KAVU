@@ -15,6 +15,10 @@ function hasConfiguredAuthProvider() {
     return true;
   }
 
+  if (provider === "app") {
+    return true;
+  }
+
   return Boolean(
     process.env.REPL_ID ||
       (process.env.OIDC_ISSUER_URL && process.env.OIDC_CLIENT_ID),
@@ -41,6 +45,7 @@ export const PREVIEW_AUTH_USER: User = {
   firstName: "Demo",
   lastName: "Admin",
   profileImageUrl: null,
+  passwordHash: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };

@@ -1,6 +1,8 @@
 import type { Express } from "express";
+import { z } from "zod";
 import { authStorage } from "./storage";
 import { isAuthenticated } from "./replitAuth";
+import { hashPassword, verifyPassword } from "../../passwords";
 import {
   PREVIEW_AUTH_USER,
   PREVIEW_COMPANY_ID,
@@ -11,6 +13,41 @@ import {
   normalizePreviewEmployeeToken,
 } from "../../preview";
 import { storage } from "../../storage";
+
+const passwordRegistrationSchema = z.object({
+  email: z.string().trim().email().max(255),
+  password: z.string().min(8).max(128),
+  firstName: z.string().trim().min(1).max(100),
+  lastName: z.string().trim().min(1).max(100),
+});
+
+const passwordLoginSchema = z.object({
+  email: z.string().trim().email().max(255),
+  password: z.string().min(8).max(128),
+});
+
+const employeeLoginSchema = z.object({
+  companyAccessCode: z.string().trim().min(4).max(16),
+  loginId: z.string().trim().min(1).max(80),
+  password: z.string().min(8).max(128),
+});
+
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(8).max(128),
+  newPassword: z.string().min(8).max(128),
+});
+
+function toPublicUser(user: any, authMethod: string) {
+  if (!user) {
+    return null;
+  }
+
+  const { passwordHash, ...rest } = user;
+  return {
+    ...rest,
+    authMethod,
+  };
+}
 
 function getPreviewRedirect(redirect: unknown) {
   if (typeof redirect !== "string" || !redirect.startsWith("/")) {
@@ -84,6 +121,156 @@ export function registerAuthRoutes(app: Express): void {
     });
   }
 
+  app.post("/api/auth/register", async (req: any, res) => {
+    try {
+      const parsed = passwordRegistrationSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({
+          message: "Validation error",
+          errors: parsed.error.flatten().fieldErrors,
+        });
+      }
+
+      const existingUser = await authStorage.getUserByEmail(parsed.data.email);
+      if (existingUser) {
+        return res.status(409).json({ message: "Diese E-Mail-Adresse ist bereits registriert." });
+      }
+
+      const user = await authStorage.createPasswordUser({
+        email: parsed.data.email,
+        passwordHash: hashPassword(parsed.data.password),
+        firstName: parsed.data.firstName,
+        lastName: parsed.data.lastName,
+      });
+
+      if (!req.session) {
+        return res.status(500).json({ message: "Session unavailable" });
+      }
+
+      req.session.localAuth = {
+        userId: user.id,
+        kind: "password",
+      };
+
+      return res.json({ user: toPublicUser(user, "password") });
+    } catch (error) {
+      console.error("Error during password registration:", error);
+      return res.status(500).json({ message: "Registrierung fehlgeschlagen" });
+    }
+  });
+
+  app.post("/api/auth/login/password", async (req: any, res) => {
+    try {
+      const parsed = passwordLoginSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({
+          message: "Validation error",
+          errors: parsed.error.flatten().fieldErrors,
+        });
+      }
+
+      const user = await authStorage.getUserByEmail(parsed.data.email);
+      if (!user?.passwordHash || !user.email) {
+        return res.status(401).json({ message: "E-Mail oder Passwort ist ungueltig." });
+      }
+
+      if (!verifyPassword(parsed.data.password, user.passwordHash)) {
+        return res.status(401).json({ message: "E-Mail oder Passwort ist ungueltig." });
+      }
+
+      if (!req.session) {
+        return res.status(500).json({ message: "Session unavailable" });
+      }
+
+      req.session.localAuth = {
+        userId: user.id,
+        kind: "password",
+      };
+
+      return res.json({ user: toPublicUser(user, "password") });
+    } catch (error) {
+      console.error("Error during password login:", error);
+      return res.status(500).json({ message: "Login fehlgeschlagen" });
+    }
+  });
+
+  app.post("/api/auth/employee-login", async (req: any, res) => {
+    try {
+      const parsed = employeeLoginSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({
+          message: "Validation error",
+          errors: parsed.error.flatten().fieldErrors,
+        });
+      }
+
+      const result = await storage.authenticateLocalEmployee(parsed.data);
+      if (!req.session) {
+        return res.status(500).json({ message: "Session unavailable" });
+      }
+      req.session.localAuth = {
+        userId: result.userId,
+        kind: "employee_access",
+      };
+
+      return res.json({
+        employee: result.employee,
+        company: result.company,
+        requiresPasswordChange: result.employee.mustChangePassword,
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        const message = error.message;
+        if (
+          message === "Company access not found" ||
+          message === "Employee access not found" ||
+          message === "Invalid password" ||
+          message === "Employee access is inactive"
+        ) {
+          return res.status(401).json({ message: "Betriebscode, Benutzername oder Passwort ist ungueltig." });
+        }
+      }
+
+      console.error("Error during employee login:", error);
+      return res.status(500).json({ message: "Login fehlgeschlagen" });
+    }
+  });
+
+  app.post("/api/auth/change-password", isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user?.auth_method !== "employee_access") {
+        return res.status(400).json({ message: "Nur lokale Mitarbeiterkonten koennen hier ein Passwort setzen." });
+      }
+
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const parsed = changePasswordSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({
+          message: "Validation error",
+          errors: parsed.error.flatten().fieldErrors,
+        });
+      }
+
+      const employee = await storage.changeLocalEmployeePassword({
+        userId,
+        currentPassword: parsed.data.currentPassword,
+        newPassword: parsed.data.newPassword,
+      });
+      return res.json({ employee });
+    } catch (error) {
+      if (error instanceof Error && error.message === "Current password is invalid") {
+        return res.status(400).json({ message: "Das aktuelle Passwort ist ungueltig." });
+      }
+
+      console.error("Error changing employee password:", error);
+      return res.status(500).json({ message: "Passwort konnte nicht aktualisiert werden." });
+    }
+  });
+
   // Get current authenticated user
   app.get("/api/auth/user", isAuthenticated, async (req: any, res) => {
     try {
@@ -93,7 +280,7 @@ export function registerAuthRoutes(app: Express): void {
 
       const userId = req.user.claims.sub;
       const user = await authStorage.getUser(userId);
-      res.json(user);
+      res.json(toPublicUser(user, req.user?.auth_method ?? "oidc"));
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });

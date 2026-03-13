@@ -7,11 +7,13 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/use-auth";
 import { AppShell } from "@/components/AppShell";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmployeeOfflineQueueProvider } from "@/features/employee-offline/EmployeeOfflineQueueProvider";
 import NotFound from "@/pages/not-found";
 import { applyPreviewIdentityFromUrl } from "@/lib/preview-session";
 
 const LandingPage = lazy(() => import("@/pages/LandingPage"));
 const SetupPage = lazy(() => import("@/pages/SetupPage"));
+const ChangePasswordPage = lazy(() => import("@/pages/ChangePasswordPage"));
 const AdminDashboard = lazy(() => import("@/pages/AdminDashboard"));
 const EmployeeDayView = lazy(() => import("@/pages/EmployeeDayView"));
 const AssignmentDetail = lazy(() => import("@/pages/AssignmentDetail"));
@@ -91,13 +93,23 @@ function AuthenticatedApp() {
     );
   }
 
+  if (meData?.requiresPasswordChange) {
+    return (
+      <Suspense fallback={<PageFallback />}>
+        <ChangePasswordPage employee={meData?.employee} company={meData?.company} />
+      </Suspense>
+    );
+  }
+
   const employee = meData?.employee;
   const role = employee?.role || "employee";
 
   return (
-    <AppShell role={role} employee={employee}>
-      {role === "admin" ? <AdminRouter /> : <EmployeeRouter />}
-    </AppShell>
+    <EmployeeOfflineQueueProvider employeeId={employee?.id} enabled={role === "employee"}>
+      <AppShell role={role} employee={employee}>
+        {role === "admin" ? <AdminRouter /> : <EmployeeRouter />}
+      </AppShell>
+    </EmployeeOfflineQueueProvider>
   );
 }
 

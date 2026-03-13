@@ -37,6 +37,17 @@ import {
   isInvitationExpired,
   normalizeInvitationEmail,
 } from "./companyInvitations";
+import {
+  buildEmployeeLoginCandidates,
+  createLocalUserId,
+  generateCompanyAccessCode,
+  generateTemporaryPassword,
+  hashEmployeePassword,
+  normalizeCompanyAccessCode,
+  normalizeEmployeeLoginId,
+  verifyEmployeePassword,
+} from "./employeeAccess";
+import { authStorage } from "./replit_integrations/auth/storage";
 
 type CreateJobData = Omit<InsertJob, "jobNumber">;
 export type CreateCompanyWithAdminData = {
@@ -68,6 +79,27 @@ export type CompanyInvitationDeliveryUpdate = {
   delivered: boolean;
   errorMessage?: string | null;
 };
+export type LocalEmployeeAccess = {
+  companyAccessCode: string;
+  loginId: string;
+  temporaryPassword: string;
+  mustChangePassword: boolean;
+};
+export type ProvisionEmployeeAccessData = {
+  companyId: string;
+  employeeId: string;
+  loginId?: string | null;
+};
+export type LocalEmployeeAuthenticationData = {
+  companyAccessCode: string;
+  loginId: string;
+  password: string;
+};
+export type ChangeLocalEmployeePasswordData = {
+  userId: string;
+  currentPassword: string;
+  newPassword: string;
+};
 
 function getEmployeeSortKey(employee: Pick<Employee, "firstName" | "lastName">) {
   return `${employee.firstName} ${employee.lastName}`.trim();
@@ -75,6 +107,7 @@ function getEmployeeSortKey(employee: Pick<Employee, "firstName" | "lastName">) 
 
 export interface IStorage {
   getCompany(id: string): Promise<Company | undefined>;
+  getCompanyByAccessCode(accessCode: string): Promise<Company | undefined>;
   getCompanyByUserId(userId: string): Promise<Company | undefined>;
   createCompany(data: InsertCompany): Promise<Company>;
   createCompanyWithAdmin(
@@ -85,9 +118,17 @@ export interface IStorage {
   getEmployee(id: string): Promise<Employee | undefined>;
   getEmployeeForCompany(companyId: string, id: string): Promise<Employee | undefined>;
   getEmployeeByUserId(userId: string): Promise<Employee | undefined>;
+  getEmployeeByLoginId(companyId: string, loginId: string): Promise<Employee | undefined>;
   getEmployeesByCompany(companyId: string): Promise<Employee[]>;
   createEmployee(data: InsertEmployee): Promise<Employee>;
   updateEmployee(id: string, data: Partial<InsertEmployee>): Promise<Employee | undefined>;
+  provisionEmployeeAccess(
+    data: ProvisionEmployeeAccessData,
+  ): Promise<{ employee: Employee; company: Company; access: LocalEmployeeAccess }>;
+  authenticateLocalEmployee(
+    data: LocalEmployeeAuthenticationData,
+  ): Promise<{ employee: Employee; company: Company; userId: string }>;
+  changeLocalEmployeePassword(data: ChangeLocalEmployeePasswordData): Promise<Employee>;
 
   getCompanyInvitation(id: string): Promise<CompanyInvitation | undefined>;
   getCompanyInvitationForCompany(
@@ -164,8 +205,82 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  private async generateUniqueCompanyAccessCode(tx: any = db) {
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      const accessCode = generateCompanyAccessCode();
+      const [existingCompany] = await tx
+        .select({ id: companies.id })
+        .from(companies)
+        .where(eq(companies.accessCode, accessCode));
+
+      if (!existingCompany) {
+        return accessCode;
+      }
+    }
+
+    throw new Error("Unable to generate a unique company access code");
+  }
+
+  private async resolveUniqueEmployeeLoginId(
+    companyId: string,
+    firstName: string,
+    lastName: string,
+    explicitLoginId?: string | null,
+    currentEmployeeId?: string,
+  ) {
+    const candidates = buildEmployeeLoginCandidates(firstName, lastName, explicitLoginId);
+
+    for (const candidate of candidates) {
+      const [existingEmployee] = await db
+        .select({ id: employees.id })
+        .from(employees)
+        .where(
+          and(
+            eq(employees.companyId, companyId),
+            eq(employees.loginId, candidate),
+          ),
+        );
+
+      if (!existingEmployee || existingEmployee.id === currentEmployeeId) {
+        return candidate;
+      }
+    }
+
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      const fallback = `${buildEmployeeLoginCandidates(firstName, lastName)[0] || "mitarbeiter"}.${attempt + 1}`.slice(0, 80);
+      const [existingEmployee] = await db
+        .select({ id: employees.id })
+        .from(employees)
+        .where(
+          and(
+            eq(employees.companyId, companyId),
+            eq(employees.loginId, fallback),
+          ),
+        );
+
+      if (!existingEmployee || existingEmployee.id === currentEmployeeId) {
+        return fallback;
+      }
+    }
+
+    throw new Error("Unable to generate a unique employee login");
+  }
+
   async getCompany(id: string): Promise<Company | undefined> {
     const [company] = await db.select().from(companies).where(eq(companies.id, id));
+    return company;
+  }
+
+  async getCompanyByAccessCode(accessCode: string): Promise<Company | undefined> {
+    const normalizedCode = normalizeCompanyAccessCode(accessCode);
+    if (!normalizedCode) {
+      return undefined;
+    }
+
+    const [company] = await db
+      .select()
+      .from(companies)
+      .where(eq(companies.accessCode, normalizedCode));
     return company;
   }
 
@@ -179,7 +294,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCompany(data: InsertCompany): Promise<Company> {
-    const [company] = await db.insert(companies).values(data).returning();
+    const [company] = await db
+      .insert(companies)
+      .values({
+        ...data,
+        accessCode: data.accessCode ?? (await this.generateUniqueCompanyAccessCode()),
+      })
+      .returning();
     return company;
   }
 
@@ -196,7 +317,10 @@ export class DatabaseStorage implements IStorage {
 
       const [company] = await tx
         .insert(companies)
-        .values({ name: data.companyName })
+        .values({
+          name: data.companyName,
+          accessCode: await this.generateUniqueCompanyAccessCode(tx),
+        })
         .returning();
 
       const [employee] = await tx
@@ -246,6 +370,24 @@ export class DatabaseStorage implements IStorage {
     return employee;
   }
 
+  async getEmployeeByLoginId(companyId: string, loginId: string): Promise<Employee | undefined> {
+    const normalizedLoginId = normalizeEmployeeLoginId(loginId);
+    if (!normalizedLoginId) {
+      return undefined;
+    }
+
+    const [employee] = await db
+      .select()
+      .from(employees)
+      .where(
+        and(
+          eq(employees.companyId, companyId),
+          eq(employees.loginId, normalizedLoginId),
+        ),
+      );
+    return employee;
+  }
+
   async getEmployeesByCompany(companyId: string): Promise<Employee[]> {
     return db
       .select()
@@ -259,7 +401,13 @@ export class DatabaseStorage implements IStorage {
       await this.ensureUserLinkAvailable(data.userId);
     }
 
-    const [employee] = await db.insert(employees).values(data).returning();
+    const [employee] = await db
+      .insert(employees)
+      .values({
+        ...data,
+        loginId: data.loginId ? normalizeEmployeeLoginId(data.loginId) : null,
+      })
+      .returning();
     return employee;
   }
 
@@ -270,10 +418,153 @@ export class DatabaseStorage implements IStorage {
 
     const [employee] = await db
       .update(employees)
-      .set({ ...data, updatedAt: new Date() })
+      .set({
+        ...data,
+        loginId: data.loginId === undefined
+          ? undefined
+          : data.loginId
+            ? normalizeEmployeeLoginId(data.loginId)
+            : null,
+        updatedAt: new Date(),
+      })
       .where(eq(employees.id, id))
       .returning();
     return employee;
+  }
+
+  async provisionEmployeeAccess(data: ProvisionEmployeeAccessData) {
+    const employee = await this.getEmployeeForCompany(data.companyId, data.employeeId);
+    if (!employee) {
+      throw new Error("Employee not found");
+    }
+
+    const company = await this.getCompany(data.companyId);
+    if (!company) {
+      throw new Error("Company not found");
+    }
+
+    const companyAccessCode = company.accessCode ?? (await this.generateUniqueCompanyAccessCode());
+    const loginId =
+      employee.loginId ??
+      (await this.resolveUniqueEmployeeLoginId(
+        data.companyId,
+        employee.firstName,
+        employee.lastName,
+        data.loginId,
+        employee.id,
+      ));
+    const temporaryPassword = generateTemporaryPassword();
+    const userId = employee.userId ?? createLocalUserId();
+    const existingUser = await authStorage.getUser(userId);
+
+    await authStorage.upsertUser({
+      id: userId,
+      firstName: employee.firstName,
+      lastName: employee.lastName,
+      email: existingUser?.email ?? null,
+      profileImageUrl: existingUser?.profileImageUrl ?? null,
+    });
+
+    const [updatedCompany] =
+      company.accessCode
+        ? [company]
+        : await db
+            .update(companies)
+            .set({ accessCode: companyAccessCode, updatedAt: new Date() })
+            .where(eq(companies.id, company.id))
+            .returning();
+    const resolvedCompany = updatedCompany ?? { ...company, accessCode: companyAccessCode };
+
+    const [updatedEmployee] = await db
+      .update(employees)
+      .set({
+        userId,
+        loginId,
+        passwordHash: hashEmployeePassword(temporaryPassword),
+        mustChangePassword: true,
+        passwordIssuedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(and(eq(employees.id, employee.id), eq(employees.companyId, data.companyId)))
+      .returning();
+
+    if (!updatedEmployee) {
+      throw new Error("Employee access could not be provisioned");
+    }
+
+    return {
+      employee: updatedEmployee,
+      company: resolvedCompany,
+      access: {
+        companyAccessCode,
+        loginId,
+        temporaryPassword,
+        mustChangePassword: true,
+      },
+    };
+  }
+
+  async authenticateLocalEmployee(data: LocalEmployeeAuthenticationData) {
+    const company = await this.getCompanyByAccessCode(data.companyAccessCode);
+    if (!company) {
+      throw new Error("Company access not found");
+    }
+
+    const employee = await this.getEmployeeByLoginId(company.id, data.loginId);
+    if (!employee || !employee.passwordHash || !employee.userId) {
+      throw new Error("Employee access not found");
+    }
+
+    if (!employee.isActive) {
+      throw new Error("Employee access is inactive");
+    }
+
+    if (!verifyEmployeePassword(data.password, employee.passwordHash)) {
+      throw new Error("Invalid password");
+    }
+
+    const existingUser = await authStorage.getUser(employee.userId);
+    await authStorage.upsertUser({
+      id: employee.userId,
+      firstName: employee.firstName,
+      lastName: employee.lastName,
+      email: existingUser?.email ?? null,
+      profileImageUrl: existingUser?.profileImageUrl ?? null,
+    });
+
+    return {
+      employee,
+      company,
+      userId: employee.userId,
+    };
+  }
+
+  async changeLocalEmployeePassword(data: ChangeLocalEmployeePasswordData) {
+    const employee = await this.getEmployeeByUserId(data.userId);
+    if (!employee || !employee.passwordHash) {
+      throw new Error("Local employee access not found");
+    }
+
+    if (!verifyEmployeePassword(data.currentPassword, employee.passwordHash)) {
+      throw new Error("Current password is invalid");
+    }
+
+    const [updatedEmployee] = await db
+      .update(employees)
+      .set({
+        passwordHash: hashEmployeePassword(data.newPassword),
+        mustChangePassword: false,
+        passwordIssuedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(employees.id, employee.id))
+      .returning();
+
+    if (!updatedEmployee) {
+      throw new Error("Local employee access could not be updated");
+    }
+
+    return updatedEmployee;
   }
 
   async getCompanyInvitation(id: string): Promise<CompanyInvitation | undefined> {

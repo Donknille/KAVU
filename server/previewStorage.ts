@@ -31,10 +31,23 @@ import {
   isInvitationExpired,
   normalizeInvitationEmail,
 } from "./companyInvitations.ts";
+import {
+  buildEmployeeLoginCandidates,
+  createLocalUserId,
+  generateCompanyAccessCode,
+  generateTemporaryPassword,
+  hashEmployeePassword,
+  normalizeCompanyAccessCode,
+  normalizeEmployeeLoginId,
+  verifyEmployeePassword,
+} from "./employeeAccess.ts";
 import type {
   AcceptCompanyInvitationData,
   CompanyInvitationWithToken,
+  ChangeLocalEmployeePasswordData,
   CreateCompanyInvitationData,
+  LocalEmployeeAuthenticationData,
+  ProvisionEmployeeAccessData,
 } from "./storage.ts";
 
 type CreateJobData = Omit<InsertJob, "jobNumber">;
@@ -88,6 +101,7 @@ function buildPreviewData() {
   const previewCompany: Company = {
     id: PREVIEW_COMPANY_ID,
     name: "KAVU Demo GmbH",
+    accessCode: "KAVU2026",
     logoUrl: null,
     phone: "+49 89 1234567",
     createdAt: new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000),
@@ -102,6 +116,10 @@ function buildPreviewData() {
       firstName: "Demo",
       lastName: "Admin",
       phone: "+49 170 0000001",
+      loginId: null,
+      passwordHash: null,
+      mustChangePassword: false,
+      passwordIssuedAt: null,
       role: "admin",
       isActive: true,
       color: "#2563eb",
@@ -115,6 +133,10 @@ function buildPreviewData() {
       firstName: "Lena",
       lastName: "Bauer",
       phone: "+49 170 0000002",
+      loginId: null,
+      passwordHash: null,
+      mustChangePassword: false,
+      passwordIssuedAt: null,
       role: "employee",
       isActive: true,
       color: "#10b981",
@@ -128,6 +150,10 @@ function buildPreviewData() {
       firstName: "Mehmet",
       lastName: "Yilmaz",
       phone: "+49 170 0000003",
+      loginId: null,
+      passwordHash: null,
+      mustChangePassword: false,
+      passwordIssuedAt: null,
       role: "employee",
       isActive: true,
       color: "#f59e0b",
@@ -141,6 +167,10 @@ function buildPreviewData() {
       firstName: "Sarah",
       lastName: "Klein",
       phone: "+49 170 0000004",
+      loginId: null,
+      passwordHash: null,
+      mustChangePassword: false,
+      passwordIssuedAt: null,
       role: "employee",
       isActive: true,
       color: "#ef4444",
@@ -154,6 +184,10 @@ function buildPreviewData() {
       firstName: "Jonas",
       lastName: "Richter",
       phone: "+49 170 0000005",
+      loginId: null,
+      passwordHash: null,
+      mustChangePassword: false,
+      passwordIssuedAt: null,
       role: "employee",
       isActive: true,
       color: "#8b5cf6",
@@ -620,8 +654,54 @@ export class PreviewStorage {
     }
   }
 
+  private generateUniqueCompanyAccessCode() {
+    while (true) {
+      const accessCode = generateCompanyAccessCode();
+      if (!this.data.companies.some((company) => company.accessCode === accessCode)) {
+        return accessCode;
+      }
+    }
+  }
+
+  private resolveUniqueEmployeeLoginId(
+    companyId: string,
+    firstName: string,
+    lastName: string,
+    explicitLoginId?: string | null,
+    currentEmployeeId?: string,
+  ) {
+    const baseCandidates = buildEmployeeLoginCandidates(firstName, lastName, explicitLoginId);
+
+    for (const candidate of baseCandidates) {
+      const existingEmployee = this.data.employees.find(
+        (employee) => employee.companyId === companyId && employee.loginId === candidate,
+      );
+      if (!existingEmployee || existingEmployee.id === currentEmployeeId) {
+        return candidate;
+      }
+    }
+
+    const fallbackBase = baseCandidates[0] || "mitarbeiter";
+    for (let attempt = 1; attempt <= 20; attempt += 1) {
+      const fallback = `${fallbackBase}.${attempt}`.slice(0, 80);
+      const existingEmployee = this.data.employees.find(
+        (employee) => employee.companyId === companyId && employee.loginId === fallback,
+      );
+      if (!existingEmployee || existingEmployee.id === currentEmployeeId) {
+        return fallback;
+      }
+    }
+
+    throw new Error("Unable to generate a unique employee login");
+  }
+
   async getCompany(id: string) {
     return this.data.companies.find((company) => company.id === id);
+  }
+
+  async getCompanyByAccessCode(accessCode: string) {
+    const normalizedCode = normalizeCompanyAccessCode(accessCode);
+    return this.data.companies.find((company) => company.accessCode === normalizedCode);
   }
 
   async getCompanyByUserId(userId: string) {
@@ -634,6 +714,7 @@ export class PreviewStorage {
     const company: Company = {
       id: createId(),
       name: data.name,
+      accessCode: data.accessCode ?? this.generateUniqueCompanyAccessCode(),
       logoUrl: data.logoUrl ?? null,
       phone: data.phone ?? null,
       createdAt: new Date(),
@@ -687,6 +768,17 @@ export class PreviewStorage {
     return this.data.employees.find((employee) => employee.userId === userId);
   }
 
+  async getEmployeeByLoginId(companyId: string, loginId: string) {
+    const normalizedLoginId = normalizeEmployeeLoginId(loginId);
+    if (!normalizedLoginId) {
+      return undefined;
+    }
+
+    return this.data.employees.find(
+      (employee) => employee.companyId === companyId && employee.loginId === normalizedLoginId,
+    );
+  }
+
   async getEmployeesByCompany(companyId: string) {
     return [...this.data.employees]
       .filter((employee) => employee.companyId === companyId)
@@ -705,6 +797,10 @@ export class PreviewStorage {
       firstName: data.firstName,
       lastName: data.lastName,
       phone: data.phone ?? null,
+      loginId: data.loginId ? normalizeEmployeeLoginId(data.loginId) : null,
+      passwordHash: data.passwordHash ?? null,
+      mustChangePassword: data.mustChangePassword ?? false,
+      passwordIssuedAt: data.passwordIssuedAt ?? null,
       role: data.role ?? "employee",
       isActive: data.isActive ?? true,
       color: data.color ?? null,
@@ -722,7 +818,104 @@ export class PreviewStorage {
 
     const employee = this.data.employees.find((item) => item.id === id);
     if (!employee) return undefined;
-    Object.assign(employee, data, { updatedAt: new Date() });
+    Object.assign(employee, {
+      ...data,
+      loginId: data.loginId === undefined
+        ? employee.loginId
+        : data.loginId
+          ? normalizeEmployeeLoginId(data.loginId)
+          : null,
+      updatedAt: new Date(),
+    });
+    return employee;
+  }
+
+  async provisionEmployeeAccess(data: ProvisionEmployeeAccessData) {
+    const employee = await this.getEmployeeForCompany(data.companyId, data.employeeId);
+    if (!employee) {
+      throw new Error("Employee not found");
+    }
+
+    const company = await this.getCompany(data.companyId);
+    if (!company) {
+      throw new Error("Company not found");
+    }
+
+    if (!company.accessCode) {
+      company.accessCode = this.generateUniqueCompanyAccessCode();
+      company.updatedAt = new Date();
+    }
+
+    const loginId =
+      employee.loginId ??
+      this.resolveUniqueEmployeeLoginId(
+        data.companyId,
+        employee.firstName,
+        employee.lastName,
+        data.loginId,
+        employee.id,
+      );
+    const temporaryPassword = generateTemporaryPassword();
+
+    employee.userId = employee.userId ?? createLocalUserId();
+    employee.loginId = loginId;
+    employee.passwordHash = hashEmployeePassword(temporaryPassword);
+    employee.mustChangePassword = true;
+    employee.passwordIssuedAt = new Date();
+    employee.updatedAt = new Date();
+
+    return {
+      employee,
+      company,
+      access: {
+        companyAccessCode: company.accessCode,
+        loginId,
+        temporaryPassword,
+        mustChangePassword: true,
+      },
+    };
+  }
+
+  async authenticateLocalEmployee(data: LocalEmployeeAuthenticationData) {
+    const company = await this.getCompanyByAccessCode(data.companyAccessCode);
+    if (!company) {
+      throw new Error("Company access not found");
+    }
+
+    const employee = await this.getEmployeeByLoginId(company.id, data.loginId);
+    if (!employee || !employee.passwordHash || !employee.userId) {
+      throw new Error("Employee access not found");
+    }
+
+    if (!employee.isActive) {
+      throw new Error("Employee access is inactive");
+    }
+
+    if (!verifyEmployeePassword(data.password, employee.passwordHash)) {
+      throw new Error("Invalid password");
+    }
+
+    return {
+      employee,
+      company,
+      userId: employee.userId,
+    };
+  }
+
+  async changeLocalEmployeePassword(data: ChangeLocalEmployeePasswordData) {
+    const employee = await this.getEmployeeByUserId(data.userId);
+    if (!employee || !employee.passwordHash) {
+      throw new Error("Local employee access not found");
+    }
+
+    if (!verifyEmployeePassword(data.currentPassword, employee.passwordHash)) {
+      throw new Error("Current password is invalid");
+    }
+
+    employee.passwordHash = hashEmployeePassword(data.newPassword);
+    employee.mustChangePassword = false;
+    employee.passwordIssuedAt = new Date();
+    employee.updatedAt = new Date();
     return employee;
   }
 

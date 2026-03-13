@@ -4,7 +4,8 @@
 
 KAVU is currently prepared for standard hosting as a single Node service:
 
-- `AUTH_PROVIDER=oidc` or `AUTH_PROVIDER=replit`
+- `AUTH_PROVIDER=app` for built-in owner/admin email registration
+- optional legacy `AUTH_PROVIDER=oidc` or `AUTH_PROVIDER=replit`
 - PostgreSQL
 - HTTPS domain
 - invite emails via `INVITATION_EMAIL_PROVIDER`
@@ -38,11 +39,21 @@ Example:
 DATABASE_URL=postgres://user:password@host:5432/kavu?sslmode=require
 ```
 
-### 2. Authentication provider
+### 2. Authentication mode
 
-For standard hosting, configure an OIDC provider.
+Recommended for Render/Supabase:
 
-Required environment variables:
+```env
+AUTH_PROVIDER=app
+```
+
+In this mode:
+
+- owners/admins register directly in KAVU with email and password
+- invited users with email also use the same KAVU registration/login
+- employees without email use `company access code + login id + password`
+
+Optional legacy mode:
 
 ```env
 AUTH_PROVIDER=oidc
@@ -53,17 +64,6 @@ OIDC_CALLBACK_URL=https://kavu.example.com/api/callback
 OIDC_POST_LOGOUT_REDIRECT_URL=https://kavu.example.com/
 OIDC_SIGNUP_HINT=signup
 ```
-
-What you must configure in the OIDC provider:
-
-- Redirect URI: `https://your-domain/api/callback`
-- Post logout redirect URI: `https://your-domain/`
-- Claims:
-  - `sub`
-  - `email`
-  - `first_name`
-  - `last_name`
-  - `profile_image_url` optional
 
 ### 3. Invite emails
 

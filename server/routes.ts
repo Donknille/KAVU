@@ -12,6 +12,7 @@ import {
   normalizeInvitationEmail,
 } from "./companyInvitations";
 import { buildCompanyInvitationMutationResponse } from "./companyInvitationDispatch";
+import { sendEmployeeAccessEmail } from "./employeeAccessDelivery";
 import {
   createCompanyInvitationSchema,
   getCurrentUserEmail,
@@ -19,7 +20,6 @@ import {
   toInvitationPreviewPayload,
 } from "./companyInvitationApi";
 import {
-  insertEmployeeSchema,
   insertJobSchema,
   insertAssignmentSchema,
   insertIssueReportSchema,
@@ -48,6 +48,19 @@ const setupSchema = z.object({
   firstName: z.string().min(1).max(100),
   lastName: z.string().min(1).max(100),
   phone: z.string().max(50).optional(),
+});
+const createEmployeeSchema = z.object({
+  firstName: z.string().min(1).max(100),
+  lastName: z.string().min(1).max(100),
+  phone: z.string().max(50).optional(),
+  role: z.enum(["admin", "employee"]).default("employee"),
+  createAccess: z.boolean().default(false),
+  loginId: z.string().trim().max(80).optional(),
+  sendCredentialsToAdmin: z.boolean().default(false),
+});
+const provisionEmployeeAccessSchema = z.object({
+  loginId: z.string().trim().max(80).optional(),
+  sendCredentialsToAdmin: z.boolean().default(false),
 });
 
 const assignmentDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -192,6 +205,65 @@ async function getCompanyAssignments(companyId: string, assignmentIds: string[])
   return Promise.all(uniqueIds.map((assignmentId) => storage.getAssignmentForCompany(companyId, assignmentId)));
 }
 
+async function maybeDeliverEmployeeAccess(req: any, employee: any, company: any, access: any, shouldSend: boolean) {
+  if (!shouldSend) {
+    return {
+      status: "skipped",
+      delivered: false,
+      message: "Zugangsdaten werden nur im Browser angezeigt.",
+    };
+  }
+
+  const recipientEmail = await getCurrentUserEmail(req);
+  return sendEmployeeAccessEmail({
+    company,
+    employee,
+    access,
+    recipientEmail,
+    recipientName: [req.employee?.firstName, req.employee?.lastName].filter(Boolean).join(" "),
+  });
+}
+
+function toPublicEmployee(employee: any, options: { includeAccess?: boolean } = {}) {
+  if (!employee) {
+    return employee;
+  }
+
+  const {
+    passwordHash,
+    passwordIssuedAt,
+    userId,
+    loginId,
+    mustChangePassword,
+    ...rest
+  } = employee;
+
+  if (options.includeAccess) {
+    return {
+      ...rest,
+      loginId,
+      mustChangePassword,
+    };
+  }
+
+  return rest;
+}
+
+function toPublicAssignment(assignment: any) {
+  if (!assignment) {
+    return assignment;
+  }
+
+  return {
+    ...assignment,
+    worker: assignment.worker ? toPublicEmployee(assignment.worker) : assignment.worker,
+    workers: Array.isArray(assignment.workers)
+      ? assignment.workers.map((worker: any) => toPublicEmployee(worker))
+      : assignment.workers,
+    employee: assignment.employee ? toPublicEmployee(assignment.employee) : assignment.employee,
+  };
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -206,7 +278,14 @@ export async function registerRoutes(
         return res.json({ employee: null, company: null, needsSetup: true });
       }
       const company = await storage.getCompany(employee.companyId);
-      return res.json({ employee, company, needsSetup: false });
+      return res.json({
+        employee: toPublicEmployee(employee),
+        company,
+        needsSetup: false,
+        authMethod: req.user?.auth_method ?? "oidc",
+        requiresPasswordChange:
+          req.user?.auth_method === "employee_access" && employee.mustChangePassword === true,
+      });
     } catch (error) {
       console.error("Error in /api/me:", error);
       res.status(500).json({ message: "Internal error" });
@@ -224,7 +303,7 @@ export async function registerRoutes(
       const existing = await storage.getEmployeeByUserId(userId);
       if (existing) {
         const company = await storage.getCompany(existing.companyId);
-        return res.json({ employee: existing, company });
+        return res.json({ employee: toPublicEmployee(existing), company });
       }
 
       const parsed = setupSchema.safeParse(req.body);
@@ -242,13 +321,13 @@ export async function registerRoutes(
         phone,
       });
 
-      return res.json({ employee, company });
+      return res.json({ employee: toPublicEmployee(employee), company });
     } catch (error) {
       if (userId && isUserTenantConflict(error)) {
         const existing = await storage.getEmployeeByUserId(userId);
         if (existing) {
           const company = await storage.getCompany(existing.companyId);
-          return res.json({ employee: existing, company });
+          return res.json({ employee: toPublicEmployee(existing), company });
         }
 
         return res.status(409).json({ message: USER_TENANT_CONFLICT_MESSAGE });
@@ -320,7 +399,7 @@ export async function registerRoutes(
       });
 
       return res.json({
-        employee: result.employee,
+        employee: toPublicEmployee(result.employee),
         company: result.company,
       });
     } catch (error) {
@@ -342,7 +421,11 @@ export async function registerRoutes(
       const today = toDateStr(new Date());
       const todayAssignments = await storage.getAssignmentsByDate(req.companyId, today);
       const unassigned = await storage.getUnassignedJobs(req.companyId);
-      res.json({ stats, todayAssignments, unassignedJobs: unassigned });
+      res.json({
+        stats,
+        todayAssignments: todayAssignments.map((assignment) => toPublicAssignment(assignment)),
+        unassignedJobs: unassigned,
+      });
     } catch (error) {
       console.error("Error in /api/dashboard:", error);
       res.status(500).json({ message: "Internal error" });
@@ -383,9 +466,9 @@ export async function registerRoutes(
       res.json(
         createPlanningBoardReadModel(
           {
-            employees: employeesList,
+            employees: employeesList.map((employee) => toPublicEmployee(employee)),
             backlogJobs,
-            assignments: planningAssignments,
+            assignments: planningAssignments.map((assignment) => toPublicAssignment(assignment)),
           },
           visibleDays
         )
@@ -396,10 +479,10 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/employees", isAuthenticated, requireAuth, async (req: any, res) => {
+  app.get("/api/employees", isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const list = await storage.getEmployeesByCompany(req.companyId);
-      res.json(list);
+      res.json(list.map((employee) => toPublicEmployee(employee, { includeAccess: true })));
     } catch (error) {
       res.status(500).json({ message: "Internal error" });
     }
@@ -503,15 +586,47 @@ export async function registerRoutes(
 
   app.post("/api/employees", isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
-      const parsed = insertEmployeeSchema.omit({ companyId: true }).safeParse(req.body);
+      const parsed = createEmployeeSchema.safeParse(req.body);
       if (!parsed.success) {
         return res.status(400).json({ message: "Validation error", errors: parsed.error.flatten().fieldErrors });
       }
+
       const employee = await storage.createEmployee({
-        ...parsed.data,
+        firstName: parsed.data.firstName,
+        lastName: parsed.data.lastName,
+        phone: parsed.data.phone,
+        role: parsed.data.role,
+        isActive: true,
         companyId: req.companyId,
       });
-      res.json(employee);
+
+      if (!parsed.data.createAccess) {
+        return res.json({
+          employee: toPublicEmployee(employee, { includeAccess: true }),
+          access: null,
+          delivery: null,
+        });
+      }
+
+      const provisioned = await storage.provisionEmployeeAccess({
+        companyId: req.companyId,
+        employeeId: employee.id,
+        loginId: parsed.data.loginId,
+      });
+      const delivery = await maybeDeliverEmployeeAccess(
+        req,
+        provisioned.employee,
+        provisioned.company,
+        provisioned.access,
+        parsed.data.sendCredentialsToAdmin,
+      );
+
+      res.json({
+        employee: toPublicEmployee(provisioned.employee, { includeAccess: true }),
+        company: provisioned.company,
+        access: provisioned.access,
+        delivery,
+      });
     } catch (error) {
       if (isUserTenantConflict(error)) {
         return res.status(409).json({ message: USER_TENANT_CONFLICT_MESSAGE });
@@ -526,18 +641,62 @@ export async function registerRoutes(
       const existing = await storage.getEmployeeForCompany(req.companyId, req.params.id);
       if (!existing)
         return res.status(404).json({ message: "Not found" });
-      const parsed = insertEmployeeSchema.omit({ companyId: true }).partial().safeParse(req.body);
+      const parsed = createEmployeeSchema
+        .omit({ createAccess: true, loginId: true, sendCredentialsToAdmin: true })
+        .partial()
+        .safeParse(req.body);
       if (!parsed.success) {
         return res.status(400).json({ message: "Validation error", errors: parsed.error.flatten().fieldErrors });
       }
       const employee = await storage.updateEmployee(req.params.id, parsed.data);
       if (!employee) return res.status(404).json({ message: "Not found" });
-      res.json(employee);
+      res.json(toPublicEmployee(employee, { includeAccess: true }));
     } catch (error) {
       if (isUserTenantConflict(error)) {
         return res.status(409).json({ message: USER_TENANT_CONFLICT_MESSAGE });
       }
       res.status(500).json({ message: "Internal error" });
+    }
+  });
+
+  app.post("/api/employees/:id/access", isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const existing = await storage.getEmployeeForCompany(req.companyId, req.params.id);
+      if (!existing) {
+        return res.status(404).json({ message: "Not found" });
+      }
+
+      const parsed = provisionEmployeeAccessSchema.safeParse(req.body ?? {});
+      if (!parsed.success) {
+        return res.status(400).json({ message: "Validation error", errors: parsed.error.flatten().fieldErrors });
+      }
+
+      const provisioned = await storage.provisionEmployeeAccess({
+        companyId: req.companyId,
+        employeeId: req.params.id,
+        loginId: parsed.data.loginId,
+      });
+      const delivery = await maybeDeliverEmployeeAccess(
+        req,
+        provisioned.employee,
+        provisioned.company,
+        provisioned.access,
+        parsed.data.sendCredentialsToAdmin,
+      );
+
+      return res.json({
+        employee: toPublicEmployee(provisioned.employee, { includeAccess: true }),
+        company: provisioned.company,
+        access: provisioned.access,
+        delivery,
+      });
+    } catch (error) {
+      if (isUserTenantConflict(error)) {
+        return res.status(409).json({ message: USER_TENANT_CONFLICT_MESSAGE });
+      }
+
+      console.error("Error provisioning employee access:", error);
+      return res.status(500).json({ message: "Internal error" });
     }
   });
 
@@ -625,7 +784,7 @@ export async function registerRoutes(
       const { date, startDate, endDate } = req.query;
       if (date) {
         const list = await storage.getAssignmentsByDate(req.companyId, date as string);
-        return res.json(list);
+        return res.json(list.map((assignment) => toPublicAssignment(assignment)));
       }
       if (startDate && endDate) {
         const list = await storage.getAssignmentsByDateRange(
@@ -633,11 +792,11 @@ export async function registerRoutes(
           startDate as string,
           endDate as string
         );
-        return res.json(list);
+        return res.json(list.map((assignment) => toPublicAssignment(assignment)));
       }
       const today = toDateStr(new Date());
       const list = await storage.getAssignmentsByDate(req.companyId, today);
-      res.json(list);
+      res.json(list.map((assignment) => toPublicAssignment(assignment)));
     } catch (error) {
       res.status(500).json({ message: "Internal error" });
     }
@@ -656,7 +815,7 @@ export async function registerRoutes(
             req.employee.id,
             date || toDateStr(new Date())
           );
-      res.json(list);
+      res.json(list.map((assignment) => toPublicAssignment(assignment)));
     } catch (error) {
       res.status(500).json({ message: "Internal error" });
     }
@@ -682,7 +841,7 @@ export async function registerRoutes(
       res.json({
         ...assignment,
         job,
-        workers,
+        workers: workers.map((worker) => toPublicEmployee(worker)),
         timeEntry,
         breaks: breaksList,
         issues,
@@ -1269,7 +1428,7 @@ export async function registerRoutes(
       for (const entry of entries) {
         const employee = await storage.getEmployeeForCompany(req.companyId, entry.employeeId);
         const breaks = await storage.getBreakEntriesByTimeEntry(req.companyId, entry.id);
-        enriched.push({ ...entry, employee, breaks });
+        enriched.push({ ...entry, employee: toPublicEmployee(employee), breaks });
       }
       res.json(enriched);
     } catch (error) {

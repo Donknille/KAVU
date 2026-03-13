@@ -8,6 +8,7 @@ import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { authStorage } from "./storage";
 import { getPreviewSessionUser, PREVIEW_MODE } from "../../preview";
+import { storage } from "../../storage";
 import {
   APP_BASE_URL,
   AUTH_PROVIDER,
@@ -23,6 +24,16 @@ import {
   OIDC_SCOPE,
   TRUST_PROXY,
 } from "../../runtimeConfig";
+
+declare module "express-session" {
+  interface SessionData {
+    returnTo?: string;
+    localAuth?: {
+      userId: string;
+      kind: "employee_access" | "password";
+    };
+  }
+}
 
 function getOidcClientAuth() {
   switch (OIDC_CLIENT_AUTH_METHOD) {
@@ -91,6 +102,44 @@ export function getSession() {
       maxAge: sessionTtl,
     },
   });
+}
+
+function buildLocalSessionUser(userId: string, kind: "employee_access" | "password") {
+  return {
+    claims: { sub: userId },
+    access_token: `${kind}-local-session`,
+    refresh_token: undefined,
+    expires_at: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 365,
+    auth_method: kind,
+  };
+}
+
+async function attachLocalSession(req: any) {
+  const localSession = req.session?.localAuth;
+  if (!localSession?.userId || req.user) {
+    return;
+  }
+
+  if (localSession.kind === "employee_access") {
+    const employee = await storage.getEmployeeByUserId(localSession.userId);
+    if (!employee || !employee.passwordHash || !employee.isActive) {
+      delete req.session.localAuth;
+      return;
+    }
+
+    req.user = buildLocalSessionUser(localSession.userId, localSession.kind);
+    req.isAuthenticated = () => true;
+    return;
+  }
+
+  const user = await authStorage.getUser(localSession.userId);
+  if (!user || !user.email || !user.passwordHash) {
+    delete req.session.localAuth;
+    return;
+  }
+
+  req.user = buildLocalSessionUser(localSession.userId, localSession.kind);
+  req.isAuthenticated = () => true;
 }
 
 function updateUserSession(
@@ -190,6 +239,7 @@ export async function setupAuth(app: Express) {
   }
 
   app.set("trust proxy", TRUST_PROXY ? 1 : 0);
+  app.use(getSession());
 
   if (AUTH_PROVIDER === "local") {
     app.use(async (req: any, _res, next) => {
@@ -229,9 +279,51 @@ export async function setupAuth(app: Express) {
     return;
   }
 
-  app.use(getSession());
+  if (AUTH_PROVIDER === "app") {
+    app.use(async (req: any, _res, next) => {
+      try {
+        await attachLocalSession(req);
+        next();
+      } catch (error) {
+        next(error);
+      }
+    });
+
+    app.get("/api/login", (req: any, res) => {
+      res.redirect(getNextPathFromRequest(req) ?? "/");
+    });
+
+    app.get("/api/signup", (req: any, res) => {
+      res.redirect(getNextPathFromRequest(req) ?? "/");
+    });
+
+    app.get("/api/callback", (_req, res) => {
+      res.redirect("/");
+    });
+
+    app.get("/api/logout", (req: any, res) => {
+      if (req.session?.localAuth) {
+        return req.session.destroy(() => {
+          res.redirect("/");
+        });
+      }
+
+      return res.redirect("/");
+    });
+
+    return;
+  }
+
   app.use(passport.initialize());
   app.use(passport.session());
+  app.use(async (req: any, _res, next) => {
+    try {
+      await attachLocalSession(req);
+      next();
+    } catch (error) {
+      next(error);
+    }
+  });
 
   const verify: VerifyFunction = async (
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
@@ -290,6 +382,12 @@ export async function setupAuth(app: Express) {
     });
 
     app.get("/api/logout", (req, res) => {
+      if (req.session?.localAuth) {
+        return req.session.destroy(() => {
+          res.redirect("/");
+        });
+      }
+
       req.logout(() => {
         res.redirect(
           client.buildEndSessionUrl(config, {
@@ -347,6 +445,12 @@ export async function setupAuth(app: Express) {
   });
 
   app.get("/api/logout", (req, res) => {
+    if (req.session?.localAuth) {
+      return req.session.destroy(() => {
+        res.redirect("/");
+      });
+    }
+
     req.logout(() => {
       res.redirect(OIDC_POST_LOGOUT_REDIRECT_URL);
     });

@@ -77,6 +77,57 @@ async function main() {
     undefined,
   );
 
+  const localEmployee = await storage.createEmployee({
+    companyId: inviteOwner.company.id,
+    firstName: "Kai",
+    lastName: "Vorarbeiter",
+    role: "employee",
+    isActive: true,
+  });
+  const localAccess = await storage.provisionEmployeeAccess({
+    companyId: inviteOwner.company.id,
+    employeeId: localEmployee.id,
+  });
+
+  assert.equal(localAccess.employee.loginId, localAccess.access.loginId);
+  assert.equal(localAccess.company.accessCode, localAccess.access.companyAccessCode);
+  assert.equal(localAccess.employee.mustChangePassword, true);
+
+  await assert.rejects(
+    () =>
+      storage.authenticateLocalEmployee({
+        companyAccessCode: localAccess.access.companyAccessCode,
+        loginId: localAccess.access.loginId,
+        password: "wrong-password",
+      }),
+    /Invalid password/,
+  );
+
+  const authenticatedLocalEmployee = await storage.authenticateLocalEmployee({
+    companyAccessCode: localAccess.access.companyAccessCode,
+    loginId: localAccess.access.loginId,
+    password: localAccess.access.temporaryPassword,
+  });
+
+  assert.equal(authenticatedLocalEmployee.employee.id, localEmployee.id);
+  assert.equal(authenticatedLocalEmployee.userId, localAccess.employee.userId);
+
+  const changedPasswordEmployee = await storage.changeLocalEmployeePassword({
+    userId: authenticatedLocalEmployee.userId,
+    currentPassword: localAccess.access.temporaryPassword,
+    newPassword: "SicheresPasswort9",
+  });
+
+  assert.equal(changedPasswordEmployee.mustChangePassword, false);
+
+  const reauthenticatedLocalEmployee = await storage.authenticateLocalEmployee({
+    companyAccessCode: localAccess.access.companyAccessCode,
+    loginId: localAccess.access.loginId,
+    password: "SicheresPasswort9",
+  });
+
+  assert.equal(reauthenticatedLocalEmployee.employee.id, localEmployee.id);
+
   const previewJob = await storage.createJob({
     companyId: PREVIEW_COMPANY_ID,
     title: "Tenant Smoke Preview",

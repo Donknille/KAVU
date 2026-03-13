@@ -1,30 +1,113 @@
+import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   getInviteReturnPath,
   getInviteToken,
   getInvitationRoleLabel,
 } from "@/features/invitations/shared";
 import { useInvitationPreview } from "@/features/invitations/useInvitationPreview";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import {
   ArrowRight,
   ClipboardCheck,
   Clock,
   HardHat,
+  KeyRound,
   Mail,
+  Shield,
+  UserRoundPlus,
 } from "lucide-react";
 
+const INITIAL_REGISTER_FORM = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  password: "",
+};
+
+const INITIAL_LOGIN_FORM = {
+  email: "",
+  password: "",
+};
+
 export default function LandingPage() {
+  const { toast } = useToast();
   const inviteToken = getInviteToken();
   const returnTo = getInviteReturnPath(inviteToken);
-  const loginHref = inviteToken
-    ? `/api/login?next=${encodeURIComponent(returnTo)}`
-    : "/api/login";
-  const signupHref = inviteToken
-    ? `/api/signup?next=${encodeURIComponent(returnTo)}`
-    : "/api/signup";
-
   const { data: invitation, error: invitationError } = useInvitationPreview(inviteToken);
+  const [registerForm, setRegisterForm] = useState(INITIAL_REGISTER_FORM);
+  const [loginForm, setLoginForm] = useState(INITIAL_LOGIN_FORM);
+  const [companyAccessCode, setCompanyAccessCode] = useState("");
+  const [employeeLoginId, setEmployeeLoginId] = useState("");
+  const [employeePassword, setEmployeePassword] = useState("");
+
+  const registerMutation = useMutation({
+    mutationFn: async () => apiRequest("POST", "/api/auth/register", registerForm),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/me"] });
+      window.location.href = inviteToken ? returnTo : "/";
+    },
+    onError: (error) => {
+      toast({
+        title: "Registrierung fehlgeschlagen",
+        description:
+          error instanceof Error
+            ? error.message.replace(/^\d+:\s*/, "")
+            : "Bitte pruefe deine Eingaben.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const loginMutation = useMutation({
+    mutationFn: async () => apiRequest("POST", "/api/auth/login/password", loginForm),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/me"] });
+      window.location.href = inviteToken ? returnTo : "/";
+    },
+    onError: (error) => {
+      toast({
+        title: "Login fehlgeschlagen",
+        description:
+          error instanceof Error
+            ? error.message.replace(/^\d+:\s*/, "")
+            : "Bitte pruefe E-Mail und Passwort.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const employeeLoginMutation = useMutation({
+    mutationFn: async () =>
+      apiRequest("POST", "/api/auth/employee-login", {
+        companyAccessCode,
+        loginId: employeeLoginId,
+        password: employeePassword,
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/me"] });
+      window.location.href = "/";
+    },
+    onError: (error) => {
+      toast({
+        title: "Mitarbeiter-Login fehlgeschlagen",
+        description:
+          error instanceof Error
+            ? error.message.replace(/^\d+:\s*/, "")
+            : "Bitte pruefe Betriebscode, Benutzername und Passwort.",
+        variant: "destructive",
+      });
+    },
+  });
 
   const inviteTitle = invitation
     ? `Einladung von ${invitation.companyName}`
@@ -33,12 +116,12 @@ export default function LandingPage() {
     ? `${invitation.firstName} ${invitation.lastName} soll als ${
         getInvitationRoleLabel(invitation.role)
       } beitreten.`
-    : "Wer ist heute wo? Was ist zu tun? Wie viele Stunden wurden geleistet? Einfach, mobil und sofort einsatzbereit.";
+    : "Firmeninhaber registrieren sich mit E-Mail und Passwort. Mitarbeiter melden sich mit Betriebscode und Benutzername an.";
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-sm">
-        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-3 px-4">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4">
           <div className="flex items-center gap-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary">
               <HardHat className="h-5 w-5 text-primary-foreground" />
@@ -47,14 +130,14 @@ export default function LandingPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <a href={loginHref} data-testid="button-login-header">
+            <a href="#admin-auth" data-testid="button-login-header">
               <Button size="sm" variant="outline">
-                Anmelden
+                Admin-Zugang
               </Button>
             </a>
-            <a href={signupHref} data-testid="button-signup-header">
+            <a href="#employee-access" data-testid="button-employee-header">
               <Button size="sm">
-                {inviteToken ? "Einladung annehmen" : "Registrieren"}
+                Mitarbeiter
               </Button>
             </a>
           </div>
@@ -77,7 +160,7 @@ export default function LandingPage() {
                         {invitation.companyName} hat {invitation.email} eingeladen.
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        Melde dich an oder registriere dich mit dieser E-Mail-Adresse.
+                        Erstelle ein Konto oder melde dich mit dieser E-Mail-Adresse an.
                       </p>
                     </div>
                   </div>
@@ -92,7 +175,7 @@ export default function LandingPage() {
                     Der Einladungslink ist ungueltig oder abgelaufen.
                   </p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Bitte lasse dir einen neuen Link senden oder registriere deinen eigenen Betrieb.
+                    Bitte lasse dir einen neuen Link senden oder richte deinen eigenen Betrieb ein.
                   </p>
                 </Card>
               </div>
@@ -106,9 +189,7 @@ export default function LandingPage() {
               {!inviteToken && (
                 <>
                   <br />
-                  <span className="text-muted-foreground">
-                    fuer kleine Handwerksbetriebe
-                  </span>
+                  <span className="text-muted-foreground">fuer kleine Handwerksbetriebe</span>
                 </>
               )}
             </h1>
@@ -118,35 +199,252 @@ export default function LandingPage() {
             </p>
 
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <a
-                href={signupHref}
-                data-testid={inviteToken ? "button-accept-invite-hero" : "button-signup-hero"}
-              >
+              <a href="#admin-auth" data-testid="button-signup-hero">
                 <Button size="lg" className="h-14 gap-2 px-8 text-lg">
-                  {inviteToken ? "Einladung annehmen" : "Kostenlos registrieren"}
+                  {inviteToken ? "Per E-Mail fortfahren" : "Betrieb registrieren"}
                   <ArrowRight className="h-5 w-5" />
                 </Button>
               </a>
-              <a href={loginHref} data-testid="button-login-hero">
+              <a href="#employee-access" data-testid="button-employee-login-hero">
                 <Button size="lg" variant="outline" className="h-14 px-8 text-lg">
-                  {inviteToken ? "Ich habe bereits ein Konto" : "Bereits Kunde? Anmelden"}
+                  Mitarbeiter anmelden
                 </Button>
               </a>
             </div>
+          </div>
+        </section>
 
-            {!inviteToken && (
-              <p className="mt-3 text-sm text-muted-foreground">
-                Kostenlos loslegen. Keine Kreditkarte noetig.
-              </p>
-            )}
+        <section id="admin-auth" className="px-4 pb-12">
+          <div className="mx-auto max-w-6xl">
+            <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+              <Card className="p-6 md:p-8">
+                <div className="mb-6 flex items-start gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <UserRoundPlus className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold">Admin- und Inhaber-Zugang</h2>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Kein Google-Login noetig. Firmeninhaber und Buero-Mitarbeiter arbeiten mit E-Mail und Passwort direkt in KAVU.
+                    </p>
+                  </div>
+                </div>
+
+                <Tabs defaultValue="register" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="register">Registrieren</TabsTrigger>
+                    <TabsTrigger value="login">Anmelden</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="register" className="mt-4">
+                    <form
+                      className="space-y-4"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        registerMutation.mutate();
+                      }}
+                    >
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label htmlFor="register-first-name">Vorname</Label>
+                          <Input
+                            id="register-first-name"
+                            value={registerForm.firstName}
+                            onChange={(event) =>
+                              setRegisterForm((current) => ({
+                                ...current,
+                                firstName: event.target.value,
+                              }))
+                            }
+                            data-testid="input-register-firstname"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="register-last-name">Nachname</Label>
+                          <Input
+                            id="register-last-name"
+                            value={registerForm.lastName}
+                            onChange={(event) =>
+                              setRegisterForm((current) => ({
+                                ...current,
+                                lastName: event.target.value,
+                              }))
+                            }
+                            data-testid="input-register-lastname"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="register-email">E-Mail</Label>
+                        <Input
+                          id="register-email"
+                          type="email"
+                          value={registerForm.email}
+                          onChange={(event) =>
+                            setRegisterForm((current) => ({
+                              ...current,
+                              email: event.target.value,
+                            }))
+                          }
+                          data-testid="input-register-email"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="register-password">Passwort</Label>
+                        <Input
+                          id="register-password"
+                          type="password"
+                          value={registerForm.password}
+                          onChange={(event) =>
+                            setRegisterForm((current) => ({
+                              ...current,
+                              password: event.target.value,
+                            }))
+                          }
+                          data-testid="input-register-password"
+                        />
+                      </div>
+                      <Button
+                        type="submit"
+                        className="h-12 w-full text-base"
+                        disabled={
+                          registerMutation.isPending ||
+                          !registerForm.firstName ||
+                          !registerForm.lastName ||
+                          !registerForm.email ||
+                          !registerForm.password
+                        }
+                        data-testid="button-register-password"
+                      >
+                        {registerMutation.isPending ? "Konto wird erstellt..." : inviteToken ? "Konto erstellen und Einladung annehmen" : "Betrieb starten"}
+                      </Button>
+                    </form>
+                  </TabsContent>
+
+                  <TabsContent value="login" className="mt-4">
+                    <form
+                      className="space-y-4"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        loginMutation.mutate();
+                      }}
+                    >
+                      <div>
+                        <Label htmlFor="login-email">E-Mail</Label>
+                        <Input
+                          id="login-email"
+                          type="email"
+                          value={loginForm.email}
+                          onChange={(event) =>
+                            setLoginForm((current) => ({
+                              ...current,
+                              email: event.target.value,
+                            }))
+                          }
+                          data-testid="input-login-email"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="login-password">Passwort</Label>
+                        <Input
+                          id="login-password"
+                          type="password"
+                          value={loginForm.password}
+                          onChange={(event) =>
+                            setLoginForm((current) => ({
+                              ...current,
+                              password: event.target.value,
+                            }))
+                          }
+                          data-testid="input-login-password"
+                        />
+                      </div>
+                      <Button
+                        type="submit"
+                        className="h-12 w-full text-base"
+                        disabled={loginMutation.isPending || !loginForm.email || !loginForm.password}
+                        data-testid="button-login-password"
+                      >
+                        {loginMutation.isPending ? "Anmeldung laeuft..." : inviteToken ? "Anmelden und Einladung aufrufen" : "Admin anmelden"}
+                      </Button>
+                    </form>
+                  </TabsContent>
+                </Tabs>
+              </Card>
+
+              <Card id="employee-access" className="p-6 md:p-8">
+                <div className="mb-6 flex items-start gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <Shield className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold">Mitarbeiterzugang ohne eigene E-Mail</h2>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Der Admin legt Zugangsdaten an, druckt sie aus und der Mitarbeiter meldet sich direkt mit Betriebscode an.
+                    </p>
+                  </div>
+                </div>
+
+                <form
+                  className="space-y-4"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    employeeLoginMutation.mutate();
+                  }}
+                >
+                  <div>
+                    <Label htmlFor="company-access-code">Betriebscode</Label>
+                    <Input
+                      id="company-access-code"
+                      value={companyAccessCode}
+                      onChange={(event) => setCompanyAccessCode(event.target.value)}
+                      placeholder="z. B. KAVU2026"
+                      data-testid="input-company-access-code"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="employee-login-id">Benutzername</Label>
+                    <Input
+                      id="employee-login-id"
+                      value={employeeLoginId}
+                      onChange={(event) => setEmployeeLoginId(event.target.value)}
+                      placeholder="max.mueller"
+                      data-testid="input-employee-login-id"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="employee-password">Passwort</Label>
+                    <Input
+                      id="employee-password"
+                      type="password"
+                      value={employeePassword}
+                      onChange={(event) => setEmployeePassword(event.target.value)}
+                      data-testid="input-employee-password"
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    className="h-12 w-full text-base"
+                    disabled={
+                      employeeLoginMutation.isPending ||
+                      !companyAccessCode ||
+                      !employeeLoginId ||
+                      !employeePassword
+                    }
+                    data-testid="button-employee-login"
+                  >
+                    <KeyRound className="mr-2 h-4 w-4" />
+                    {employeeLoginMutation.isPending ? "Anmeldung laeuft..." : "Als Mitarbeiter anmelden"}
+                  </Button>
+                </form>
+              </Card>
+            </div>
           </div>
         </section>
 
         <section className="bg-card/50 px-4 py-16">
           <div className="mx-auto max-w-5xl">
-            <h2 className="mb-10 text-center text-2xl font-bold">
-              Drei Fragen, eine App
-            </h2>
+            <h2 className="mb-10 text-center text-2xl font-bold">Drei Fragen, eine App</h2>
 
             <div className="grid gap-6 md:grid-cols-3">
               <Card className="p-6">
@@ -155,8 +453,7 @@ export default function LandingPage() {
                 </div>
                 <h3 className="mb-2 text-lg font-semibold">Wer ist heute wo?</h3>
                 <p className="text-sm text-muted-foreground">
-                  Einsatzplan auf einen Blick. Mitarbeiter, Auftraege und Tage
-                  in einer Uebersicht.
+                  Einsatzplan auf einen Blick. Mitarbeiter, Auftraege und Tage in einer Uebersicht.
                 </p>
               </Card>
 
@@ -166,8 +463,7 @@ export default function LandingPage() {
                 </div>
                 <h3 className="mb-2 text-lg font-semibold">Was ist der Status?</h3>
                 <p className="text-sm text-muted-foreground">
-                  Fahrt, Ankunft, Pause, fertig. Klare Statusaktionen per
-                  Knopfdruck.
+                  Fahrt, Ankunft, Pause, fertig. Klare Statusaktionen per Knopfdruck.
                 </p>
               </Card>
 
@@ -175,36 +471,11 @@ export default function LandingPage() {
                 <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-md bg-amber-100">
                   <ClipboardCheck className="h-5 w-5 text-amber-700" />
                 </div>
-                <h3 className="mb-2 text-lg font-semibold">
-                  Ist alles dokumentiert?
-                </h3>
+                <h3 className="mb-2 text-lg font-semibold">Ist alles dokumentiert?</h3>
                 <p className="text-sm text-muted-foreground">
                   Zeiten, Notizen und Probleme werden direkt am Einsatz dokumentiert.
                 </p>
               </Card>
-            </div>
-          </div>
-        </section>
-
-        <section className="px-4 py-16">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="mb-4 text-2xl font-bold">Gebaut fuer die Baustelle</h2>
-            <p className="mb-6 text-muted-foreground">
-              Grosse Buttons, klare Farben und mobile Bedienung, auch wenn wenig
-              Zeit ist.
-            </p>
-
-            <div className="flex flex-wrap justify-center gap-3">
-              {["PV / Solar", "Waermepumpen", "SHK", "Montage", "Service"].map(
-                (tag) => (
-                  <span
-                    key={tag}
-                    className="rounded-md bg-muted px-3 py-1.5 text-sm text-muted-foreground"
-                  >
-                    {tag}
-                  </span>
-                ),
-              )}
             </div>
           </div>
         </section>

@@ -1,6 +1,6 @@
 import { PREVIEW_MODE } from "./preview.ts";
 
-export type AuthProvider = "preview" | "replit" | "oidc" | "local";
+export type AuthProvider = "preview" | "replit" | "oidc" | "local" | "app";
 export type InvitationEmailProvider = "disabled" | "log" | "resend";
 export type RuntimeConfigIssue = {
   field: string;
@@ -22,7 +22,7 @@ function trimTrailingSlash(value: string | undefined) {
 
 function resolveAuthProvider(): Exclude<AuthProvider, "preview"> {
   const configured = normalizeEnv(process.env.AUTH_PROVIDER);
-  if (configured === "replit" || configured === "oidc" || configured === "local") {
+  if (configured === "replit" || configured === "oidc" || configured === "local" || configured === "app") {
     return configured;
   }
 
@@ -30,7 +30,7 @@ function resolveAuthProvider(): Exclude<AuthProvider, "preview"> {
     return "replit";
   }
 
-  return "oidc";
+  return "app";
 }
 
 function resolveSameSite() {

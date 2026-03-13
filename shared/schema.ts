@@ -53,11 +53,14 @@ export const jobCategoryEnum = pgEnum("job_category", [
 export const companies = pgTable("companies", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: varchar("name", { length: 255 }).notNull(),
+  accessCode: varchar("access_code", { length: 16 }),
   logoUrl: varchar("logo_url"),
   phone: varchar("phone", { length: 50 }),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  uniqueIndex("uq_companies_access_code").on(table.accessCode),
+]);
 
 export const employees = pgTable("employees", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -68,6 +71,10 @@ export const employees = pgTable("employees", {
   firstName: varchar("first_name", { length: 100 }).notNull(),
   lastName: varchar("last_name", { length: 100 }).notNull(),
   phone: varchar("phone", { length: 50 }),
+  loginId: varchar("login_id", { length: 80 }),
+  passwordHash: text("password_hash"),
+  mustChangePassword: boolean("must_change_password").notNull().default(false),
+  passwordIssuedAt: timestamp("password_issued_at"),
   role: roleEnum("role").notNull().default("employee"),
   isActive: boolean("is_active").notNull().default(true),
   color: varchar("color", { length: 7 }),
@@ -76,7 +83,9 @@ export const employees = pgTable("employees", {
 }, (table) => [
   index("idx_employees_company_id").on(table.companyId),
   index("idx_employees_user_id").on(table.userId),
+  index("idx_employees_login_id").on(table.loginId),
   uniqueIndex("uq_employees_user_id").on(table.userId),
+  uniqueIndex("uq_employees_company_login_id").on(table.companyId, table.loginId),
 ]);
 
 export const companyInvitations = pgTable("company_invitations", {

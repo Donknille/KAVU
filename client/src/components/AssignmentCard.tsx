@@ -70,6 +70,18 @@ export function AssignmentCard({ assignment, onClick, compact = false }: Assignm
           </span>
         </div>
       )}
+
+      {assignment.offlineSync?.pendingItems?.length > 0 && (
+        <div className="mt-2 text-xs font-medium text-amber-700">
+          Wird synchronisiert
+        </div>
+      )}
+
+      {assignment.offlineSync?.conflictItems?.length > 0 && (
+        <div className="mt-2 text-xs font-medium text-red-700">
+          Sync-Konflikt pruefen
+        </div>
+      )}
     </Card>
   );
 }
