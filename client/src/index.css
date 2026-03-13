@@ -43,7 +43,13 @@
   --chart-3: 24 80% 42%;
   --chart-4: 280 70% 38%;
   --chart-5: 145 65% 32%;
-  --font-sans: Inter, sans-serif;
+  --font-sans:
+    "Segoe UI",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
   --font-serif: Georgia, serif;
   --font-mono: Menlo, monospace;
   --radius: .5rem;
