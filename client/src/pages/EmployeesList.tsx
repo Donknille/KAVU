@@ -225,10 +225,10 @@ export default function EmployeesList() {
         <div className="space-y-1">
           <p className="flex items-center gap-2 text-sm font-medium">
             <Shield className="h-4 w-4 text-primary" />
-            Lokaler Mitarbeiterzugang
+            Zugang fuer Mitarbeitende
           </p>
           <p className="text-sm text-muted-foreground">
-            Mitarbeiter ohne eigene E-Mail melden sich mit Betriebscode, Benutzername und Passwort an.
+            Mitarbeitende ohne persoenliche E-Mail-Adresse melden sich mit Betriebscode, Benutzername und Passwort an.
           </p>
         </div>
         <div className="rounded-xl border bg-background px-4 py-3 text-right">
@@ -504,9 +504,9 @@ export default function EmployeesList() {
                   }
                 />
                 <div className="space-y-1">
-                  <Label htmlFor="createAccess">Lokalen Zugang direkt anlegen</Label>
+                  <Label htmlFor="createAccess">Zugang direkt anlegen</Label>
                   <p className="text-sm text-muted-foreground">
-                    Fuer Mitarbeiter ohne eigene E-Mail. Das System erzeugt Benutzername und temporaeres Passwort.
+                    Fuer Mitarbeitende ohne persoenliche E-Mail-Adresse. Benutzername und temporaeres Passwort werden automatisch bereitgestellt.
                   </p>
                 </div>
               </div>
@@ -519,7 +519,7 @@ export default function EmployeesList() {
                       id="loginId"
                       value={form.loginId}
                       onChange={(e) => setForm((current) => ({ ...current, loginId: e.target.value }))}
-                      placeholder="Wird sonst automatisch erzeugt"
+                      placeholder="Wird automatisch vergeben"
                       data-testid="input-emp-login-id"
                     />
                   </div>
@@ -537,7 +537,7 @@ export default function EmployeesList() {
                     <div className="space-y-1">
                       <Label htmlFor="sendCredentialsToAdmin">Zugangsdaten an meine E-Mail senden</Label>
                       <p className="text-sm text-muted-foreground">
-                        Funktioniert nur, wenn der E-Mail-Versand in der Plattform konfiguriert ist.
+                        Verfuegbar, sobald der E-Mail-Versand eingerichtet ist.
                       </p>
                     </div>
                   </div>
@@ -570,7 +570,7 @@ export default function EmployeesList() {
                     {issuedAccess.employee.firstName} {issuedAccess.employee.lastName}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Diese Daten werden nur jetzt vollstaendig angezeigt. Bitte direkt weitergeben oder ausdrucken.
+                    Diese Zugangsdaten werden aus Sicherheitsgruenden nur einmal vollstaendig angezeigt. Bitte sicher weitergeben oder ausdrucken.
                   </p>
                 </div>
                 <div className="grid gap-3 md:grid-cols-3">

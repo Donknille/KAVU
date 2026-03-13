@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { getRequestErrorMessage, refreshAuthState } from "@/features/auth/authFlow";
 import { Label } from "@/components/ui/label";
+import { PasswordField } from "@/features/auth/PasswordField";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 import { KeyRound, ShieldCheck } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -52,8 +53,7 @@ export default function ChangePasswordPage({
         currentPassword,
         newPassword,
       });
-      await queryClient.invalidateQueries({ queryKey: ["/api/me"] });
-      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      await refreshAuthState();
       toast({
         title: "Passwort aktualisiert",
         description: required
@@ -69,10 +69,7 @@ export default function ChangePasswordPage({
     } catch (error) {
       toast({
         title: "Passwort konnte nicht aktualisiert werden",
-        description:
-          error instanceof Error
-            ? error.message.replace(/^\d+:\s*/, "")
-            : "Bitte pruefe dein aktuelles Passwort.",
+        description: getRequestErrorMessage(error, "Bitte pruefe dein aktuelles Passwort."),
         variant: "destructive",
       });
     } finally {
@@ -114,9 +111,8 @@ export default function ChangePasswordPage({
             <Label htmlFor="currentPassword">
               {required ? "Temporaeres Passwort" : "Aktuelles Passwort"}
             </Label>
-            <Input
+            <PasswordField
               id="currentPassword"
-              type="password"
               value={currentPassword}
               onChange={(event) => setCurrentPassword(event.target.value)}
               data-testid="input-current-password"
@@ -124,9 +120,8 @@ export default function ChangePasswordPage({
           </div>
           <div>
             <Label htmlFor="newPassword">Neues Passwort</Label>
-            <Input
+            <PasswordField
               id="newPassword"
-              type="password"
               value={newPassword}
               onChange={(event) => setNewPassword(event.target.value)}
               data-testid="input-new-password"
@@ -134,9 +129,8 @@ export default function ChangePasswordPage({
           </div>
           <div>
             <Label htmlFor="confirmPassword">Passwort wiederholen</Label>
-            <Input
+            <PasswordField
               id="confirmPassword"
-              type="password"
               value={confirmPassword}
               onChange={(event) => setConfirmPassword(event.target.value)}
               data-testid="input-confirm-password"

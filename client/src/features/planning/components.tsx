@@ -863,7 +863,7 @@ export function SelectedBlockPanel({
   if (!selectedBlock) {
     return (
       <Card className="rounded-3xl border bg-card p-5 shadow-sm">
-        Auftrag auswaehlen oder direkt Mitarbeiter auf einen Auftragsbalken ziehen.
+        Bitte waehlen Sie einen Auftrag aus, um Details und Teamzuordnungen zu bearbeiten.
       </Card>
     );
   }
@@ -916,14 +916,14 @@ export function SelectedBlockPanel({
           <div className="space-y-2 rounded-2xl border bg-muted/60 p-3">
             <div className="flex items-center justify-between gap-2">
               <div>
-                <p className="text-sm font-semibold">Mitarbeiter direkt zuordnen</p>
+                <p className="text-sm font-semibold">Mitarbeitende zuordnen</p>
                 <p className="text-xs text-muted-foreground">
-                  Fallback, falls Drag & Drop hakt. Tagesgenaue Teilzuweisungen sind hier ebenfalls moeglich.
+                  Tagesgenaue Zuordnungen koennen hier gezielt vorgenommen werden.
                 </p>
               </div>
               <Badge variant="outline" className="gap-1">
                 <UserRoundPlus className="h-3 w-3" />
-                Direkt
+                Zuordnung
               </Badge>
             </div>
 
@@ -1048,9 +1048,9 @@ export function SelectedBlockPanel({
         {selectedBlock.canMove && onMoveBlock && availableStartDates.length > 0 && (
           <div className="space-y-2 rounded-2xl border bg-muted/60 p-3">
             <div>
-              <p className="text-sm font-semibold">Auftrag direkt verschieben</p>
+              <p className="text-sm font-semibold">Auftrag verschieben</p>
               <p className="text-xs text-muted-foreground">
-                Fallback, falls Drag & Drop beim Verschieben hakt.
+                Das Startdatum kann innerhalb des verfuegbaren Zeitraums angepasst werden.
               </p>
             </div>
 
@@ -1092,13 +1092,13 @@ export function SelectedBlockPanel({
             {selectedBlock.canAssignWorkers && (
               <Badge variant="outline" className="gap-1">
                 <UserRoundPlus className="h-3 w-3" />
-                Drag & Drop
+                Zuweisung moeglich
               </Badge>
             )}
           </div>
           {selectedBlock.workers.length === 0 && (
             <div className="rounded-2xl border border-dashed bg-card p-4 text-sm text-muted-foreground">
-              Noch kein Mitarbeiter zugeordnet.
+              Diesem Auftrag sind noch keine Mitarbeitenden zugeordnet.
             </div>
           )}
           <div className="space-y-2">
@@ -1204,8 +1204,8 @@ export function SelectedBlockPanel({
 
         <div className="rounded-2xl border bg-muted p-3 text-xs text-muted-foreground">
           {selectedBlock.hasProtectedHistory
-            ? "Laufender Auftrag: Vergangene oder bereits gestartete Tage bleiben fix. Neue Mitarbeitende koennen ab heute tagegenau dazukommen und nur aus offenen Tagen wieder entfernt werden."
-            : "Mehrere Auftraege pro Tag sind moeglich. Fuer kurze Einsaetze Reihenfolge und Uhrzeiten im Blick behalten."}
+            ? "Bei laufenden Auftraegen bleiben vergangene oder bereits begonnene Tage unveraendert. Weitere Mitarbeitende koennen ab heute fuer offene Tage ergaenzt oder entfernt werden."
+            : "Mehrere Einsaetze pro Tag sind moeglich. Reihenfolge und Uhrzeiten sollten in der Disposition beachtet werden."}
         </div>
 
         {selectedBlock.canDelete && (
@@ -1238,9 +1238,9 @@ export function CreatePlanningJobDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Neuen Auftrag direkt im Backlog anlegen</DialogTitle>
+          <DialogTitle>Auftrag im Backlog anlegen</DialogTitle>
           <DialogDescription>
-            Erfasse den Auftrag komplett genug fuer die Disposition. Danach liegt er sofort links im Backlog.
+            Erfassen Sie die wesentlichen Auftragsdaten fuer die Disposition. Der Auftrag steht anschliessend direkt im Backlog bereit.
           </DialogDescription>
         </DialogHeader>
 

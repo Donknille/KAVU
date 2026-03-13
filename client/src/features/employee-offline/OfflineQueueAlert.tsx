@@ -33,12 +33,12 @@ export function OfflineQueueAlert({ assignmentId }: OfflineQueueAlertProps) {
     return (
       <Alert variant="destructive">
         <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Sync-Konflikt</AlertTitle>
+        <AlertTitle>Abgleich erforderlich</AlertTitle>
         <AlertDescription className="space-y-3">
           <p>
             {visibleConflictCount === 1
-              ? "Eine vorgemerkte Aktion passt nicht mehr zum aktuellen Serverstand."
-              : `${visibleConflictCount} vorgemerkte Aktionen passen nicht mehr zum aktuellen Serverstand.`}
+              ? "Eine gespeicherte Aenderung passt nicht mehr zum aktuellen Datenstand."
+              : `${visibleConflictCount} gespeicherte Aenderungen passen nicht mehr zum aktuellen Datenstand.`}
           </p>
           {assignmentId && conflictItems.length > 0 && (
             <ul className="space-y-1 text-sm">
@@ -69,18 +69,18 @@ export function OfflineQueueAlert({ assignmentId }: OfflineQueueAlertProps) {
   return (
     <Alert>
       {isOnline ? <CheckCircle2 className="h-4 w-4" /> : <WifiOff className="h-4 w-4" />}
-      <AlertTitle>{isOnline ? "Synchronisierung ausstehend" : "Offline gespeichert"}</AlertTitle>
+      <AlertTitle>{isOnline ? "Abgleich ausstehend" : "Aenderung gespeichert"}</AlertTitle>
       <AlertDescription className="space-y-3">
         <p>
           {isOnline
             ? isSyncing
-              ? "Vorgemerkte Aktionen werden gerade mit dem Server abgeglichen."
+              ? "Gespeicherte Aenderungen werden derzeit mit dem System abgeglichen."
               : visiblePendingCount === 1
-                ? "Eine vorgemerkte Aktion wartet auf die Synchronisierung."
-                : `${visiblePendingCount} vorgemerkte Aktionen warten auf die Synchronisierung.`
+                ? "Eine gespeicherte Aenderung wartet auf den Abgleich."
+                : `${visiblePendingCount} gespeicherte Aenderungen warten auf den Abgleich.`
             : visiblePendingCount === 1
-              ? "Eine Aktion wurde lokal gespeichert und wird beim naechsten Online-Moment gesendet."
-              : `${visiblePendingCount} Aktionen wurden lokal gespeichert und werden beim naechsten Online-Moment gesendet.`}
+              ? "Eine Aenderung wurde gespeichert und wird uebermittelt, sobald wieder eine Verbindung besteht."
+              : `${visiblePendingCount} Aenderungen wurden gespeichert und werden uebermittelt, sobald wieder eine Verbindung besteht.`}
         </p>
         {assignmentId && pendingItems.length > 0 && (
           <ul className="space-y-1 text-sm">
@@ -97,7 +97,7 @@ export function OfflineQueueAlert({ assignmentId }: OfflineQueueAlertProps) {
             data-testid="button-flush-offline-queue"
           >
             <RefreshCcw className="mr-2 h-4 w-4" />
-            Jetzt synchronisieren
+            Abgleich starten
           </Button>
         )}
       </AlertDescription>

@@ -48,19 +48,19 @@ function formatPlannedWindow(detail: any) {
 function getStatusSummary(status: string) {
   switch (status) {
     case "planned":
-      return "Starte die Fahrt, sobald du losfaehrst.";
+      return "Der Einsatz ist geplant. Starten Sie die Fahrt bei Abfahrt.";
     case "en_route":
-      return "Melde deine Ankunft direkt bei der Baustelle.";
+      return "Bitte bestaetigen Sie die Ankunft am Einsatzort.";
     case "on_site":
-      return "Arbeite vor Ort und beende den Einsatz erst, wenn alles abgeschlossen ist.";
+      return "Der Einsatz wird vor Ort bearbeitet.";
     case "break":
-      return "Dein Einsatz pausiert. Beende die Pause, wenn du weiterarbeitest.";
+      return "Der Einsatz ist derzeit pausiert.";
     case "problem":
-      return "Es liegt ein Problem vor. Setze den Einsatz fort, sobald es geloest ist.";
+      return "Fuer diesen Einsatz liegt derzeit ein Problem oder eine Rueckfrage vor.";
     case "completed":
       return "Dieser Einsatz ist abgeschlossen.";
     default:
-      return "Alle wichtigen Einsatzdaten sind hier gebuendelt.";
+      return "Alle relevanten Einsatzinformationen sind hier gebuendelt.";
   }
 }
 
@@ -237,9 +237,9 @@ export default function AssignmentDetail() {
 
       <Card className="p-4">
         <div className="mb-3">
-          <h2 className="font-semibold">Schnellzugriff</h2>
+          <h2 className="font-semibold">Kontakt und Navigation</h2>
           <p className="text-sm text-muted-foreground">
-            Wegbeschreibung und Kontakt direkt vom Einsatz aus.
+            Ansprechpartner und Wegbeschreibung fuer diesen Einsatz.
           </p>
         </div>
         {address || job?.contactPhone ? (
@@ -278,7 +278,7 @@ export default function AssignmentDetail() {
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">
-            Fuer diesen Einsatz sind noch keine direkten Kontakt- oder Navigationsdaten hinterlegt.
+            Fuer diesen Einsatz sind derzeit keine Kontakt- oder Navigationsdaten hinterlegt.
           </p>
         )}
       </Card>
@@ -312,8 +312,8 @@ export default function AssignmentDetail() {
             <div>
               <p className="font-medium">Offline</p>
               <p className="mt-1 text-sm">
-                Statuswechsel und Problem-Meldungen werden lokal vorgemerkt und beim naechsten
-                Online-Moment synchronisiert.
+                Statusaenderungen und Problem-Meldungen werden gespeichert und automatisch
+                synchronisiert, sobald wieder eine Verbindung besteht.
               </p>
             </div>
           </div>

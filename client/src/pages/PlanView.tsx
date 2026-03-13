@@ -165,7 +165,7 @@ export default function PlanView() {
             <div>
               <p className="text-xs font-semibold">Neuen Auftrag anlegen</p>
               <p className="text-[10px] text-muted-foreground">
-                Direkt im Backlog erfassen und danach verplanen
+                Im Backlog erfassen und anschliessend disponieren
               </p>
             </div>
             <Plus className="h-4 w-4 text-slate-500" />
@@ -311,13 +311,13 @@ export default function PlanView() {
           <div>
             <p className="text-sm font-semibold">Team</p>
             <p className="text-xs text-muted-foreground">
-              Mitarbeitende in den Auftrag ziehen
+              Mitarbeitende fuer die Einsatzplanung
             </p>
           </div>
           <div className="flex items-center gap-2">
             {planning.selectedBlock && (
               <Badge variant="outline" className="rounded-full px-2 py-0.5 text-[10px]">
-                Detailansicht offen
+                Detailansicht aktiv
               </Badge>
             )}
             <Badge variant="secondary">{planning.activeEmployees.length}</Badge>
@@ -411,7 +411,7 @@ export default function PlanView() {
           </div>
           <h1 className="mt-1.5 text-2xl font-semibold tracking-tight">Wochenplanung nach Auftrag</h1>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Backlog links, Auftragsplanung in der Mitte, Team unten.
+            Backlog, Wochenplanung und Teamuebersicht in einer zentralen Arbeitsflaeche.
           </p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             <Badge variant="outline" className="gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium">

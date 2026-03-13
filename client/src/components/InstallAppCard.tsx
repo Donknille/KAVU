@@ -51,9 +51,9 @@ export function InstallAppCard() {
             <Smartphone className="h-5 w-5" />
           </div>
           <div className="space-y-1">
-            <p className="text-sm font-semibold">KAVU als App installieren</p>
+            <p className="text-sm font-semibold">KAVU auf dem Geraet speichern</p>
             <p className="text-sm text-muted-foreground">
-              Oeffne deine Mitarbeiteransicht direkt vom Homescreen und halte die App schneller griffbereit.
+              Oeffnen Sie die Mitarbeiteransicht direkt ueber den Startbildschirm und greifen Sie schneller auf aktuelle Einsaetze zu.
             </p>
           </div>
         </div>
@@ -75,7 +75,7 @@ export function InstallAppCard() {
           disabled={isInstalling}
           data-testid="button-install-pwa"
         >
-          <span>App installieren</span>
+          <span>Auf Geraet installieren</span>
           <Download className="h-4 w-4" />
         </Button>
       ) : (
@@ -84,7 +84,7 @@ export function InstallAppCard() {
             <Share2 className="h-4 w-4" />
             Auf iPhone installieren
           </div>
-          <p>Teilen antippen und dann "Zum Home-Bildschirm" waehlen.</p>
+          <p>Waehlen Sie "Teilen" und anschliessend "Zum Home-Bildschirm".</p>
         </div>
       )}
     </Card>

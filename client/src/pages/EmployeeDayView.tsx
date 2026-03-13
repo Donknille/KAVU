@@ -119,7 +119,7 @@ export default function EmployeeDayView() {
                 Heute im Blick
               </h1>
               <p className="mt-1 max-w-md text-sm text-slate-300">
-                Aktiver Einsatz, naechster Termin und dein Tagesplan ohne Suchen.
+                Aktuelle Einsaetze, anstehende Termine und der Tagesverlauf auf einen Blick.
               </p>
             </div>
             <ConnectionStatusBadge
@@ -182,15 +182,15 @@ export default function EmployeeDayView() {
 
                 {activeAssignments.length > 1 && (
                   <p className="text-xs text-slate-300">
-                    Noch {activeAssignments.length - 1} weiterer aktiver Einsatz verfuegbar.
+                    Es ist noch {activeAssignments.length - 1} weiterer aktiver Einsatz vorhanden.
                   </p>
                 )}
               </div>
             ) : (
               <div className="space-y-2">
-                <p className="text-sm font-medium">Heute sind noch keine Einsaetze eingeplant.</p>
+                <p className="text-sm font-medium">Fuer heute sind derzeit keine Einsaetze eingeplant.</p>
                 <p className="text-sm text-slate-300">
-                  Neue Zuordnungen erscheinen hier automatisch, sobald die Disposition plant.
+                  Neue Termine werden nach der Disposition hier angezeigt.
                 </p>
               </div>
             )}
@@ -245,8 +245,8 @@ export default function EmployeeDayView() {
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
               {totalAssignments === 0
-                ? "Sobald du heute eingeplant bist, erscheint der Einsatz hier."
-                : "Dein weiterer Tagesplan bleibt hier sichtbar, sobald neue Termine dazukommen."}
+                ? "Sobald ein Einsatz fuer heute disponiert ist, wird er hier angezeigt."
+                : "Weitere Einsaetze fuer den heutigen Tag werden hier fortlaufend ergaenzt."}
             </p>
           </Card>
         ) : (
@@ -270,9 +270,9 @@ export default function EmployeeDayView() {
 
         {upcomingAssignments.length === 0 ? (
           <Card className="p-6 text-center">
-            <p className="font-medium text-muted-foreground">Keine weiteren Planungen</p>
+            <p className="font-medium text-muted-foreground">Keine weiteren Einsaetze geplant</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Zukuenftige Zuordnungen erscheinen automatisch in dieser Liste.
+              Zukuenftige Einsaetze werden in dieser Uebersicht angezeigt.
             </p>
           </Card>
         ) : (

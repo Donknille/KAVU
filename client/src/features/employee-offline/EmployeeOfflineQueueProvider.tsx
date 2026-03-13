@@ -227,10 +227,10 @@ export function EmployeeOfflineQueueProvider({
       persistQueue(nextQueue);
 
       toast({
-        title: isOnline ? "Aktion vorgemerkt" : "Offline gespeichert",
+        title: isOnline ? "Aenderung gespeichert" : "Aenderung offline gespeichert",
         description: isOnline
-          ? `${getQueueItemLabel(queuedItem)}. Die Synchronisierung startet jetzt.`
-          : `${getQueueItemLabel(queuedItem)}. Die Aktion wird gesendet, sobald wieder Verbindung besteht.`,
+          ? `${getQueueItemLabel(queuedItem)}. Der Abgleich wird jetzt gestartet.`
+          : `${getQueueItemLabel(queuedItem)}. Die Aenderung wird automatisch uebermittelt, sobald wieder eine Verbindung besteht.`,
       });
 
       if (isOnline) {

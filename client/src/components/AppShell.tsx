@@ -100,7 +100,7 @@ export function AppShell({ children, role, employee }: AppShellProps) {
                   </p>
                   {previewToken && (
                     <span className="rounded-full border bg-slate-50 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-600">
-                      Preview
+                      Vorschau
                     </span>
                   )}
                   {role === "employee" && (
@@ -163,7 +163,7 @@ export function AppShell({ children, role, employee }: AppShellProps) {
                   )}
                   {role === "employee" && conflictCount === 0 && pendingCount > 0 && (
                     <span className="rounded-full border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-amber-700">
-                      {pendingCount} Queue
+                      {pendingCount} Ausstehend
                     </span>
                   )}
                   {role === "employee" && (
@@ -218,15 +218,16 @@ export function AppShell({ children, role, employee }: AppShellProps) {
 
           {role === "employee" && !isOnline && (
             <div className="border-b bg-amber-50 px-3 py-2 text-sm text-amber-900">
-              Keine Verbindung. Statuswechsel werden lokal vorgemerkt und spaeter synchronisiert.
+              Keine Verbindung. Aenderungen werden gespeichert und automatisch uebermittelt,
+              sobald wieder eine Verbindung besteht.
             </div>
           )}
 
           {role === "employee" && isOnline && conflictCount > 0 && (
             <div className="border-b bg-red-50 px-3 py-2 text-sm text-red-900">
               {conflictCount === 1
-                ? "Eine vorgemerkte Aktion braucht Pruefung."
-                : `${conflictCount} vorgemerkte Aktionen brauchen Pruefung.`}
+                ? "Eine gespeicherte Aenderung muss geprueft werden."
+                : `${conflictCount} gespeicherte Aenderungen muessen geprueft werden.`}
             </div>
           )}
 

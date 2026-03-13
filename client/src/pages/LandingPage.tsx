@@ -99,7 +99,7 @@ export default function LandingPage() {
 
             <div className="mx-auto max-w-2xl text-center">
               <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-primary">
-                Mobile-first Zugang
+                Professioneller Zugang
               </p>
               <h1
                 className="mt-4 text-4xl font-semibold tracking-tight md:text-5xl"
@@ -119,8 +119,8 @@ export default function LandingPage() {
                 </div>
                 <h2 className="mt-4 text-2xl font-semibold">Betrieb verwalten</h2>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  Fuer Inhaber, Buero und Disposition. Direkter Einstieg in Login oder Registrierung,
-                  ohne durch Mitarbeiterformulare zu scrollen.
+                  Fuer Inhaber, Buero und Disposition. Anmeldung und Registrierung erfolgen in einem
+                  eigenen, klar strukturierten Bereich.
                 </p>
                 <div className="mt-6 grid gap-2 sm:grid-cols-2">
                   <Button asChild className="h-12 text-base" data-testid="button-admin-login-primary">
@@ -140,7 +140,7 @@ export default function LandingPage() {
                   </Button>
                 </div>
                 <p className="mt-4 text-xs text-muted-foreground">
-                  Kein Google-Login noetig. Nur E-Mail und Passwort.
+                  Anmeldung mit E-Mail-Adresse und Passwort.
                 </p>
               </Card>
 
@@ -150,8 +150,8 @@ export default function LandingPage() {
                 </div>
                 <h2 className="mt-4 text-2xl font-semibold">Mitarbeiter anmelden</h2>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  Fuer Monteure und Teams ohne eigene E-Mail. Anmeldung mit Betriebscode, Benutzername
-                  und Passwort direkt am Handy.
+                  Fuer operative Teams ohne persoenliche E-Mail-Adresse. Anmeldung mit Betriebscode,
+                  Benutzername und Passwort.
                 </p>
                 <div className="mt-6">
                   <Button
@@ -167,7 +167,7 @@ export default function LandingPage() {
                   </Button>
                 </div>
                 <p className="mt-4 text-xs text-muted-foreground">
-                  Zugangsdaten kann der Admin ausdrucken oder direkt weitergeben.
+                  Zugangsdaten koennen intern sicher weitergegeben oder ausgedruckt werden.
                 </p>
               </Card>
             </div>
@@ -177,7 +177,7 @@ export default function LandingPage() {
         <section className="bg-card/50 px-4 py-14 md:py-16">
           <div className="mx-auto max-w-5xl">
             <h2 className="text-center text-2xl font-semibold tracking-tight">
-              {isMobile ? "Direkt auf der Baustelle einsetzbar" : "Drei Fragen, eine Plattform"}
+              {isMobile ? "Fuer den mobilen Einsatz optimiert" : "Die wichtigsten Funktionen im Ueberblick"}
             </h2>
 
             <div className="mt-8 grid gap-4 md:grid-cols-3">
@@ -187,7 +187,7 @@ export default function LandingPage() {
                 </div>
                 <h3 className="text-lg font-semibold">Wer ist heute wo?</h3>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  Einsatzplan auf einen Blick. Mitarbeiter, Auftraege und Tage in einer Uebersicht.
+                  Auftraege, Teams und Einsatztage in einer klaren Dispositionsansicht.
                 </p>
               </Card>
 
@@ -197,7 +197,7 @@ export default function LandingPage() {
                 </div>
                 <h3 className="text-lg font-semibold">Was ist der Status?</h3>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  Fahrt, Ankunft, Pause oder fertig. Klare Statusaktionen direkt auf dem Handy.
+                  Statusmeldungen wie Fahrt, Ankunft, Pause oder Abschluss werden mobil und eindeutig erfasst.
                 </p>
               </Card>
 
@@ -205,10 +205,9 @@ export default function LandingPage() {
                 <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-md bg-amber-100">
                   <KeyRound className="h-5 w-5 text-amber-700" />
                 </div>
-                <h3 className="text-lg font-semibold">Sauberer Zugang</h3>
+                <h3 className="text-lg font-semibold">Passende Zugangsmodelle</h3>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  Admins loggen sich mit E-Mail ein. Mitarbeiter koennen auch ohne eigene Mail sauber
-                  arbeiten.
+                  Administration und operative Teams erhalten jeweils den passenden, sicheren Zugang.
                 </p>
               </Card>
             </div>

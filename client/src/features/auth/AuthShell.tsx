@@ -77,7 +77,7 @@ export function AuthShell({
           <Card className={cn("rounded-[28px] border bg-card/95 p-5 shadow-xl md:p-7", cardClassName)}>
             <div className="space-y-2">
               <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                Direkter Zugang
+                Zugang
               </p>
               <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
               <p className="text-sm leading-6 text-muted-foreground">{subtitle}</p>

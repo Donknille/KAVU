@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useRedirectingAuthMutation } from "@/features/auth/authFlow";
 import { AuthShell } from "@/features/auth/AuthShell";
 import { PasswordField } from "@/features/auth/PasswordField";
 import {
@@ -14,8 +14,7 @@ import {
   withInviteToken,
 } from "@/features/invitations/shared";
 import { useInvitationPreview } from "@/features/invitations/useInvitationPreview";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 import { cn } from "@/lib/utils";
 
 type AdminAuthPageProps = {
@@ -35,7 +34,6 @@ const INITIAL_LOGIN_FORM = {
 };
 
 export default function AdminAuthPage({ mode }: AdminAuthPageProps) {
-  const { toast } = useToast();
   const inviteToken = getInviteToken();
   const returnTo = getInviteReturnPath(inviteToken);
   const registerHref = withInviteToken("/register/admin", inviteToken);
@@ -45,44 +43,20 @@ export default function AdminAuthPage({ mode }: AdminAuthPageProps) {
   const [registerForm, setRegisterForm] = useState(INITIAL_REGISTER_FORM);
   const [loginForm, setLoginForm] = useState(INITIAL_LOGIN_FORM);
 
-  const registerMutation = useMutation({
+  const registerMutation = useRedirectingAuthMutation({
     mutationFn: async (payload: typeof registerForm) =>
       apiRequest("POST", "/api/auth/register", payload),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      await queryClient.invalidateQueries({ queryKey: ["/api/me"] });
-      window.location.href = returnTo;
-    },
-    onError: (error) => {
-      toast({
-        title: "Registrierung fehlgeschlagen",
-        description:
-          error instanceof Error
-            ? error.message.replace(/^\d+:\s*/, "")
-            : "Bitte pruefe deine Eingaben.",
-        variant: "destructive",
-      });
-    },
+    redirectTo: returnTo,
+    errorTitle: "Registrierung fehlgeschlagen",
+    fallbackErrorMessage: "Bitte pruefe deine Eingaben.",
   });
 
-  const loginMutation = useMutation({
+  const loginMutation = useRedirectingAuthMutation({
     mutationFn: async (payload: typeof loginForm) =>
       apiRequest("POST", "/api/auth/login/password", payload),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      await queryClient.invalidateQueries({ queryKey: ["/api/me"] });
-      window.location.href = returnTo;
-    },
-    onError: (error) => {
-      toast({
-        title: "Login fehlgeschlagen",
-        description:
-          error instanceof Error
-            ? error.message.replace(/^\d+:\s*/, "")
-            : "Bitte pruefe E-Mail und Passwort.",
-        variant: "destructive",
-      });
-    },
+    redirectTo: returnTo,
+    errorTitle: "Login fehlgeschlagen",
+    fallbackErrorMessage: "Bitte pruefe E-Mail und Passwort.",
   });
 
   const title =
@@ -95,8 +69,8 @@ export default function AdminAuthPage({ mode }: AdminAuthPageProps) {
         : "Betrieb registrieren";
   const subtitle =
     mode === "login"
-      ? "Fuer Inhaber, Buero und Disposition. Direkt mit E-Mail und Passwort in KAVU anmelden."
-      : "Lege dein Inhaber-Konto an und richte danach direkt den Betrieb ein.";
+      ? "Fuer Inhaber, Buero und Disposition. Anmeldung mit E-Mail-Adresse und Passwort."
+      : "Registrieren Sie Ihr Inhaberkonto und richten Sie anschliessend den Betrieb ein.";
 
   const inviteBanner = inviteToken ? (
     invitation ? (
@@ -113,7 +87,7 @@ export default function AdminAuthPage({ mode }: AdminAuthPageProps) {
           Der Einladungslink ist ungueltig oder abgelaufen.
         </p>
         <p className="mt-1 text-sm text-muted-foreground">
-          Du kannst dich trotzdem anmelden oder einen eigenen Betrieb registrieren.
+          Sie koennen sich weiterhin anmelden oder einen eigenen Betrieb registrieren.
         </p>
       </Card>
     ) : null
@@ -125,12 +99,12 @@ export default function AdminAuthPage({ mode }: AdminAuthPageProps) {
       subtitle={subtitle}
       banner={inviteBanner}
       asideEyebrow="Admin-Zugang"
-      asideTitle="Schneller Zugriff fuer Inhaber und Buero"
-      asideDescription="Auf dem Handy soll der Einstieg direkt in den Login fuehren, ohne erst durch Marketing und Mitarbeiter-Formulare zu scrollen."
+      asideTitle="Zugang fuer Administration und Disposition"
+      asideDescription="Zentraler Zugang fuer Inhaber, Buero und Disposition mit klarem Anmeldeprozess."
       asideItems={[
-        "E-Mail und Passwort statt Social Login",
-        "Direkt nach dem Login in Planung, Auftraege und Team",
-        "Einladungslinks bleiben beim Admin-Login erhalten",
+        "Anmeldung mit E-Mail-Adresse und Passwort",
+        "Sofortiger Zugriff auf Planung, Auftraege und Mitarbeitende",
+        "Einladungen werden im Anmeldeprozess automatisch uebernommen",
       ]}
       footer={
         <div className="grid gap-2 sm:grid-cols-2">
