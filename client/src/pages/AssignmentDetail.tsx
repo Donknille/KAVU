@@ -1,13 +1,11 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation, useParams } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/StatusBadge";
-import { ActionButtons } from "@/components/ActionButtons";
 import { ConnectionStatusBadge } from "@/components/ConnectionStatusBadge";
-import { ProblemDialog } from "@/components/ProblemDialog";
+import { EmployeeTimeTrackerCard } from "@/features/employee-time/EmployeeTimeTrackerCard";
 import { OfflineQueueAlert } from "@/features/employee-offline/OfflineQueueAlert";
 import { useEmployeeOfflineQueue } from "@/features/employee-offline/EmployeeOfflineQueueProvider";
 import { type AssignmentAction } from "@/features/employee-offline/shared";
@@ -15,7 +13,6 @@ import { useToast } from "@/hooks/use-toast";
 import {
   formatAddress,
   formatDate,
-  formatDuration,
   formatTime,
   getNavigationUrl,
   getPhoneUrl,
@@ -26,7 +23,6 @@ import {
   AlertTriangle,
   ArrowLeft,
   CalendarDays,
-  Clock,
   FileText,
   MapPin,
   Navigation,
@@ -48,15 +44,15 @@ function formatPlannedWindow(detail: any) {
 function getStatusSummary(status: string) {
   switch (status) {
     case "planned":
-      return "Der Einsatz ist geplant. Starten Sie die Fahrt bei Abfahrt.";
+      return "Der Einsatz ist geplant. Starten Sie die Zeiterfassung bei Arbeitsbeginn.";
     case "en_route":
-      return "Bitte bestaetigen Sie die Ankunft am Einsatzort.";
+      return "Bitte bestaetigen Sie den Arbeitsbeginn fuer diesen Einsatz.";
     case "on_site":
-      return "Der Einsatz wird vor Ort bearbeitet.";
+      return "Die Arbeitszeit fuer diesen Einsatz laeuft.";
     case "break":
       return "Der Einsatz ist derzeit pausiert.";
     case "problem":
-      return "Fuer diesen Einsatz liegt derzeit ein Problem oder eine Rueckfrage vor.";
+      return "Der Einsatz ist unterbrochen. Bitte kurz mit dem Buero abstimmen.";
     case "completed":
       return "Dieser Einsatz ist abgeschlossen.";
     default:
@@ -68,7 +64,6 @@ export default function AssignmentDetail() {
   const { id } = useParams<{ id: string }>();
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const [showProblemDialog, setShowProblemDialog] = useState(false);
   const {
     isOnline,
     isSyncing,
@@ -85,11 +80,6 @@ export default function AssignmentDetail() {
   const effectiveDetail = detail ? applyOptimisticAssignmentState(detail) : null;
 
   async function runAction(action: AssignmentAction) {
-    if (action === "report-problem") {
-      setShowProblemDialog(true);
-      return;
-    }
-
     if (!effectiveDetail) {
       return;
     }
@@ -112,29 +102,6 @@ export default function AssignmentDetail() {
 
   function handleAction(action: string) {
     void runAction(action as AssignmentAction);
-  }
-
-  async function handleProblemSubmit(issueType: string, note: string) {
-    if (!effectiveDetail) {
-      return;
-    }
-
-    try {
-      await queueAction({
-        assignmentId: effectiveDetail.id,
-        assignmentTitle: effectiveDetail.job?.title,
-        currentStatus: effectiveDetail.status,
-        action: "report-problem",
-        body: { issueType, note },
-      });
-      setShowProblemDialog(false);
-    } catch (error) {
-      toast({
-        title: "Fehler",
-        description: error instanceof Error ? error.message : "Problem konnte nicht vorgemerkt werden.",
-        variant: "destructive",
-      });
-    }
   }
 
   function handleBack() {
@@ -177,7 +144,7 @@ export default function AssignmentDetail() {
     : "Einsatz";
 
   return (
-    <div className="mx-auto max-w-lg space-y-4 p-4 pb-40">
+    <div className="mx-auto max-w-lg space-y-4 p-4 pb-72">
       <div className="flex items-center justify-between gap-3">
         <Button
           variant="ghost"
@@ -320,43 +287,6 @@ export default function AssignmentDetail() {
         </Card>
       )}
 
-      {timeEntry && (
-        <Card className="p-4">
-          <h3 className="mb-2 flex items-center gap-1.5 text-sm font-medium">
-            <Clock className="h-4 w-4" />
-            Zeiterfassung
-          </h3>
-          <div className="grid grid-cols-3 gap-3 text-center">
-            <div>
-              <p className="text-xs text-muted-foreground">Start</p>
-              <p className="font-mono font-medium" data-testid="text-time-start">
-                {formatTime(timeEntry.startedAt)}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Ankunft</p>
-              <p className="font-mono font-medium" data-testid="text-time-arrival">
-                {formatTime(timeEntry.arrivedAt)}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Ende</p>
-              <p className="font-mono font-medium" data-testid="text-time-end">
-                {formatTime(timeEntry.endedAt)}
-              </p>
-            </div>
-          </div>
-          {timeEntry.totalMinutes != null && (
-            <div className="mt-2 border-t pt-2 text-center">
-              <p className="text-xs text-muted-foreground">Arbeitszeit</p>
-              <p className="font-semibold" data-testid="text-duration">
-                {formatDuration(timeEntry.totalMinutes)}
-              </p>
-            </div>
-          )}
-        </Card>
-      )}
-
       {effectiveDetail.issues && effectiveDetail.issues.length > 0 && (
         <Card className="p-4">
           <h3 className="mb-2 flex items-center gap-1.5 text-sm font-medium text-red-600 dark:text-red-400">
@@ -388,28 +318,32 @@ export default function AssignmentDetail() {
         </Card>
       )}
 
-      <div className="safe-area-bottom fixed bottom-0 left-0 right-0 border-t bg-background/95 p-4 backdrop-blur-sm">
-        <div className="mx-auto max-w-lg">
-          <div className="rounded-[24px] border bg-background p-3 shadow-lg">
-            <p className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              Naechster Schritt
-            </p>
-            <ActionButtons
+      {effectiveDetail.status === "completed" ? (
+        <EmployeeTimeTrackerCard
+          status={effectiveDetail.status}
+          timeEntry={timeEntry}
+          breaks={effectiveDetail.breaks ?? []}
+          pendingItems={pendingItems}
+          onAction={handleAction}
+          isLoading={isSyncing && pendingItems.length > 0}
+          disabled={assignmentConflicts.length > 0}
+        />
+      ) : (
+        <div className="safe-area-bottom fixed bottom-0 left-0 right-0 border-t bg-background/80 p-4 backdrop-blur-xl">
+          <div className="mx-auto max-w-lg">
+            <EmployeeTimeTrackerCard
               status={effectiveDetail.status}
+              timeEntry={timeEntry}
+              breaks={effectiveDetail.breaks ?? []}
+              pendingItems={pendingItems}
               onAction={handleAction}
               isLoading={isSyncing && pendingItems.length > 0}
               disabled={assignmentConflicts.length > 0}
             />
           </div>
         </div>
-      </div>
+      )}
 
-      <ProblemDialog
-        open={showProblemDialog}
-        onClose={() => setShowProblemDialog(false)}
-        onSubmit={handleProblemSubmit}
-        isLoading={false}
-      />
     </div>
   );
 }

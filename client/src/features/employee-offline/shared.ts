@@ -7,6 +7,7 @@ export type AssignmentStatus =
   | "problem";
 
 export type AssignmentAction =
+  | "start-work"
   | "start-travel"
   | "arrive"
   | "start-break"
@@ -31,6 +32,7 @@ export interface QueuedAssignmentAction {
 }
 
 const actionLabels: Record<AssignmentAction, string> = {
+  "start-work": "Arbeit starten",
   "start-travel": "Fahrt beginnen",
   arrive: "Ankunft Baustelle",
   "start-break": "Pause starten",
@@ -47,6 +49,10 @@ const transitionMap: Record<
     nextStatus: AssignmentStatus;
   }
 > = {
+  "start-work": {
+    allowedFrom: ["planned", "en_route"],
+    nextStatus: "on_site",
+  },
   "start-travel": {
     allowedFrom: ["planned"],
     nextStatus: "en_route",

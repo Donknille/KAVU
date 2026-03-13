@@ -1209,6 +1209,55 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/assignments/:id/start-work", isAuthenticated, requireAuth, async (req: any, res) => {
+    try {
+      const assignment = await getAuthorizedAssignment(req, res, req.params.id, {
+        requireWorker: true,
+      });
+      if (!assignment) return;
+      if (assignment.status !== "planned" && assignment.status !== "en_route")
+        return res.status(400).json({ message: "Invalid status transition" });
+
+      await storage.updateAssignment(req.params.id, { status: "on_site" });
+
+      const now = new Date();
+      let timeEntry = await storage.getTimeEntryForAssignment(
+        req.companyId,
+        req.params.id,
+        req.employee.id
+      );
+      if (!timeEntry) {
+        timeEntry = await storage.createTimeEntry({
+          companyId: req.companyId,
+          jobId: assignment.jobId,
+          assignmentId: req.params.id,
+          employeeId: req.employee.id,
+          startedAt: now,
+          arrivedAt: now,
+          status: "on_site",
+        });
+      } else {
+        timeEntry = await storage.updateTimeEntry(timeEntry.id, {
+          startedAt: timeEntry.startedAt ?? now,
+          arrivedAt: timeEntry.arrivedAt ?? now,
+          endedAt: null,
+          totalMinutes: null,
+          status: "on_site",
+        });
+      }
+
+      const job = await storage.getJobForCompany(req.companyId, assignment.jobId);
+      if (job && job.status === "planned") {
+        await storage.updateJob(job.id, { status: "in_progress" });
+      }
+
+      res.json({ assignment: { ...assignment, status: "on_site" }, timeEntry });
+    } catch (error) {
+      console.error("Error starting work:", error);
+      res.status(500).json({ message: "Internal error" });
+    }
+  });
+
   app.post("/api/assignments/:id/arrive", isAuthenticated, requireAuth, async (req: any, res) => {
     try {
       const assignment = await getAuthorizedAssignment(req, res, req.params.id, {
