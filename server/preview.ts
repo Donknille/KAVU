@@ -1,4 +1,4 @@
-import type { User } from "@shared/models/auth";
+import type { User } from "../shared/models/auth.js";
 
 function hasConfiguredAuthProvider() {
   const provider = process.env.AUTH_PROVIDER?.trim().toLowerCase();
