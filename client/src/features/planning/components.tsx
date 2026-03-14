@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import {
@@ -60,7 +60,13 @@ import {
   toDateStr,
 } from "@/features/planning/utils";
 
-export function BacklogJobCard({ job, compact }: { job: PlanJob; compact: boolean }) {
+export const BacklogJobCard = memo(function BacklogJobCard({
+  job,
+  compact,
+}: {
+  job: PlanJob;
+  compact: boolean;
+}) {
   const {
     attributes,
     listeners,
@@ -156,9 +162,9 @@ export function BacklogJobCard({ job, compact }: { job: PlanJob; compact: boolea
       </div>
     </button>
   );
-}
+});
 
-export function TeamMemberCard({
+export const TeamMemberCard = memo(function TeamMemberCard({
   employee,
   badgeLabel,
   badgeTone,
@@ -255,9 +261,9 @@ export function TeamMemberCard({
       </div>
     </button>
   );
-}
+});
 
-export function DayColumnDropZone({
+export const DayColumnDropZone = memo(function DayColumnDropZone({
   date,
   column,
   laneCount,
@@ -290,16 +296,16 @@ export function DayColumnDropZone({
       }}
     />
   );
-}
+});
 
-export function PlanningBlockCard({
+export const PlanningBlockCard = memo(function PlanningBlockCard({
   block,
   compact,
   overview = false,
   readableCompact = false,
   employeeDropActive = false,
   selected,
-  onSelect,
+  onSelectBlock,
 }: {
   block: PlanningBlock;
   compact: boolean;
@@ -307,7 +313,7 @@ export function PlanningBlockCard({
   readableCompact?: boolean;
   employeeDropActive?: boolean;
   selected: boolean;
-  onSelect: () => void;
+  onSelectBlock: (blockId: string) => void;
 }) {
   const {
     attributes: moveAttributes,
@@ -394,7 +400,7 @@ export function PlanningBlockCard({
         transform: CSS.Translate.toString(transform),
         zIndex: isDragging ? 50 : selected ? 20 : 10,
       }}
-      onClick={onSelect}
+      onClick={() => onSelectBlock(block.id)}
     >
       {employeeDropActive && block.canAssignWorkers && (
         <div
@@ -581,7 +587,7 @@ export function PlanningBlockCard({
       </div>
     </div>
   );
-}
+});
 
 export function ResizePreviewGhost({
   preview,

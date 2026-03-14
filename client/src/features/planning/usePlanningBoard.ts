@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import {
   MouseSensor,
   TouchSensor,
@@ -89,46 +89,85 @@ export function usePlanningBoard() {
   const [backlogSearch, setBacklogSearch] = useState("");
   const [teamSearch, setTeamSearch] = useState("");
   const [teamFilter, setTeamFilter] = useState<TeamFilterMode>("all");
+  const deferredBacklogSearch = useDeferredValue(backlogSearch);
+  const deferredTeamSearch = useDeferredValue(teamSearch);
 
-  const visibleDays = getVisibleDays(weekStart, viewSpan);
-  const planningBoardUrl = `/api/planning/board?startDate=${visibleDays[0]}&endDate=${
-    visibleDays[visibleDays.length - 1]
-  }`;
+  const visibleDays = useMemo(() => getVisibleDays(weekStart, viewSpan), [weekStart, viewSpan]);
+  const planningBoardUrl = useMemo(
+    () =>
+      `/api/planning/board?startDate=${visibleDays[0]}&endDate=${
+        visibleDays[visibleDays.length - 1]
+      }`,
+    [visibleDays],
+  );
 
   const { data: planningBoard = EMPTY_PLANNING_BOARD } = useQuery<PlanningBoardResponse>({
     queryKey: [planningBoardUrl],
   });
 
-  const { assignments, activeEmployees, backlogJobs, blocks } = planningBoard;
-  const blocksById = new Map(blocks.map((block) => [block.id, block]));
-  const jobsById = new Map<string, PlanJob>();
-  for (const job of backlogJobs) {
-    jobsById.set(job.id, job);
-  }
-  for (const assignment of assignments) {
-    if (assignment.job) {
-      jobsById.set(assignment.job.id, assignment.job);
+  const { assignments, activeEmployees, backlogJobs, blocks, daySummaries } = planningBoard;
+  const blocksById = useMemo(() => new Map(blocks.map((block) => [block.id, block])), [blocks]);
+  const jobsById = useMemo(() => {
+    const next = new Map<string, PlanJob>();
+    for (const job of backlogJobs) {
+      next.set(job.id, job);
     }
-  }
-  const employeesById = new Map(activeEmployees.map((employee) => [employee.id, employee]));
-  const dayIndexByDate = new Map(visibleDays.map((date, index) => [date, index]));
-  const selectedBlock = selectedBlockId ? blocksById.get(selectedBlockId) ?? null : null;
-  const backlogList = filterJobs(backlogJobs, backlogSearch);
-  const teamFocusDate =
-    selectedBlock && visibleDays.includes(selectedBlock.startDate)
-      ? selectedBlock.startDate
-      : visibleDays.includes(today)
-        ? today
-        : visibleDays[0];
-  const teamFocusLabel = teamFocusDate === today ? "Heute" : formatCompactDate(teamFocusDate);
-  const teamOverview = buildTeamOverview(activeEmployees, assignments, visibleDays, teamFocusDate);
-  const filteredTeamOverview = filterTeamOverview(teamOverview, teamSearch, teamFilter);
-  const teamSections = buildTeamSections(filteredTeamOverview, teamFocusLabel);
-  const teamSummary = {
-    freeOnFocusDay: teamOverview.filter((entry) => !entry.focusAssigned).length,
-    unassignedInWindow: teamOverview.filter((entry) => entry.unassignedInWindow).length,
-    fullyBookedInWindow: teamOverview.filter((entry) => entry.fullyBookedInWindow).length,
-  };
+    for (const assignment of assignments) {
+      if (assignment.job) {
+        next.set(assignment.job.id, assignment.job);
+      }
+    }
+    return next;
+  }, [assignments, backlogJobs]);
+  const employeesById = useMemo(
+    () => new Map(activeEmployees.map((employee) => [employee.id, employee])),
+    [activeEmployees],
+  );
+  const dayIndexByDate = useMemo(
+    () => new Map(visibleDays.map((date, index) => [date, index])),
+    [visibleDays],
+  );
+  const selectedBlock = useMemo(
+    () => (selectedBlockId ? blocksById.get(selectedBlockId) ?? null : null),
+    [blocksById, selectedBlockId],
+  );
+  const backlogList = useMemo(
+    () => filterJobs(backlogJobs, deferredBacklogSearch),
+    [backlogJobs, deferredBacklogSearch],
+  );
+  const teamFocusDate = useMemo(
+    () =>
+      selectedBlock && visibleDays.includes(selectedBlock.startDate)
+        ? selectedBlock.startDate
+        : visibleDays.includes(today)
+          ? today
+          : visibleDays[0],
+    [selectedBlock, today, visibleDays],
+  );
+  const teamFocusLabel = useMemo(
+    () => (teamFocusDate === today ? "Heute" : formatCompactDate(teamFocusDate)),
+    [teamFocusDate, today],
+  );
+  const teamOverview = useMemo(
+    () => buildTeamOverview(activeEmployees, assignments, visibleDays, teamFocusDate),
+    [activeEmployees, assignments, teamFocusDate, visibleDays],
+  );
+  const filteredTeamOverview = useMemo(
+    () => filterTeamOverview(teamOverview, deferredTeamSearch, teamFilter),
+    [deferredTeamSearch, teamFilter, teamOverview],
+  );
+  const teamSections = useMemo(
+    () => buildTeamSections(filteredTeamOverview, teamFocusLabel),
+    [filteredTeamOverview, teamFocusLabel],
+  );
+  const teamSummary = useMemo(
+    () => ({
+      freeOnFocusDay: teamOverview.filter((entry) => !entry.focusAssigned).length,
+      unassignedInWindow: teamOverview.filter((entry) => entry.unassignedInWindow).length,
+      fullyBookedInWindow: teamOverview.filter((entry) => entry.fullyBookedInWindow).length,
+    }),
+    [teamOverview],
+  );
 
   useEffect(() => {
     if (selectedBlockId && !blocksById.has(selectedBlockId)) {
@@ -154,7 +193,7 @@ export function usePlanningBoard() {
     })
   );
 
-  const collisionDetection: CollisionDetection = (args) => {
+  const collisionDetection = useCallback<CollisionDetection>((args) => {
     const hits = pointerWithin(args);
     const activeId = String(args.active.id);
     const preferred = preferCollisionHits(activeId, hits);
@@ -173,28 +212,28 @@ export function usePlanningBoard() {
     }
 
     return fallbackHits;
-  };
+  }, []);
 
-  function updateJobForm(field: keyof JobForm, value: string) {
+  const updateJobForm = useCallback((field: keyof JobForm, value: string) => {
     setJobForm((current) => ({ ...current, [field]: value }));
-  }
+  }, []);
 
-  function setCreateJobDialogOpen(open: boolean) {
+  const setCreateJobDialogOpen = useCallback((open: boolean) => {
     setShowCreateJobDialog(open);
     if (!open) {
       setJobForm(EMPTY_JOB_FORM);
     }
-  }
+  }, []);
 
-  function composePlanningBoard(
+  const composePlanningBoard = useCallback((
     data: Pick<PlanningBoardResponse, "employees" | "backlogJobs" | "assignments">
-  ): PlanningBoardResponse {
+  ): PlanningBoardResponse => {
     return createPlanningBoardReadModel(data, visibleDays, today) as PlanningBoardResponse;
-  }
+  }, [today, visibleDays]);
 
-  function updateAssignmentsCache(
+  const updateAssignmentsCache = useCallback((
     updater: (current: PlanAssignment[]) => PlanAssignment[]
-  ) {
+  ) => {
     queryClient.setQueryData<PlanningBoardResponse>([planningBoardUrl], (current) => ({
       ...composePlanningBoard({
         employees: current?.employees ?? [],
@@ -202,9 +241,9 @@ export function usePlanningBoard() {
         assignments: updater(current?.assignments ?? []),
       }),
     }));
-  }
+  }, [composePlanningBoard, planningBoardUrl]);
 
-  function updateBacklogCache(updater: (current: PlanJob[]) => PlanJob[]) {
+  const updateBacklogCache = useCallback((updater: (current: PlanJob[]) => PlanJob[]) => {
     queryClient.setQueryData<PlanningBoardResponse>([planningBoardUrl], (current) => ({
       ...composePlanningBoard({
         employees: current?.employees ?? [],
@@ -212,18 +251,18 @@ export function usePlanningBoard() {
         assignments: current?.assignments ?? [],
       }),
     }));
-  }
+  }, [composePlanningBoard, planningBoardUrl]);
 
-  function updateJobsCache(updater: (current: PlanJob[]) => PlanJob[]) {
+  const updateJobsCache = useCallback((updater: (current: PlanJob[]) => PlanJob[]) => {
     queryClient.setQueryData<PlanJob[]>([JOBS_QUERY_KEY], (current = []) => updater(current));
-  }
+  }, []);
 
-  async function refreshPlanningBoard() {
+  const refreshPlanningBoard = useCallback(async () => {
     await queryClient.invalidateQueries({
       queryKey: [planningBoardUrl],
       exact: true,
     });
-  }
+  }, [planningBoardUrl]);
 
   async function runBusyAction(label: string, action: () => Promise<void>) {
     if (busyLabel) {
@@ -251,11 +290,11 @@ export function usePlanningBoard() {
     return false;
   }
 
-  function getEmployeeScheduledDates(
+  const getEmployeeScheduledDates = useCallback((
     employeeId: string,
     targetDays: string[],
     ignoredAssignmentIds: string[] = []
-  ) {
+  ) => {
     const ignored = new Set(ignoredAssignmentIds);
 
     return uniqueSortedDates(
@@ -269,9 +308,13 @@ export function usePlanningBoard() {
         })
         .map((assignment) => assignment.assignmentDate)
     );
-  }
+  }, [assignments]);
 
-  function getJobConflictDates(jobId: string, targetDays: string[], ignoredAssignmentIds: string[] = []) {
+  const getJobConflictDates = useCallback((
+    jobId: string,
+    targetDays: string[],
+    ignoredAssignmentIds: string[] = [],
+  ) => {
     const ignored = new Set(ignoredAssignmentIds);
 
     return uniqueSortedDates(
@@ -285,9 +328,9 @@ export function usePlanningBoard() {
         })
         .map((assignment) => assignment.assignmentDate)
     );
-  }
+  }, [assignments]);
 
-  function getEmployeeAvailability(employeeId: string) {
+  const getEmployeeAvailability = useCallback((employeeId: string) => {
     if (!selectedBlock) {
       return "free" as const;
     }
@@ -298,7 +341,7 @@ export function usePlanningBoard() {
     return getEmployeeScheduledDates(employeeId, selectedBlock.days, selectedBlock.assignmentIds).length > 0
       ? ("scheduled" as const)
       : ("free" as const);
-  }
+  }, [getEmployeeScheduledDates, selectedBlock]);
 
   async function createBacklogJob() {
     if (!jobForm.title || !jobForm.customerName) {
@@ -718,11 +761,11 @@ export function usePlanningBoard() {
     });
   }
 
-  function changeWindow(direction: -1 | 1) {
+  const changeWindow = useCallback((direction: -1 | 1) => {
     setWeekStart((current) => addCalendarDays(current, direction * viewSpan * 7));
-  }
+  }, [viewSpan]);
 
-  function handleDragStart(event: DragStartEvent) {
+  const handleDragStart = useCallback((event: DragStartEvent) => {
     const id = String(event.active.id);
     const data = event.active.data.current as PlanningDragData | undefined;
 
@@ -804,7 +847,7 @@ export function usePlanningBoard() {
         setActiveDrag({ type: "block-resize-end", block });
       }
     }
-  }
+  }, [blocksById, employeesById, jobsById]);
 
   function getActiveCenterX(event: DragOverEvent | DragEndEvent) {
     const translated = event.active.rect.current.translated;
@@ -820,7 +863,7 @@ export function usePlanningBoard() {
     return null;
   }
 
-  function resolveDropDate(event: DragOverEvent | DragEndEvent, currentDrag: ActiveDrag) {
+  const resolveDropDate = useCallback((event: DragOverEvent | DragEndEvent, currentDrag: ActiveDrag) => {
     const overId = event.over ? String(event.over.id) : null;
     if (!overId) {
       return null;
@@ -842,9 +885,9 @@ export function usePlanningBoard() {
       activeCenterX: getActiveCenterX(event),
       overRect: event.over?.rect ?? null,
     });
-  }
+  }, [blocksById]);
 
-  function buildResizePreview(currentDrag: ActiveDrag, targetDate: string | null): ResizePreview | null {
+  const buildResizePreview = useCallback((currentDrag: ActiveDrag, targetDate: string | null): ResizePreview | null => {
     if (!targetDate) {
       return null;
     }
@@ -903,9 +946,9 @@ export function usePlanningBoard() {
       valid: !blockedByHistory && !blockedByPermission && !blockedByConflict,
       label: formatRange(nextDays[0], nextDays[nextDays.length - 1]),
     };
-  }
+  }, [dayIndexByDate, getJobConflictDates, visibleDays]);
 
-  function handleDragOver(event: DragOverEvent) {
+  const handleDragOver = useCallback((event: DragOverEvent) => {
     if (!activeDrag) {
       return;
     }
@@ -916,14 +959,14 @@ export function usePlanningBoard() {
     }
 
     setDragOverDate(resolveDropDate(event, activeDrag));
-  }
+  }, [activeDrag, resolveDropDate]);
 
-  function handleDragCancel(_event: DragCancelEvent) {
+  const handleDragCancel = useCallback((_event: DragCancelEvent) => {
     setActiveDrag(null);
     setDragOverDate(null);
-  }
+  }, []);
 
-  async function handleDragEnd(event: DragEndEvent) {
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     const overId = event.over ? String(event.over.id) : null;
     const overData = event.over?.data.current as PlanningDropData | undefined;
     const currentDrag = activeDrag;
@@ -974,9 +1017,22 @@ export function usePlanningBoard() {
         variant: "destructive",
       });
     }
-  }
+  }, [
+    activeDrag,
+    assignEmployeeToBlock,
+    blocksById,
+    busyLabel,
+    createBlockFromBacklog,
+    moveBlock,
+    resizeBlock,
+    resolveDropDate,
+    toast,
+  ]);
 
-  const laneCount = Math.max(2, blocks.reduce((max, block) => Math.max(max, block.lane + 1), 0));
+  const laneCount = useMemo(
+    () => Math.max(2, blocks.reduce((max, block) => Math.max(max, block.lane + 1), 0)),
+    [blocks],
+  );
   const columnMinWidth = isMobile ? (viewSpan === 2 ? 104 : 76) : viewSpan === 2 ? 58 : 36;
   const laneHeight = isMobile ? (viewSpan === 2 ? 88 : 64) : viewSpan === 2 ? 48 : 34;
   const boardMinHeight = isMobile
@@ -986,18 +1042,54 @@ export function usePlanningBoard() {
     : viewSpan === 2
       ? "clamp(13.5rem, 28vh, 17rem)"
       : "clamp(11rem, 22vh, 14rem)";
-  const resizePreview = activeDrag ? buildResizePreview(activeDrag, dragOverDate) : null;
-  const boardGridStyle = {
-    gridTemplateColumns: `repeat(${visibleDays.length}, minmax(${columnMinWidth}px, 1fr))`,
-    gridTemplateRows: `repeat(${laneCount}, minmax(${laneHeight}px, 1fr))`,
-    minHeight: boardMinHeight,
-  };
-  const boardBackgroundStyle = {
-    backgroundColor: "rgba(255, 255, 255, 0.92)",
-    backgroundImage:
-      "linear-gradient(to right, rgba(203, 213, 225, 0.9) 1px, transparent 1px), linear-gradient(to bottom, rgba(203, 213, 225, 0.9) 1px, transparent 1px)",
-    backgroundSize: `calc(100% / ${visibleDays.length}) calc(100% / ${laneCount})`,
-  };
+  const resizePreview = useMemo(
+    () => (activeDrag ? buildResizePreview(activeDrag, dragOverDate) : null),
+    [activeDrag, buildResizePreview, dragOverDate],
+  );
+  const boardGridStyle = useMemo(
+    () => ({
+      gridTemplateColumns: `repeat(${visibleDays.length}, minmax(${columnMinWidth}px, 1fr))`,
+      gridTemplateRows: `repeat(${laneCount}, minmax(${laneHeight}px, 1fr))`,
+      minHeight: boardMinHeight,
+    }),
+    [boardMinHeight, columnMinWidth, laneCount, laneHeight, visibleDays.length],
+  );
+  const boardBackgroundStyle = useMemo(
+    () => ({
+      backgroundColor: "rgba(255, 255, 255, 0.92)",
+      backgroundImage:
+        "linear-gradient(to right, rgba(203, 213, 225, 0.9) 1px, transparent 1px), linear-gradient(to bottom, rgba(203, 213, 225, 0.9) 1px, transparent 1px)",
+      backgroundSize: `calc(100% / ${visibleDays.length}) calc(100% / ${laneCount})`,
+    }),
+    [laneCount, visibleDays.length],
+  );
+
+  const removeEmployeeFromSelected = useCallback((employeeId: string, selection?: WorkerDaySelection) => {
+    if (selectedBlock) {
+      return removeEmployeeFromBlock(selectedBlock, employeeId, selection);
+    }
+  }, [removeEmployeeFromBlock, selectedBlock]);
+
+  const assignEmployeeToSelected = useCallback((employeeId: string, selection?: WorkerDaySelection) => {
+    if (selectedBlock) {
+      const employee = employeesById.get(employeeId);
+      if (employee) {
+        return assignEmployeeToBlock(selectedBlock, employee, selection);
+      }
+    }
+  }, [assignEmployeeToBlock, employeesById, selectedBlock]);
+
+  const moveSelectedBlock = useCallback((targetDate: string) => {
+    if (selectedBlock) {
+      return moveBlock(selectedBlock, targetDate);
+    }
+  }, [moveBlock, selectedBlock]);
+
+  const removeSelectedBlock = useCallback(() => {
+    if (selectedBlock) {
+      return removeBlock(selectedBlock);
+    }
+  }, [removeBlock, selectedBlock]);
 
   return {
     activeDrag,
@@ -1010,7 +1102,6 @@ export function usePlanningBoard() {
     boardGridStyle,
     busyLabel,
     collisionDetection,
-    daySummaries: planningBoard.daySummaries,
     getEmployeeAvailability,
     handleDragCancel,
     handleDragEnd,
@@ -1023,9 +1114,11 @@ export function usePlanningBoard() {
     sensors,
     showCreateJobDialog,
     teamFilter,
+    teamEntries: filteredTeamOverview,
     teamFocusDate,
     teamFocusLabel,
     teamSearch,
+    daySummaries,
     teamSections,
     teamSummary,
     isMobile,
@@ -1033,29 +1126,10 @@ export function usePlanningBoard() {
     visibleDays,
     weekStart,
     changeWindow,
-    removeEmployeeFromSelected(employeeId: string, selection?: WorkerDaySelection) {
-      if (selectedBlock) {
-        return removeEmployeeFromBlock(selectedBlock, employeeId, selection);
-      }
-    },
-    assignEmployeeToSelected(employeeId: string, selection?: WorkerDaySelection) {
-      if (selectedBlock) {
-        const employee = employeesById.get(employeeId);
-        if (employee) {
-          return assignEmployeeToBlock(selectedBlock, employee, selection);
-        }
-      }
-    },
-    moveSelectedBlock(targetDate: string) {
-      if (selectedBlock) {
-        return moveBlock(selectedBlock, targetDate);
-      }
-    },
-    removeSelectedBlock() {
-      if (selectedBlock) {
-        return removeBlock(selectedBlock);
-      }
-    },
+    removeEmployeeFromSelected,
+    assignEmployeeToSelected,
+    moveSelectedBlock,
+    removeSelectedBlock,
     setBacklogSearch,
     setSelectedBlockId,
     setTeamFilter,
@@ -1068,6 +1142,10 @@ export function usePlanningBoard() {
 }
 
 function filterJobs(jobs: PlanJob[], searchTerm: string) {
+  if (!searchTerm.trim()) {
+    return jobs;
+  }
+
   const normalizedSearch = searchTerm.toLowerCase();
   return jobs.filter((job) => {
     const haystack = `${job.jobNumber} ${job.title} ${job.customerName}`.toLowerCase();
@@ -1075,12 +1153,14 @@ function filterJobs(jobs: PlanJob[], searchTerm: string) {
   });
 }
 
-function filterEmployees(employees: PlanEmployee[], searchTerm: string) {
+function matchesEmployeeSearch(employee: PlanEmployee, searchTerm: string) {
+  if (!searchTerm.trim()) {
+    return true;
+  }
+
   const normalizedSearch = searchTerm.toLowerCase();
-  return employees.filter((employee) => {
-    const haystack = `${employee.firstName} ${employee.lastName} ${employee.phone ?? ""}`.toLowerCase();
-    return haystack.includes(normalizedSearch);
-  });
+  const haystack = `${employee.firstName} ${employee.lastName} ${employee.phone ?? ""}`.toLowerCase();
+  return haystack.includes(normalizedSearch);
 }
 
 function buildTeamOverview(
@@ -1165,9 +1245,10 @@ function filterTeamOverview(
   searchTerm: string,
   teamFilter: TeamFilterMode
 ) {
+  const hasSearch = !!searchTerm.trim();
+
   return entries.filter((entry) => {
-    const matchesSearch = filterEmployees([entry.employee], searchTerm).length > 0;
-    if (!matchesSearch) {
+    if (hasSearch && !matchesEmployeeSearch(entry.employee, searchTerm)) {
       return false;
     }
 

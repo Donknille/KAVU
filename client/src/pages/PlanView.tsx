@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DndContext, DragOverlay } from "@dnd-kit/core";
 import type { ImperativePanelHandle } from "react-resizable-panels";
 import {
@@ -37,20 +37,12 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
 export default function PlanView() {
   const planning = usePlanningBoard();
   const isOverviewMode = planning.viewSpan === 4;
   const readableCompactBlocks = planning.isMobile && planning.viewSpan === 2;
-  const compactBoard = isOverviewMode;
   const backlogPanelRef = useRef<ImperativePanelHandle | null>(null);
   const [backlogCollapsed, setBacklogCollapsed] = useState(false);
   const [isWideDesktop, setIsWideDesktop] = useState(false);
@@ -62,7 +54,11 @@ export default function PlanView() {
 
     const mediaQuery = window.matchMedia("(min-width: 1280px)");
     const updateMatch = () => {
-      setIsWideDesktop(mediaQuery.matches);
+      const nextWideDesktop = mediaQuery.matches;
+      setIsWideDesktop(nextWideDesktop);
+      if (!nextWideDesktop) {
+        setBacklogCollapsed(true);
+      }
     };
 
     updateMatch();
@@ -73,9 +69,67 @@ export default function PlanView() {
     };
   }, []);
 
+  const handleSelectBlock = useCallback(
+    (blockId: string) => {
+      planning.setSelectedBlockId(blockId);
+    },
+    [planning.setSelectedBlockId],
+  );
+
+  const rangeLabel = useMemo(
+    () =>
+      formatRange(
+        planning.visibleDays[0],
+        planning.visibleDays[planning.visibleDays.length - 1],
+      ),
+    [planning.visibleDays],
+  );
+
+  const selectedBlockMoveDates = useMemo(
+    () =>
+      planning.selectedBlock
+        ? planning.visibleDays.filter(
+            (_day, index) => index + planning.selectedBlock!.span <= planning.visibleDays.length,
+          )
+        : [],
+    [planning.selectedBlock, planning.visibleDays],
+  );
+
+  const dayHeaders = useMemo(
+    () =>
+      planning.daySummaries.map((summary) => {
+        const date = parseDateString(summary.day);
+        const isToday = summary.day === toDateStr(new Date());
+        const isPreviewDay = planning.resizePreview?.addedDays.includes(summary.day) ?? false;
+
+        return {
+          day: summary.day,
+          isToday,
+          isPreviewDay,
+          previewTone: planning.resizePreview?.valid ? "valid" : "invalid",
+          weekdayLabel: date.toLocaleDateString("de-DE", {
+            weekday: isOverviewMode && !planning.isMobile ? "narrow" : "short",
+          }),
+          dateLabel: date.toLocaleDateString("de-DE", {
+            day: "2-digit",
+            month: "2-digit",
+          }),
+          assignmentCount: summary.assignments,
+          freeCount: Math.max(0, planning.activeEmployees.length - summary.workers),
+        };
+      }),
+    [
+      isOverviewMode,
+      planning.activeEmployees.length,
+      planning.daySummaries,
+      planning.isMobile,
+      planning.resizePreview,
+    ],
+  );
+
   function toggleBacklogPanel() {
     const panel = backlogPanelRef.current;
-    if (!panel) {
+    if (!panel || !isWideDesktop) {
       setBacklogCollapsed((current) => !current);
       return;
     }
@@ -90,326 +144,435 @@ export default function PlanView() {
     setBacklogCollapsed(true);
   }
 
-  const backlogCollapsedRail = (
-    <Card className="brand-panel flex h-full min-h-0 flex-col items-center justify-between rounded-3xl px-2 py-3">
-      <div className="flex flex-col items-center gap-2">
+  const backlogCollapsedRail = useMemo(
+    () => (
+      <Card className="brand-panel flex h-full min-h-0 flex-col items-center justify-between rounded-3xl px-2 py-3">
+        <div className="flex flex-col items-center gap-2">
+          <Button
+            type="button"
+            size="icon"
+            variant="outline"
+            className="h-8 w-8 rounded-full border-[#173d66]/12 bg-white/85 text-[#173d66]"
+            onClick={toggleBacklogPanel}
+          >
+            <ChevronsRight className="h-4 w-4" />
+          </Button>
+          <div className="brand-outline-chip rounded-full px-2 py-1 text-[10px] font-semibold">
+            {planning.backlogList.length}
+          </div>
+        </div>
+
         <Button
           type="button"
           size="icon"
-          variant="outline"
-          className="h-8 w-8 rounded-full border-[#173d66]/12 bg-white/85 text-[#173d66]"
-          onClick={toggleBacklogPanel}
+          variant="ghost"
+          className="h-8 w-8 rounded-full text-[#173d66]"
+          onClick={() => planning.setShowCreateJobDialog(true)}
         >
-          <ChevronsRight className="h-4 w-4" />
+          <Plus className="h-4 w-4" />
         </Button>
-        <div className="brand-outline-chip rounded-full px-2 py-1 text-[10px] font-semibold">
-          {planning.backlogList.length}
-        </div>
-      </div>
-
-      <Button
-        type="button"
-        size="icon"
-        variant="ghost"
-        className="h-8 w-8 rounded-full text-[#173d66]"
-        onClick={() => planning.setShowCreateJobDialog(true)}
-      >
-        <Plus className="h-4 w-4" />
-      </Button>
-    </Card>
+      </Card>
+    ),
+    [planning.backlogList.length, planning.setShowCreateJobDialog],
   );
 
-  const backlogExpandedPanel = (
-    <Card className="brand-panel flex min-h-0 flex-col overflow-hidden rounded-3xl">
-      <div className="border-b border-[#173d66]/10 p-3">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <p className="brand-kicker">Backlog</p>
-            <p className="mt-1 text-sm font-semibold text-[#173d66]">Ungeplante Auftraege</p>
-            <p className="text-xs text-[#173d66]/64">
-              {planning.backlogList.length} ungeplante Auftraege
-            </p>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Button
-              type="button"
-              size="icon"
-              variant="outline"
-              className="h-8 w-8 rounded-full border-[#173d66]/12 bg-white/85 text-[#173d66]"
-              onClick={toggleBacklogPanel}
-            >
-              <ChevronsLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              size="sm"
-              className="h-8 gap-2 bg-[#173d66] px-2.5 text-white hover:bg-[#123251]"
-              onClick={() => planning.setShowCreateJobDialog(true)}
-            >
-              <Plus className="h-4 w-4" />
-              Auftrag
-            </Button>
-          </div>
-        </div>
-        <Input
-          value={planning.backlogSearch}
-          onChange={(event) => planning.setBacklogSearch(event.target.value)}
-          placeholder="Auftrag suchen..."
-          className="mt-3 h-8 border-[#173d66]/10 bg-white/80"
-        />
-      </div>
-      <div className="min-h-0 flex-1 p-2.5">
-        <div className="flex h-full min-h-0 flex-col gap-2">
-          <button
-            type="button"
-            className="brand-soft-card flex w-full items-center justify-between rounded-xl border-dashed px-2.5 py-2 text-left transition hover:border-[#173d66]/18"
-            onClick={() => planning.setShowCreateJobDialog(true)}
-          >
+  const backlogExpandedPanel = useMemo(
+    () => (
+      <Card className="brand-panel flex h-full min-h-0 flex-col overflow-hidden rounded-3xl">
+        <div className="border-b border-[#173d66]/10 p-3">
+          <div className="flex items-center justify-between gap-2">
             <div>
-              <p className="text-xs font-semibold text-[#173d66]">Neuen Auftrag anlegen</p>
-              <p className="text-[10px] text-[#173d66]/64">
-                Im Backlog erfassen und anschliessend disponieren
+              <p className="brand-kicker">Backlog</p>
+              <p className="mt-1 text-sm font-semibold text-[#173d66]">Ungeplante Auftraege</p>
+              <p className="text-xs text-[#173d66]/64">
+                {planning.backlogList.length} ungeplante Auftraege
               </p>
             </div>
-            <Plus className="h-4 w-4 text-[#173d66]/56" />
-          </button>
-
-          {planning.backlogList.length === 0 && (
-            <div className="brand-soft-card rounded-2xl border-dashed p-6 text-center text-sm text-[#173d66]/64">
-              <p>Keine offenen Auftraege im Backlog.</p>
+            <div className="flex items-center gap-1.5">
               <Button
+                type="button"
+                size="icon"
                 variant="outline"
-                className="mt-4 gap-2 border-[#173d66]/12 bg-white/80 text-[#173d66]"
+                className="h-8 w-8 rounded-full border-[#173d66]/12 bg-white/85 text-[#173d66]"
+                onClick={toggleBacklogPanel}
+              >
+                <ChevronsLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                className="h-8 gap-2 bg-[#173d66] px-2.5 text-white hover:bg-[#123251]"
                 onClick={() => planning.setShowCreateJobDialog(true)}
               >
                 <Plus className="h-4 w-4" />
-                Auftrag anlegen
+                Auftrag
               </Button>
             </div>
-          )}
-          {planning.backlogList.length > 0 && (
-            <VirtualStack
-              items={planning.backlogList}
-              itemHeight={108}
-              className="min-h-0 flex-1 overflow-y-auto pr-1"
-              renderItem={(job) => <BacklogJobCard key={job.id} job={job} compact={false} />}
-            />
-          )}
+          </div>
+          <Input
+            value={planning.backlogSearch}
+            onChange={(event) => planning.setBacklogSearch(event.target.value)}
+            placeholder="Auftrag suchen..."
+            className="mt-3 h-8 border-[#173d66]/10 bg-white/80"
+          />
         </div>
-      </div>
-    </Card>
+        <div className="min-h-0 flex-1 p-2.5">
+          <div className="flex h-full min-h-0 flex-col gap-2">
+            <button
+              type="button"
+              className="brand-soft-card flex w-full items-center justify-between rounded-xl border-dashed px-2.5 py-2 text-left transition hover:border-[#173d66]/18"
+              onClick={() => planning.setShowCreateJobDialog(true)}
+            >
+              <div>
+                <p className="text-xs font-semibold text-[#173d66]">Neuen Auftrag anlegen</p>
+                <p className="text-[10px] text-[#173d66]/64">
+                  Im Backlog erfassen und anschliessend disponieren
+                </p>
+              </div>
+              <Plus className="h-4 w-4 text-[#173d66]/56" />
+            </button>
+
+            {planning.backlogList.length === 0 ? (
+              <div className="brand-soft-card rounded-2xl border-dashed p-6 text-center text-sm text-[#173d66]/64">
+                <p>Keine offenen Auftraege im Backlog.</p>
+                <Button
+                  variant="outline"
+                  className="mt-4 gap-2 border-[#173d66]/12 bg-white/80 text-[#173d66]"
+                  onClick={() => planning.setShowCreateJobDialog(true)}
+                >
+                  <Plus className="h-4 w-4" />
+                  Auftrag anlegen
+                </Button>
+              </div>
+            ) : (
+              <VirtualStack
+                items={planning.backlogList}
+                itemHeight={108}
+                className="min-h-0 flex-1 overflow-y-auto pr-1"
+                renderItem={(job) => <BacklogJobCard key={job.id} job={job} compact={false} />}
+              />
+            )}
+          </div>
+        </div>
+      </Card>
+    ),
+    [
+      planning.backlogList,
+      planning.backlogSearch,
+      planning.setBacklogSearch,
+      planning.setShowCreateJobDialog,
+    ],
   );
 
-  const calendarBoard = (
-    <Card className="brand-panel flex h-full min-h-0 flex-col overflow-hidden rounded-3xl">
-      <div className="overflow-x-auto">
-        <div className="w-full">
-          <div
-            className="grid gap-px border-b border-[#173d66]/10 bg-[#173d66]/10"
-            style={{ gridTemplateColumns: planning.boardGridStyle.gridTemplateColumns }}
-          >
-            {planning.daySummaries.map((summary) => {
-              const isToday = summary.day === toDateStr(new Date());
-              return (
+  const calendarBoard = useMemo(
+    () => (
+      <Card className="brand-panel flex h-full min-h-0 flex-col overflow-hidden rounded-3xl">
+        <div className="flex items-center justify-between gap-3 border-b border-[#173d66]/10 px-3 py-2.5">
+          <div className="min-w-0">
+            <p className="brand-kicker">Kalender</p>
+            <p className="mt-1 truncate text-sm font-semibold text-[#173d66]">
+              Einsatzplan im Zeitraum {rangeLabel}
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Badge
+              variant="outline"
+              className="rounded-full border-[#173d66]/10 bg-white/72 px-2 py-0.5 text-[11px] font-medium text-[#173d66]"
+            >
+              {planning.blocks.length} geplant
+            </Badge>
+            <Badge
+              variant="outline"
+              className="rounded-full border-[#173d66]/10 bg-white/72 px-2 py-0.5 text-[11px] font-medium text-[#173d66]"
+            >
+              {planning.teamSummary.freeOnFocusDay} frei
+            </Badge>
+          </div>
+        </div>
+        <div className="min-h-0 overflow-x-auto">
+          <div className="w-full">
+            <div
+              className="grid gap-px border-b border-[#173d66]/10 bg-[#173d66]/10"
+              style={{ gridTemplateColumns: planning.boardGridStyle.gridTemplateColumns }}
+            >
+              {dayHeaders.map((header) => (
                 <div
-                  key={summary.day}
+                  key={header.day}
                   className={cn(
                     "min-w-0 bg-background px-1.5 py-1.5 text-[#173d66]",
-                    planning.resizePreview?.addedDays.includes(summary.day) &&
-                      (planning.resizePreview.valid ? "bg-sky-50" : "bg-rose-50"),
-                    isToday && "bg-[#68d5c8]/24"
+                    header.isPreviewDay &&
+                      (header.previewTone === "valid" ? "bg-sky-50" : "bg-rose-50"),
+                    header.isToday && "bg-[#68d5c8]/24",
                   )}
                 >
                   <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#173d66]/58">
-                    {parseDateString(summary.day).toLocaleDateString("de-DE", {
-                      weekday: isOverviewMode && !planning.isMobile ? "narrow" : "short",
-                    })}
+                    {header.weekdayLabel}
                   </p>
                   <div className="mt-0.5 flex items-end justify-between gap-1">
-                    <p className={cn("font-semibold leading-none", isOverviewMode ? "text-xs" : "text-sm")}>
-                      {parseDateString(summary.day).toLocaleDateString("de-DE", {
-                        day: "2-digit",
-                        month: "2-digit",
-                      })}
+                    <p
+                      className={cn(
+                        "font-semibold leading-none",
+                        isOverviewMode ? "text-xs" : "text-sm",
+                      )}
+                    >
+                      {header.dateLabel}
                     </p>
                     <div className="text-right text-[9px] text-[#173d66]/58">
-                      <p>{`${summary.assignments} ET`}</p>
-                      <p>{`${Math.max(0, planning.activeEmployees.length - summary.workers)} frei`}</p>
+                      <p>{`${header.assignmentCount} ET`}</p>
+                      <p>{`${header.freeCount} frei`}</p>
                     </div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
+              ))}
+            </div>
 
-          <div className="p-1.5">
-            <div
-              className="relative overflow-hidden rounded-2xl border border-[#173d66]/12"
-              style={planning.boardGridStyle}
-            >
-              <div className="pointer-events-none absolute inset-0" style={planning.boardBackgroundStyle} />
-
+            <div className="p-1.5">
               <div
-                className="pointer-events-none absolute inset-0 grid"
+                className="relative overflow-hidden rounded-2xl border border-[#173d66]/12"
                 style={planning.boardGridStyle}
               >
-                {planning.visibleDays.map((day, index) =>
-                  planning.resizePreview?.addedDays.includes(day) ? (
-                    <div
-                      key={`preview-${day}`}
-                      className={cn(
-                        "rounded-none",
-                        planning.resizePreview.valid ? "bg-sky-50/70" : "bg-rose-50/70"
-                      )}
-                      style={{
-                        gridColumn: `${index + 1}`,
-                        gridRow: `1 / span ${planning.laneCount}`,
-                      }}
+                <div
+                  className="pointer-events-none absolute inset-0"
+                  style={planning.boardBackgroundStyle}
+                />
+
+                <div className="pointer-events-none absolute inset-0 grid" style={planning.boardGridStyle}>
+                  {planning.visibleDays.map((day, index) =>
+                    planning.resizePreview?.addedDays.includes(day) ? (
+                      <div
+                        key={`preview-${day}`}
+                        className={cn(
+                          "rounded-none",
+                          planning.resizePreview.valid ? "bg-sky-50/70" : "bg-rose-50/70",
+                        )}
+                        style={{
+                          gridColumn: `${index + 1}`,
+                          gridRow: `1 / span ${planning.laneCount}`,
+                        }}
+                      />
+                    ) : null,
+                  )}
+                  {planning.visibleDays.map((day, index) => (
+                    <DayColumnDropZone
+                      key={day}
+                      date={day}
+                      column={index + 1}
+                      laneCount={planning.laneCount}
+                      isEnabled={
+                        !!planning.activeDrag &&
+                        (planning.activeDrag.type === "job" ||
+                          planning.activeDrag.type === "block-move" ||
+                          planning.activeDrag.type === "block-resize-start" ||
+                          planning.activeDrag.type === "block-resize-end")
+                      }
                     />
-                  ) : null
-                )}
-                {planning.visibleDays.map((day, index) => (
-                  <DayColumnDropZone
-                    key={day}
-                    date={day}
-                    column={index + 1}
-                    laneCount={planning.laneCount}
-                    isEnabled={
-                      !!planning.activeDrag &&
-                      (planning.activeDrag.type === "job" ||
-                        planning.activeDrag.type === "block-move" ||
-                        planning.activeDrag.type === "block-resize-start" ||
-                        planning.activeDrag.type === "block-resize-end")
-                    }
-                  />
-                ))}
-              </div>
+                  ))}
+                </div>
 
-              <div
-                className="relative grid h-full"
-                style={planning.boardGridStyle}
-              >
-                {planning.blocks.map((block) => (
-                  <PlanningBlockCard
-                    key={block.id}
-                    block={block}
-                    compact
-                    overview={isOverviewMode}
-                    readableCompact={readableCompactBlocks}
-                    employeeDropActive={planning.activeDrag?.type === "employee"}
-                    selected={planning.selectedBlock?.id === block.id}
-                    onSelect={() => planning.setSelectedBlockId(block.id)}
-                  />
-                ))}
-                <ResizePreviewGhost preview={planning.resizePreview} compact />
+                <div className="relative grid h-full" style={planning.boardGridStyle}>
+                  {planning.blocks.map((block) => (
+                    <PlanningBlockCard
+                      key={block.id}
+                      block={block}
+                      compact
+                      overview={isOverviewMode}
+                      readableCompact={readableCompactBlocks}
+                      employeeDropActive={planning.activeDrag?.type === "employee"}
+                      selected={planning.selectedBlock?.id === block.id}
+                      onSelectBlock={handleSelectBlock}
+                    />
+                  ))}
+                  <ResizePreviewGhost preview={planning.resizePreview} compact />
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </Card>
+      </Card>
+    ),
+    [
+      dayHeaders,
+      handleSelectBlock,
+      isOverviewMode,
+      planning.activeDrag,
+      planning.blocks,
+      planning.boardBackgroundStyle,
+      planning.boardGridStyle,
+      planning.laneCount,
+      planning.resizePreview,
+      planning.selectedBlock,
+      planning.teamSummary.freeOnFocusDay,
+      planning.visibleDays,
+      rangeLabel,
+      readableCompactBlocks,
+    ],
   );
 
-  const teamCard = (
-    <Card className="brand-panel overflow-hidden rounded-3xl">
-      <div className="border-b border-[#173d66]/10 p-2.5">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="brand-kicker">Team</p>
-            <p className="mt-1 text-sm font-semibold text-[#173d66]">Verfuegbare Mitarbeitende</p>
-            <p className="text-xs text-[#173d66]/64">
-              Sortiert nach Verfuegbarkeit fuer {planning.teamFocusLabel.toLowerCase()}.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {planning.selectedBlock && (
-              <Badge variant="outline" className="rounded-full border-[#173d66]/10 bg-white/70 px-2 py-0.5 text-[10px] text-[#173d66]">
-                Detailansicht aktiv
-              </Badge>
-            )}
+  const teamContextPanel = useMemo(() => {
+    const focusSectionLabel = `${planning.teamFocusLabel} frei`;
+
+    return (
+      <Card className="brand-panel flex h-full min-h-0 flex-col overflow-hidden rounded-3xl">
+        <div className="border-b border-[#173d66]/10 p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="brand-kicker">Team</p>
+              <p className="mt-1 text-sm font-semibold text-[#173d66]">Verfuegbare Mitarbeitende</p>
+              <p className="text-xs text-[#173d66]/64">
+                Direkt neben dem Kalender fuer schnelle Zuweisungen.
+              </p>
+            </div>
             <Badge variant="secondary" className="bg-[#173d66]/8 text-[#173d66]">
               {planning.activeEmployees.length}
             </Badge>
           </div>
+
+          <div className="mt-3 grid grid-cols-3 gap-1.5">
+            <div className="brand-soft-card rounded-2xl px-2.5 py-2">
+              <p className="text-[10px] uppercase tracking-[0.14em] text-[#173d66]/58">Offen</p>
+              <p className="mt-1 text-lg font-semibold text-[#173d66]">
+                {planning.teamSummary.unassignedInWindow}
+              </p>
+            </div>
+            <div className="brand-soft-card rounded-2xl px-2.5 py-2">
+              <p className="text-[10px] uppercase tracking-[0.14em] text-[#173d66]/58">Frei</p>
+              <p className="mt-1 text-lg font-semibold text-[#173d66]">
+                {planning.teamSummary.freeOnFocusDay}
+              </p>
+            </div>
+            <div className="brand-soft-card rounded-2xl px-2.5 py-2">
+              <p className="text-[10px] uppercase tracking-[0.14em] text-[#173d66]/58">Voll</p>
+              <p className="mt-1 text-lg font-semibold text-[#173d66]">
+                {planning.teamSummary.fullyBookedInWindow}
+              </p>
+            </div>
+          </div>
+
+          <Input
+            value={planning.teamSearch}
+            onChange={(event) => planning.setTeamSearch(event.target.value)}
+            placeholder="Mitarbeiter suchen..."
+            className="mt-3 h-8 border-[#173d66]/10 bg-white/80"
+          />
+
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {[
+              { id: "all", label: "Alle" },
+              { id: "free-focus", label: focusSectionLabel },
+              { id: "unassigned", label: "Nicht eingeteilt" },
+            ].map((filter) => (
+              <Button
+                key={filter.id}
+                type="button"
+                size="sm"
+                variant={planning.teamFilter === filter.id ? "default" : "outline"}
+                className="h-7 rounded-full px-2.5 text-[11px]"
+                onClick={() => planning.setTeamFilter(filter.id as typeof planning.teamFilter)}
+              >
+                {filter.label}
+              </Button>
+            ))}
+          </div>
         </div>
-        <Input
-          value={planning.teamSearch}
-          onChange={(event) => planning.setTeamSearch(event.target.value)}
-          placeholder="Mitarbeiter suchen..."
-          className="mt-2 h-8 border-[#173d66]/10 bg-white/80"
-        />
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {[
-            { id: "all", label: "Alle" },
-            { id: "free-focus", label: `${planning.teamFocusLabel} frei` },
-            { id: "unassigned", label: "Nicht eingeteilt" },
-          ].map((filter) => (
-            <Button
-              key={filter.id}
-              type="button"
-              size="sm"
-              variant={planning.teamFilter === filter.id ? "default" : "outline"}
-              className="h-7 rounded-full px-2.5 text-[11px]"
-              onClick={() => planning.setTeamFilter(filter.id as typeof planning.teamFilter)}
-            >
-              {filter.label}
-            </Button>
-          ))}
-        </div>
-      </div>
-      <ScrollArea className="h-[min(30vh,18rem)]">
-        <div className="space-y-3 p-2">
-          {planning.teamSections.length === 0 && (
+
+        <div className="min-h-0 flex-1 p-2.5">
+          {planning.teamEntries.length === 0 ? (
             <div className="brand-soft-card rounded-2xl border-dashed p-5 text-center text-sm text-[#173d66]/64">
               Fuer den aktuellen Filter wurden keine Mitarbeitenden gefunden.
             </div>
-          )}
-          {planning.teamSections.map((section) => (
-            <div key={section.id} className="space-y-2">
-              <div className="flex items-center justify-between gap-2 px-1">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#173d66]/58">
-                    {section.title}
-                  </p>
-                  <p className="text-[11px] text-[#173d66]/64">{section.description}</p>
-                </div>
-                <Badge variant="outline" className="rounded-full border-[#173d66]/10 bg-white/70 px-2 py-0.5 text-[10px] text-[#173d66]">
-                  {section.items.length}
-                </Badge>
-              </div>
-              <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
-                {section.items.map((entry) => (
+          ) : (
+            <VirtualStack
+              items={planning.teamEntries}
+              itemHeight={88}
+              className="min-h-0 h-full overflow-y-auto pr-1"
+              renderItem={(entry) => {
+                const sectionLabel =
+                  entry.section === "unassigned"
+                    ? "Nicht eingeteilt"
+                    : entry.section === "free-focus"
+                      ? focusSectionLabel
+                      : `${planning.teamFocusLabel} eingeplant`;
+
+                return (
                   <TeamMemberCard
                     key={entry.employee.id}
                     employee={entry.employee}
                     badgeLabel={entry.badgeLabel}
                     badgeTone={entry.badgeTone}
-                    detailLabel={entry.detailLabel}
-                    compact={compactBoard}
+                    detailLabel={`${sectionLabel} | ${entry.detailLabel}`}
                   />
-                ))}
-              </div>
-            </div>
-          ))}
+                );
+              }}
+            />
+          )}
         </div>
-      </ScrollArea>
-    </Card>
+      </Card>
+    );
+  }, [
+    planning.activeEmployees.length,
+    planning.teamEntries,
+    planning.teamFilter,
+    planning.teamFocusLabel,
+    planning.teamSearch,
+    planning.teamSummary,
+    planning.setTeamFilter,
+    planning.setTeamSearch,
+  ]);
+
+  const selectedBlockPanel = useMemo(
+    () => (
+      <Card className="brand-panel flex h-full min-h-0 flex-col overflow-hidden rounded-3xl">
+        <div className="border-b border-[#173d66]/10 p-3">
+          <p className="brand-kicker">Auftrag</p>
+          <p className="mt-1 text-sm font-semibold text-[#173d66]">Details und Teamzuordnung</p>
+          <p className="text-xs text-[#173d66]/64">
+            Aenderungen bleiben neben dem Kalender und nicht in einer separaten Seite.
+          </p>
+        </div>
+        <ScrollArea className="min-h-0 flex-1">
+          <div className="p-3">
+            <SelectedBlockPanel
+              selectedBlock={planning.selectedBlock}
+              availableEmployees={planning.activeEmployees}
+              availableStartDates={selectedBlockMoveDates}
+              getEmployeeAvailability={planning.getEmployeeAvailability}
+              onAssignEmployee={(employeeId, selection) => {
+                void planning.assignEmployeeToSelected(employeeId, selection);
+              }}
+              onMoveBlock={(targetDate) => {
+                void planning.moveSelectedBlock(targetDate);
+              }}
+              onRemoveEmployee={(employeeId, selection) => {
+                void planning.removeEmployeeFromSelected(employeeId, selection);
+              }}
+              onRemoveBlock={() => {
+                void planning.removeSelectedBlock();
+              }}
+            />
+          </div>
+        </ScrollArea>
+      </Card>
+    ),
+    [
+      planning.activeEmployees,
+      planning.assignEmployeeToSelected,
+      planning.getEmployeeAvailability,
+      planning.moveSelectedBlock,
+      planning.removeEmployeeFromSelected,
+      planning.removeSelectedBlock,
+      planning.selectedBlock,
+      selectedBlockMoveDates,
+    ],
   );
 
+  const contextPanel = planning.selectedBlock ? selectedBlockPanel : teamContextPanel;
   const showMobileDetailsFocus = !!planning.selectedBlock && !isWideDesktop;
-  const selectedBlockMoveDates = planning.selectedBlock
-    ? planning.visibleDays.filter(
-        (_day, index) => index + planning.selectedBlock!.span <= planning.visibleDays.length
-      )
-    : [];
 
   const mobileDetailsFocusCard = planning.selectedBlock ? (
     <Card className="brand-panel flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl xl:hidden">
       <div className="flex items-center justify-between gap-3 border-b border-[#173d66]/10 px-3 py-3">
         <div className="min-w-0">
           <p className="text-base font-semibold text-[#173d66]">Auftragsdetails</p>
-          <p className="text-xs text-[#173d66]/64">
-            Fokusansicht fuer kleine Breiten.
-          </p>
+          <p className="text-xs text-[#173d66]/64">Fokusansicht fuer kleine Breiten.</p>
         </div>
         <Button
           type="button"
@@ -424,23 +587,23 @@ export default function PlanView() {
       </div>
       <ScrollArea className="min-h-0 flex-1">
         <div className="p-4">
-            <SelectedBlockPanel
-              selectedBlock={planning.selectedBlock}
-              availableEmployees={planning.activeEmployees}
-              availableStartDates={selectedBlockMoveDates}
-              getEmployeeAvailability={planning.getEmployeeAvailability}
-              onAssignEmployee={(employeeId, selection) => {
-                void planning.assignEmployeeToSelected(employeeId, selection);
-              }}
+          <SelectedBlockPanel
+            selectedBlock={planning.selectedBlock}
+            availableEmployees={planning.activeEmployees}
+            availableStartDates={selectedBlockMoveDates}
+            getEmployeeAvailability={planning.getEmployeeAvailability}
+            onAssignEmployee={(employeeId, selection) => {
+              void planning.assignEmployeeToSelected(employeeId, selection);
+            }}
             onMoveBlock={(targetDate) => {
               void planning.moveSelectedBlock(targetDate);
             }}
-              onRemoveEmployee={(employeeId, selection) => {
-                void planning.removeEmployeeFromSelected(employeeId, selection);
-              }}
-              onRemoveBlock={() => {
-                void planning.removeSelectedBlock();
-              }}
+            onRemoveEmployee={(employeeId, selection) => {
+              void planning.removeEmployeeFromSelected(employeeId, selection);
+            }}
+            onRemoveBlock={() => {
+              void planning.removeSelectedBlock();
+            }}
           />
         </div>
       </ScrollArea>
@@ -449,38 +612,30 @@ export default function PlanView() {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3 p-3 lg:p-4">
-      <div className="brand-panel flex flex-col gap-4 rounded-[34px] p-4 md:p-5 xl:flex-row xl:items-end xl:justify-between">
-        <div>
-          <BrandMark showWordmark subtitle="Disposition" size={44} labelClassName="text-[1.7rem]" />
-          <div className="mt-4 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#173d66]/58">
-            <CalendarRange className="h-3.5 w-3.5" />
-            Einsatzplanung
-          </div>
-          <h1 className="mt-1.5 text-2xl font-semibold tracking-tight text-[#173d66]">Wochenplanung nach Auftrag</h1>
-          <p className="mt-0.5 text-sm text-[#173d66]/68">
-            Backlog, Wochenplanung und Teamuebersicht in einer zentralen Arbeitsflaeche.
-          </p>
+      <div className="brand-panel flex flex-col gap-3 rounded-3xl px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0">
+          <BrandMark showWordmark subtitle="Disposition" size={40} labelClassName="text-[1.55rem]" />
           <div className="mt-3 flex flex-wrap gap-1.5">
-            <Badge variant="outline" className="gap-1.5 rounded-full border-[#173d66]/10 bg-white/72 px-2 py-0.5 text-[11px] font-medium text-[#173d66]">
+            <Badge
+              variant="outline"
+              className="gap-1.5 rounded-full border-[#173d66]/10 bg-white/72 px-2 py-0.5 text-[11px] font-medium text-[#173d66]"
+            >
               <BriefcaseBusiness className="h-3 w-3" />
               {planning.blocks.length} geplant
             </Badge>
-            <Badge variant="outline" className="gap-1.5 rounded-full border-[#173d66]/10 bg-white/72 px-2 py-0.5 text-[11px] font-medium text-[#173d66]">
+            <Badge
+              variant="outline"
+              className="gap-1.5 rounded-full border-[#173d66]/10 bg-white/72 px-2 py-0.5 text-[11px] font-medium text-[#173d66]"
+            >
               <CalendarRange className="h-3 w-3" />
               {planning.backlogJobs.length} im Backlog
             </Badge>
-            <Badge variant="outline" className="gap-1.5 rounded-full border-[#173d66]/10 bg-white/72 px-2 py-0.5 text-[11px] font-medium text-[#173d66]">
+            <Badge
+              variant="outline"
+              className="gap-1.5 rounded-full border-[#173d66]/10 bg-white/72 px-2 py-0.5 text-[11px] font-medium text-[#173d66]"
+            >
               <Users className="h-3 w-3" />
               {planning.activeEmployees.length} aktiv
-            </Badge>
-            <Badge variant="outline" className="rounded-full border-[#173d66]/10 bg-white/72 px-2 py-0.5 text-[11px] font-medium text-[#173d66]">
-              {planning.teamSummary.unassignedInWindow} ohne Einsatz
-            </Badge>
-            <Badge variant="outline" className="rounded-full border-[#173d66]/10 bg-white/72 px-2 py-0.5 text-[11px] font-medium text-[#173d66]">
-              {planning.teamSummary.freeOnFocusDay} {planning.teamFocusLabel.toLowerCase()} frei
-            </Badge>
-            <Badge variant="outline" className="rounded-full border-[#173d66]/10 bg-white/72 px-2 py-0.5 text-[11px] font-medium text-[#173d66]">
-              {planning.teamSummary.fullyBookedInWindow} durchgehend eingeplant
             </Badge>
           </div>
         </div>
@@ -492,19 +647,33 @@ export default function PlanView() {
             className="h-8 gap-1.5 border-[#173d66]/12 bg-white/80 px-2.5 text-[#173d66]"
             onClick={toggleBacklogPanel}
           >
-            {backlogCollapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
+            {backlogCollapsed ? (
+              <ChevronsRight className="h-4 w-4" />
+            ) : (
+              <ChevronsLeft className="h-4 w-4" />
+            )}
             Backlog
           </Button>
-          <Button variant="outline" size="icon" className="h-8 w-8 border-[#173d66]/12 bg-white/80 text-[#173d66]" onClick={() => planning.changeWindow(-1)}>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8 border-[#173d66]/12 bg-white/80 text-[#173d66]"
+            onClick={() => planning.changeWindow(-1)}
+          >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <Badge variant="secondary" className="h-8 bg-[#173d66]/8 px-3 text-xs font-medium text-[#173d66]">
-            {formatRange(
-              planning.visibleDays[0],
-              planning.visibleDays[planning.visibleDays.length - 1]
-            )}
+          <Badge
+            variant="secondary"
+            className="h-8 bg-[#173d66]/8 px-3 text-xs font-medium text-[#173d66]"
+          >
+            {rangeLabel}
           </Badge>
-          <Button variant="outline" size="icon" className="h-8 w-8 border-[#173d66]/12 bg-white/80 text-[#173d66]" onClick={() => planning.changeWindow(1)}>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8 border-[#173d66]/12 bg-white/80 text-[#173d66]"
+            onClick={() => planning.changeWindow(1)}
+          >
             <ArrowRight className="h-4 w-4" />
           </Button>
 
@@ -536,44 +705,54 @@ export default function PlanView() {
         <div className="flex min-h-0 flex-1 flex-col gap-2">
           {showMobileDetailsFocus ? (
             mobileDetailsFocusCard
+          ) : isWideDesktop ? (
+            <ResizablePanelGroup
+              direction="horizontal"
+              autoSaveId={`planning-main-layout-${planning.viewSpan}w`}
+              className="min-h-0 flex-1 items-stretch gap-2"
+            >
+              <ResizablePanel
+                ref={backlogPanelRef}
+                id="planning-backlog"
+                order={1}
+                collapsible
+                collapsedSize={5}
+                minSize={14}
+                maxSize={26}
+                defaultSize={18}
+                onCollapse={() => setBacklogCollapsed(true)}
+                onExpand={() => setBacklogCollapsed(false)}
+                className="min-h-0"
+              >
+                {backlogCollapsed ? backlogCollapsedRail : backlogExpandedPanel}
+              </ResizablePanel>
+              <ResizableHandle withHandle className="mx-0.5 bg-transparent after:w-2" />
+              <ResizablePanel
+                id="planning-board"
+                order={2}
+                defaultSize={56}
+                minSize={44}
+                className="min-h-0"
+              >
+                {calendarBoard}
+              </ResizablePanel>
+              <ResizableHandle withHandle className="mx-0.5 bg-transparent after:w-2" />
+              <ResizablePanel
+                id="planning-context"
+                order={3}
+                defaultSize={26}
+                minSize={20}
+                maxSize={34}
+                className="min-h-0"
+              >
+                {contextPanel}
+              </ResizablePanel>
+            </ResizablePanelGroup>
           ) : (
             <>
-              {isWideDesktop ? (
-                <div className="min-h-0 flex-1">
-                  <ResizablePanelGroup
-                    direction="horizontal"
-                    autoSaveId={`planning-top-layout-${planning.viewSpan}w`}
-                    className="min-h-0 flex-1 items-stretch gap-2"
-                  >
-                    <ResizablePanel
-                      ref={backlogPanelRef}
-                      id="planning-backlog"
-                      order={1}
-                      collapsible
-                      collapsedSize={5}
-                      minSize={14}
-                      maxSize={32}
-                      defaultSize={planning.viewSpan === 2 ? 24 : 18}
-                      onCollapse={() => setBacklogCollapsed(true)}
-                      onExpand={() => setBacklogCollapsed(false)}
-                      className="min-h-0"
-                    >
-                      {backlogCollapsed ? backlogCollapsedRail : backlogExpandedPanel}
-                    </ResizablePanel>
-                    <ResizableHandle withHandle className="mx-0.5 bg-transparent after:w-2" />
-                    <ResizablePanel id="planning-board" order={2} defaultSize={76} minSize={68} className="min-h-0">
-                      {calendarBoard}
-                    </ResizablePanel>
-                  </ResizablePanelGroup>
-                </div>
-              ) : (
-                <>
-                  {!backlogCollapsed && <div>{backlogExpandedPanel}</div>}
-                  <div className="min-h-0">{calendarBoard}</div>
-                </>
-              )}
-
-              <div className="flex-none">{teamCard}</div>
+              {!backlogCollapsed && <div className="flex-none">{backlogExpandedPanel}</div>}
+              <div className="min-h-0 flex-1">{calendarBoard}</div>
+              <div className="flex-none max-h-[20rem]">{contextPanel}</div>
             </>
           )}
         </div>
@@ -582,51 +761,6 @@ export default function PlanView() {
           <DragOverlayCard activeDrag={planning.activeDrag} />
         </DragOverlay>
       </DndContext>
-
-      {isWideDesktop && (
-        <Sheet
-          modal={false}
-          open={!!planning.selectedBlock}
-          onOpenChange={(open) => {
-            if (!open) {
-              planning.setSelectedBlockId(null);
-            }
-          }}
-        >
-          <SheetContent
-            side="right"
-            showOverlay={false}
-            className="w-[28rem] border-l border-[#173d66]/10 bg-[#f7f6f2] sm:max-w-[28rem]"
-          >
-            <SheetHeader className="pr-8">
-              <SheetTitle className="text-[#173d66]">Auftragsdetails</SheetTitle>
-              <SheetDescription className="text-[#173d66]/64">
-                Details bleiben aus dem Board raus, damit die Wochenplanung kompakt bleibt.
-              </SheetDescription>
-            </SheetHeader>
-            <ScrollArea className="mt-6 h-[calc(100vh-8rem)] pr-4">
-              <SelectedBlockPanel
-                selectedBlock={planning.selectedBlock}
-                availableEmployees={planning.activeEmployees}
-                availableStartDates={selectedBlockMoveDates}
-                getEmployeeAvailability={planning.getEmployeeAvailability}
-                onAssignEmployee={(employeeId, selection) => {
-                  void planning.assignEmployeeToSelected(employeeId, selection);
-                }}
-                onMoveBlock={(targetDate) => {
-                  void planning.moveSelectedBlock(targetDate);
-                }}
-                onRemoveEmployee={(employeeId, selection) => {
-                  void planning.removeEmployeeFromSelected(employeeId, selection);
-                }}
-                onRemoveBlock={() => {
-                  void planning.removeSelectedBlock();
-                }}
-              />
-            </ScrollArea>
-          </SheetContent>
-        </Sheet>
-      )}
 
       <CreatePlanningJobDialog
         open={planning.showCreateJobDialog}
