@@ -35,6 +35,7 @@ export default defineConfig({
   build: {
     outDir: buildOutDir,
     emptyOutDir: true,
+    manifest: true,
   },
   server: {
     fs: {
