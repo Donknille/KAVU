@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { BrandMark } from "@/components/BrandMark";
 import {
   getInviteToken,
   getInvitationRoleLabel,
@@ -10,7 +11,7 @@ import {
 import { useInvitationPreview } from "@/features/invitations/useInvitationPreview";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, HardHat, Mail, UserPlus } from "lucide-react";
+import { Building2, Mail, UserPlus } from "lucide-react";
 
 export default function SetupPage() {
   const inviteToken = getInviteToken();
@@ -83,15 +84,13 @@ export default function SetupPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md p-6">
+    <div className="brand-grid-shell flex min-h-screen items-center justify-center p-4">
+      <Card className="brand-panel w-full max-w-md p-6">
         <div className="mb-6 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary">
-            <HardHat className="h-5 w-5 text-primary-foreground" />
-          </div>
+          <BrandMark size={40} />
           <div>
-            <h1 className="text-xl font-bold">Willkommen</h1>
-            <p className="text-sm text-muted-foreground">
+            <h1 className="text-xl font-bold text-[#173d66]">Willkommen</h1>
+            <p className="text-sm text-[#173d66]/72">
               {hasValidInvitation ? "Einladung annehmen oder eigenen Betrieb einrichten" : "Richte deinen Betrieb ein"}
             </p>
           </div>

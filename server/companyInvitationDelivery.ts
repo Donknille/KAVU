@@ -35,7 +35,7 @@ function getRoleLabel(role: "admin" | "employee") {
 }
 
 function getSubject(companyName: string) {
-  return `${companyName}: Einladung zu KAVU`;
+  return `${companyName}: Einladung zu Meisterplaner`;
 }
 
 function getTextBody(input: SendCompanyInvitationInput) {
@@ -46,7 +46,7 @@ function getTextBody(input: SendCompanyInvitationInput) {
   return [
     `Hallo ${input.invitation.firstName} ${input.invitation.lastName},`,
     "",
-    `${input.company.name} hat dich${inviter} als ${getRoleLabel(input.invitation.role)} zu KAVU eingeladen.`,
+    `${input.company.name} hat dich${inviter} als ${getRoleLabel(input.invitation.role)} zu Meisterplaner eingeladen.`,
     "",
     "Registriere dich ueber diesen Link:",
     input.inviteUrl,
@@ -70,7 +70,7 @@ function getHtmlBody(input: SendCompanyInvitationInput) {
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111827;">
       <p>Hallo ${fullName},</p>
-      <p>${companyName} hat dich${inviter} als ${roleLabel} zu KAVU eingeladen.</p>
+      <p>${companyName} hat dich${inviter} als ${roleLabel} zu Meisterplaner eingeladen.</p>
       <p>
         <a
           href="${inviteUrl}"

@@ -3,14 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#1d4ed8" />
-    <title>KAVU offline</title>
+    <meta name="theme-color" content="#173d66" />
+    <title>Meisterplaner offline</title>
     <style>
       :root {
         color-scheme: light;
-        font-family: Inter, system-ui, sans-serif;
-        background: #f6f8fa;
-        color: #0f172a;
+        font-family: "Aptos", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+        background: #f7f6f2;
+        color: #173d66;
       }
 
       body {
@@ -20,16 +20,20 @@
         place-items: center;
         padding: 24px;
         background:
-          radial-gradient(circle at top, rgba(29, 78, 216, 0.16), transparent 38%),
-          #f6f8fa;
+          radial-gradient(circle at top right, rgba(104, 213, 200, 0.22), transparent 32%),
+          linear-gradient(rgba(23, 61, 102, 0.08) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(23, 61, 102, 0.08) 1px, transparent 1px),
+          #f7f6f2;
+        background-size: auto, 40px 40px, 40px 40px, auto;
       }
 
       main {
         width: min(100%, 420px);
         border-radius: 28px;
         padding: 28px;
-        background: rgba(255, 255, 255, 0.92);
-        box-shadow: 0 24px 64px rgba(15, 23, 42, 0.14);
+        background: rgba(255, 255, 255, 0.94);
+        border: 1px solid rgba(23, 61, 102, 0.12);
+        box-shadow: 0 24px 64px rgba(15, 23, 42, 0.12);
       }
 
       .eyebrow {
@@ -38,7 +42,7 @@
         font-weight: 700;
         letter-spacing: 0.18em;
         text-transform: uppercase;
-        color: #1d4ed8;
+        color: #173d66;
       }
 
       h1 {
@@ -49,7 +53,7 @@
 
       p {
         margin: 14px 0 0;
-        color: #334155;
+        color: rgba(23, 61, 102, 0.76);
         line-height: 1.6;
       }
 
@@ -59,7 +63,7 @@
         border: 0;
         border-radius: 18px;
         padding: 14px 18px;
-        background: #1d4ed8;
+        background: #173d66;
         color: #fff;
         font-size: 16px;
         font-weight: 600;
@@ -69,7 +73,7 @@
   </head>
   <body>
     <main>
-      <p class="eyebrow">KAVU Mitarbeiter-App</p>
+      <p class="eyebrow">Meisterplaner Mitarbeiter-App</p>
       <h1>Im Moment offline</h1>
       <p>
         Die App ist installiert, aber es besteht gerade keine Verbindung zum Server.

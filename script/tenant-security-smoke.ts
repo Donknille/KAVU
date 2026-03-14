@@ -167,6 +167,24 @@ async function main() {
   });
 
   assert.equal(
+    await storage.updateJob(PREVIEW_COMPANY_ID, otherJob.id, { title: "Manipuliert" }),
+    undefined,
+  );
+  assert.equal(
+    await storage.updateAssignment(PREVIEW_COMPANY_ID, otherAssignment.id, { note: "Manipuliert" }),
+    undefined,
+  );
+  assert.equal(await storage.deleteAssignment(PREVIEW_COMPANY_ID, otherAssignment.id), false);
+  assert.equal(
+    await storage.updateEmployee(PREVIEW_COMPANY_ID, otherEmployee.id, { firstName: "Manipuliert" }),
+    undefined,
+  );
+  assert.equal(
+    await storage.updateTimeEntry(PREVIEW_COMPANY_ID, otherTimeEntry.id, { status: "completed" }),
+    undefined,
+  );
+
+  assert.equal(
     await storage.getAssignmentForCompany(otherCompany.id, previewAssignment.id),
     undefined,
   );

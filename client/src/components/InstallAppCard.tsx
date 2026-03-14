@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { BrandMark } from "@/components/BrandMark";
 import { usePwaInstall } from "@/hooks/use-pwa-install";
-import { Download, Share2, Smartphone, X } from "lucide-react";
+import { Download, Share2, X } from "lucide-react";
 
-const DISMISS_KEY = "kavu-install-card-dismissed";
+const DISMISS_KEY = "meisterplaner-install-card-dismissed";
 
 export function InstallAppCard() {
   const { canInstall, install, isStandalone, showIosHint } = usePwaInstall();
@@ -44,15 +45,13 @@ export function InstallAppCard() {
   }
 
   return (
-    <Card className="overflow-hidden border-primary/15 bg-primary/5 p-4">
+    <Card className="brand-panel overflow-hidden rounded-[28px] p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-            <Smartphone className="h-5 w-5" />
-          </div>
+          <BrandMark size={40} />
           <div className="space-y-1">
-            <p className="text-sm font-semibold">KAVU auf dem Geraet speichern</p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm font-semibold text-[#173d66]">Meisterplaner auf dem Geraet speichern</p>
+            <p className="text-sm text-[#173d66]/72">
               Oeffnen Sie die Mitarbeiteransicht direkt ueber den Startbildschirm und greifen Sie schneller auf aktuelle Einsaetze zu.
             </p>
           </div>
@@ -70,7 +69,7 @@ export function InstallAppCard() {
 
       {canInstall ? (
         <Button
-          className="mt-4 h-11 w-full justify-between rounded-2xl"
+          className="mt-4 h-11 w-full justify-between rounded-2xl bg-[#173d66] text-white hover:bg-[#123251]"
           onClick={handleInstall}
           disabled={isInstalling}
           data-testid="button-install-pwa"
@@ -79,8 +78,8 @@ export function InstallAppCard() {
           <Download className="h-4 w-4" />
         </Button>
       ) : (
-        <div className="mt-4 rounded-2xl border bg-background/80 p-3 text-sm text-muted-foreground">
-          <div className="mb-1 flex items-center gap-2 font-medium text-foreground">
+        <div className="mt-4 rounded-2xl border border-[#173d66]/12 bg-white/80 p-3 text-sm text-[#173d66]/72">
+          <div className="mb-1 flex items-center gap-2 font-medium text-[#173d66]">
             <Share2 className="h-4 w-4" />
             Auf iPhone installieren
           </div>

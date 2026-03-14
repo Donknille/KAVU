@@ -38,7 +38,7 @@ function buildTextBody(input: SendEmployeeAccessInput) {
   return [
     recipient,
     "",
-    `du hast fuer ${input.employee.firstName} ${input.employee.lastName} einen neuen KAVU-Zugang erhalten.`,
+    `du hast fuer ${input.employee.firstName} ${input.employee.lastName} einen neuen Meisterplaner-Zugang erhalten.`,
     "",
     `Betrieb: ${input.company.name}`,
     `Betriebscode: ${input.access.companyAccessCode}`,
@@ -54,7 +54,7 @@ function buildHtmlBody(input: SendEmployeeAccessInput) {
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111827;">
       <p>${recipient},</p>
-      <p>du hast fuer <strong>${escapeHtml(`${input.employee.firstName} ${input.employee.lastName}`)}</strong> einen neuen KAVU-Zugang erhalten.</p>
+      <p>du hast fuer <strong>${escapeHtml(`${input.employee.firstName} ${input.employee.lastName}`)}</strong> einen neuen Meisterplaner-Zugang erhalten.</p>
       <table style="border-collapse:collapse;margin:16px 0;">
         <tr><td style="padding:6px 12px 6px 0;"><strong>Betrieb</strong></td><td>${escapeHtml(input.company.name)}</td></tr>
         <tr><td style="padding:6px 12px 6px 0;"><strong>Betriebscode</strong></td><td>${escapeHtml(input.access.companyAccessCode)}</td></tr>

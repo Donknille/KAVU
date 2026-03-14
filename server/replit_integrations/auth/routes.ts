@@ -49,6 +49,61 @@ function toPublicUser(user: any, authMethod: string) {
   };
 }
 
+function toPublicEmployee(employee: any) {
+  if (!employee) {
+    return employee;
+  }
+
+  const { passwordHash, passwordIssuedAt, userId, ...rest } = employee;
+  return rest;
+}
+
+function toPublicCompany(company: any) {
+  if (!company) {
+    return company;
+  }
+
+  const { accessCode, ...rest } = company;
+  return rest;
+}
+
+function regenerateSession(req: any) {
+  return new Promise<void>((resolve, reject) => {
+    req.session.regenerate((error: unknown) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve();
+    });
+  });
+}
+
+function saveSession(req: any) {
+  return new Promise<void>((resolve, reject) => {
+    req.session.save((error: unknown) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve();
+    });
+  });
+}
+
+async function establishLocalSession(
+  req: any,
+  localAuth: { userId: string; kind: "employee_access" | "password" },
+) {
+  if (!req.session) {
+    throw new Error("Session unavailable");
+  }
+
+  await regenerateSession(req);
+  req.session.localAuth = localAuth;
+  await saveSession(req);
+}
+
 function getPreviewRedirect(redirect: unknown) {
   if (typeof redirect !== "string" || !redirect.startsWith("/")) {
     return "/";
@@ -143,14 +198,10 @@ export function registerAuthRoutes(app: Express): void {
         lastName: parsed.data.lastName,
       });
 
-      if (!req.session) {
-        return res.status(500).json({ message: "Session unavailable" });
-      }
-
-      req.session.localAuth = {
+      await establishLocalSession(req, {
         userId: user.id,
         kind: "password",
-      };
+      });
 
       return res.json({ user: toPublicUser(user, "password") });
     } catch (error) {
@@ -178,14 +229,10 @@ export function registerAuthRoutes(app: Express): void {
         return res.status(401).json({ message: "E-Mail oder Passwort ist ungueltig." });
       }
 
-      if (!req.session) {
-        return res.status(500).json({ message: "Session unavailable" });
-      }
-
-      req.session.localAuth = {
+      await establishLocalSession(req, {
         userId: user.id,
         kind: "password",
-      };
+      });
 
       return res.json({ user: toPublicUser(user, "password") });
     } catch (error) {
@@ -205,17 +252,14 @@ export function registerAuthRoutes(app: Express): void {
       }
 
       const result = await storage.authenticateLocalEmployee(parsed.data);
-      if (!req.session) {
-        return res.status(500).json({ message: "Session unavailable" });
-      }
-      req.session.localAuth = {
+      await establishLocalSession(req, {
         userId: result.userId,
         kind: "employee_access",
-      };
+      });
 
       return res.json({
-        employee: result.employee,
-        company: result.company,
+        employee: toPublicEmployee(result.employee),
+        company: toPublicCompany(result.company),
         requiresPasswordChange: result.employee.mustChangePassword,
       });
     } catch (error) {
@@ -260,7 +304,7 @@ export function registerAuthRoutes(app: Express): void {
         currentPassword: parsed.data.currentPassword,
         newPassword: parsed.data.newPassword,
       });
-      return res.json({ employee });
+      return res.json({ employee: toPublicEmployee(employee) });
     } catch (error) {
       if (error instanceof Error && error.message === "Current password is invalid") {
         return res.status(400).json({ message: "Das aktuelle Passwort ist ungueltig." });

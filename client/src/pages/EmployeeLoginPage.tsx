@@ -69,7 +69,7 @@ export default function EmployeeLoginPage() {
                 companyAccessCode: event.target.value.toUpperCase(),
               }))
             }
-            placeholder="z. B. KAVU2026"
+            placeholder="z. B. MEISTER01"
             data-testid="input-company-access-code"
           />
         </div>

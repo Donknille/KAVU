@@ -74,9 +74,9 @@ export default function AdminAuthPage({ mode }: AdminAuthPageProps) {
 
   const inviteBanner = inviteToken ? (
     invitation ? (
-      <Card className="rounded-3xl border-primary/20 bg-primary/5 p-4">
-        <p className="text-sm font-semibold">Einladung erkannt</p>
-        <p className="mt-1 text-sm text-muted-foreground">
+      <Card className="brand-soft-card rounded-3xl p-4">
+        <p className="text-sm font-semibold text-[#173d66]">Einladung erkannt</p>
+        <p className="mt-1 text-sm text-[#173d66]/72">
           {invitation.companyName} hat {invitation.email} als{" "}
           {getInvitationRoleLabel(invitation.role)} eingeladen.
         </p>
@@ -117,12 +117,12 @@ export default function AdminAuthPage({ mode }: AdminAuthPageProps) {
         </div>
       }
     >
-      <div className="grid grid-cols-2 rounded-2xl bg-muted p-1">
+      <div className="grid grid-cols-2 rounded-2xl bg-[#173d66]/6 p-1">
         <Link
           href={loginHref}
           className={cn(
             "rounded-xl px-3 py-2 text-center text-sm font-medium transition-colors",
-            mode === "login" ? "bg-background shadow-sm" : "text-muted-foreground",
+            mode === "login" ? "bg-white shadow-sm" : "text-muted-foreground",
           )}
           data-testid="link-admin-login"
         >
@@ -132,7 +132,7 @@ export default function AdminAuthPage({ mode }: AdminAuthPageProps) {
           href={registerHref}
           className={cn(
             "rounded-xl px-3 py-2 text-center text-sm font-medium transition-colors",
-            mode === "register" ? "bg-background shadow-sm" : "text-muted-foreground",
+            mode === "register" ? "bg-white shadow-sm" : "text-muted-foreground",
           )}
           data-testid="link-admin-register"
         >

@@ -121,7 +121,11 @@ export interface IStorage {
   getEmployeeByLoginId(companyId: string, loginId: string): Promise<Employee | undefined>;
   getEmployeesByCompany(companyId: string): Promise<Employee[]>;
   createEmployee(data: InsertEmployee): Promise<Employee>;
-  updateEmployee(id: string, data: Partial<InsertEmployee>): Promise<Employee | undefined>;
+  updateEmployee(
+    companyId: string,
+    id: string,
+    data: Partial<InsertEmployee>,
+  ): Promise<Employee | undefined>;
   provisionEmployeeAccess(
     data: ProvisionEmployeeAccessData,
   ): Promise<{ employee: Employee; company: Company; access: LocalEmployeeAccess }>;
@@ -161,7 +165,11 @@ export interface IStorage {
   getJobsByCompany(companyId: string, includeArchived?: boolean): Promise<Job[]>;
   getUnassignedJobs(companyId: string): Promise<Job[]>;
   createJob(data: CreateJobData): Promise<Job>;
-  updateJob(id: string, data: Partial<InsertJob>): Promise<Job | undefined>;
+  updateJob(
+    companyId: string,
+    id: string,
+    data: Partial<InsertJob>,
+  ): Promise<Job | undefined>;
   searchJobs(companyId: string, query: string): Promise<Job[]>;
 
   getAssignment(id: string): Promise<Assignment | undefined>;
@@ -170,8 +178,12 @@ export interface IStorage {
   getAssignmentsByDateRange(companyId: string, startDate: string, endDate: string): Promise<any[]>;
   getAssignmentsByEmployee(companyId: string, employeeId: string, date?: string, endDate?: string): Promise<any[]>;
   createAssignment(data: InsertAssignment): Promise<Assignment>;
-  updateAssignment(id: string, data: Partial<InsertAssignment>): Promise<Assignment | undefined>;
-  deleteAssignment(id: string): Promise<boolean>;
+  updateAssignment(
+    companyId: string,
+    id: string,
+    data: Partial<InsertAssignment>,
+  ): Promise<Assignment | undefined>;
+  deleteAssignment(companyId: string, id: string): Promise<boolean>;
 
   addWorkerToAssignment(data: InsertAssignmentWorker): Promise<void>;
   removeWorkerFromAssignment(companyId: string, assignmentId: string, employeeId: string): Promise<void>;
@@ -180,7 +192,11 @@ export interface IStorage {
   getTimeEntry(id: string): Promise<TimeEntry | undefined>;
   getTimeEntryForAssignment(companyId: string, assignmentId: string, employeeId: string): Promise<TimeEntry | undefined>;
   createTimeEntry(data: InsertTimeEntry): Promise<TimeEntry>;
-  updateTimeEntry(id: string, data: Partial<TimeEntry>): Promise<TimeEntry | undefined>;
+  updateTimeEntry(
+    companyId: string,
+    id: string,
+    data: Partial<TimeEntry>,
+  ): Promise<TimeEntry | undefined>;
   getTimeEntriesByJob(companyId: string, jobId: string): Promise<TimeEntry[]>;
 
   createBreakEntry(companyId: string, timeEntryId: string): Promise<BreakEntry>;
@@ -411,7 +427,11 @@ export class DatabaseStorage implements IStorage {
     return employee;
   }
 
-  async updateEmployee(id: string, data: Partial<InsertEmployee>): Promise<Employee | undefined> {
+  async updateEmployee(
+    companyId: string,
+    id: string,
+    data: Partial<InsertEmployee>,
+  ): Promise<Employee | undefined> {
     if (data.userId) {
       await this.ensureUserLinkAvailable(data.userId, id);
     }
@@ -427,7 +447,7 @@ export class DatabaseStorage implements IStorage {
             : null,
         updatedAt: new Date(),
       })
-      .where(eq(employees.id, id))
+      .where(and(eq(employees.id, id), eq(employees.companyId, companyId)))
       .returning();
     return employee;
   }
@@ -863,11 +883,15 @@ export class DatabaseStorage implements IStorage {
     return job;
   }
 
-  async updateJob(id: string, data: Partial<InsertJob>): Promise<Job | undefined> {
+  async updateJob(
+    companyId: string,
+    id: string,
+    data: Partial<InsertJob>,
+  ): Promise<Job | undefined> {
     const [job] = await db
       .update(jobs)
       .set({ ...data, updatedAt: new Date() })
-      .where(eq(jobs.id, id))
+      .where(and(eq(jobs.id, id), eq(jobs.companyId, companyId)))
       .returning();
     return job;
   }
@@ -1080,20 +1104,31 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateAssignment(
+    companyId: string,
     id: string,
     data: Partial<InsertAssignment>
   ): Promise<Assignment | undefined> {
     const [assignment] = await db
       .update(assignments)
       .set({ ...data, updatedAt: new Date() })
-      .where(eq(assignments.id, id))
+      .where(and(eq(assignments.id, id), eq(assignments.companyId, companyId)))
       .returning();
     return assignment;
   }
 
-  async deleteAssignment(id: string): Promise<boolean> {
-    await db.delete(assignmentWorkers).where(eq(assignmentWorkers.assignmentId, id));
-    const [deleted] = await db.delete(assignments).where(eq(assignments.id, id)).returning();
+  async deleteAssignment(companyId: string, id: string): Promise<boolean> {
+    await db
+      .delete(assignmentWorkers)
+      .where(
+        and(
+          eq(assignmentWorkers.assignmentId, id),
+          eq(assignmentWorkers.companyId, companyId),
+        ),
+      );
+    const [deleted] = await db
+      .delete(assignments)
+      .where(and(eq(assignments.id, id), eq(assignments.companyId, companyId)))
+      .returning();
     return !!deleted;
   }
 
@@ -1191,13 +1226,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateTimeEntry(
+    companyId: string,
     id: string,
     data: Partial<TimeEntry>
   ): Promise<TimeEntry | undefined> {
     const [entry] = await db
       .update(timeEntries)
       .set({ ...data, updatedAt: new Date() })
-      .where(eq(timeEntries.id, id))
+      .where(and(eq(timeEntries.id, id), eq(timeEntries.companyId, companyId)))
       .returning();
     return entry;
   }

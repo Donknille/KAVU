@@ -19,7 +19,6 @@ import {
   Briefcase,
   Calendar,
   ClipboardList,
-  HardHat,
   KeyRound,
   LogOut,
   Sun,
@@ -27,6 +26,7 @@ import {
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { ConnectionStatusBadge } from "@/components/ConnectionStatusBadge";
+import { BrandMark } from "@/components/BrandMark";
 import { useEmployeeOfflineQueue } from "@/features/employee-offline/EmployeeOfflineQueueProvider";
 import { getPreviewEmployeeToken } from "@/lib/preview-session";
 
@@ -89,11 +89,12 @@ export function AppShell({ children, role, employee }: AppShellProps) {
         <Sidebar collapsible="icon">
           <SidebarHeader className="border-b p-0">
             <div className="flex items-center gap-2 px-3 py-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary">
-                <HardHat className="h-4 w-4 text-primary-foreground" />
-              </div>
+              <BrandMark
+                size={34}
+                iconClassName="rounded-[14px] group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8"
+              />
               <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
-                <p className="truncate text-sm font-bold">Digitaler Polier</p>
+                <p className="truncate text-sm font-bold text-[#173d66]">Meisterplaner</p>
                 <div className="flex items-center gap-1.5">
                   <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                     {role === "admin" ? "Zentrale" : "Mitarbeiter"}

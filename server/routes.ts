@@ -249,6 +249,19 @@ function toPublicEmployee(employee: any, options: { includeAccess?: boolean } = 
   return rest;
 }
 
+function toPublicCompany(company: any, options: { includeAccessCode?: boolean } = {}) {
+  if (!company) {
+    return company;
+  }
+
+  if (options.includeAccessCode) {
+    return company;
+  }
+
+  const { accessCode, ...rest } = company;
+  return rest;
+}
+
 function toPublicAssignment(assignment: any) {
   if (!assignment) {
     return assignment;
@@ -280,7 +293,9 @@ export async function registerRoutes(
       const company = await storage.getCompany(employee.companyId);
       return res.json({
         employee: toPublicEmployee(employee),
-        company,
+        company: toPublicCompany(company, {
+          includeAccessCode: employee.role === "admin",
+        }),
         needsSetup: false,
         authMethod: req.user?.auth_method ?? "oidc",
         requiresPasswordChange:
@@ -432,7 +447,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/planning/board", isAuthenticated, requireAuth, async (req: any, res) => {
+  app.get("/api/planning/board", isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const parsed = z
         .object({
@@ -648,7 +663,7 @@ export async function registerRoutes(
       if (!parsed.success) {
         return res.status(400).json({ message: "Validation error", errors: parsed.error.flatten().fieldErrors });
       }
-      const employee = await storage.updateEmployee(req.params.id, parsed.data);
+      const employee = await storage.updateEmployee(req.companyId, req.params.id, parsed.data);
       if (!employee) return res.status(404).json({ message: "Not found" });
       res.json(toPublicEmployee(employee, { includeAccess: true }));
     } catch (error) {
@@ -700,7 +715,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/jobs", isAuthenticated, requireAuth, async (req: any, res) => {
+  app.get("/api/jobs", isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const includeArchived = req.query.archived === "true";
       const list = await storage.getJobsByCompany(req.companyId, includeArchived);
@@ -710,7 +725,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/jobs/unassigned", isAuthenticated, requireAuth, async (req: any, res) => {
+  app.get("/api/jobs/unassigned", isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const list = await storage.getUnassignedJobs(req.companyId);
       res.json(list);
@@ -729,7 +744,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/jobs/:id", isAuthenticated, requireAuth, async (req: any, res) => {
+  app.get("/api/jobs/:id", isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const job = await storage.getJobForCompany(req.companyId, req.params.id);
       if (!job)
@@ -772,14 +787,14 @@ export async function registerRoutes(
       if (!parsed.success) {
         return res.status(400).json({ message: "Validation error", errors: parsed.error.flatten().fieldErrors });
       }
-      const job = await storage.updateJob(req.params.id, parsed.data);
+      const job = await storage.updateJob(req.companyId, req.params.id, parsed.data);
       res.json(job);
     } catch (error) {
       res.status(500).json({ message: "Internal error" });
     }
   });
 
-  app.get("/api/assignments", isAuthenticated, requireAuth, async (req: any, res) => {
+  app.get("/api/assignments", isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const { date, startDate, endDate } = req.query;
       if (date) {
@@ -910,7 +925,7 @@ export async function registerRoutes(
           return res.status(404).json({ message: "Job not found" });
         }
       }
-      const assignment = await storage.updateAssignment(req.params.id, safeData);
+      const assignment = await storage.updateAssignment(req.companyId, req.params.id, safeData);
       if (!assignment) return res.status(404).json({ message: "Not found" });
       res.json(assignment);
     } catch (error) {
@@ -964,7 +979,7 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Not found" });
       if (existing.status !== "planned")
         return res.status(400).json({ message: "Nur geplante Einsätze können gelöscht werden" });
-      await storage.deleteAssignment(req.params.id);
+      await storage.deleteAssignment(req.companyId, req.params.id);
       res.json({ ok: true });
     } catch (error) {
       res.status(500).json({ message: "Internal error" });
@@ -1041,7 +1056,7 @@ export async function registerRoutes(
       }
 
       for (const update of parsed.data.updates) {
-        await storage.updateAssignment(update.assignmentId, {
+        await storage.updateAssignment(req.companyId, update.assignmentId, {
           assignmentDate: update.assignmentDate,
         });
       }
@@ -1097,7 +1112,7 @@ export async function registerRoutes(
       }
 
       for (const assignmentId of parsed.data.removeAssignmentIds) {
-        await storage.deleteAssignment(assignmentId);
+        await storage.deleteAssignment(req.companyId, assignmentId);
       }
 
       const createdAssignments = [];
@@ -1155,7 +1170,7 @@ export async function registerRoutes(
       }
 
       for (const assignmentId of parsed.data.assignmentIds) {
-        await storage.deleteAssignment(assignmentId);
+        await storage.deleteAssignment(req.companyId, assignmentId);
       }
 
       res.json({ ok: true });
@@ -1174,7 +1189,7 @@ export async function registerRoutes(
       if (assignment.status !== "planned")
         return res.status(400).json({ message: "Invalid status transition" });
 
-      await storage.updateAssignment(req.params.id, { status: "en_route" });
+      await storage.updateAssignment(req.companyId, req.params.id, { status: "en_route" });
 
       let timeEntry = await storage.getTimeEntryForAssignment(
         req.companyId,
@@ -1191,7 +1206,7 @@ export async function registerRoutes(
           status: "en_route",
         });
       } else {
-        timeEntry = await storage.updateTimeEntry(timeEntry.id, {
+        timeEntry = await storage.updateTimeEntry(req.companyId, timeEntry.id, {
           startedAt: new Date(),
           status: "en_route",
         });
@@ -1199,7 +1214,7 @@ export async function registerRoutes(
 
       const job = await storage.getJobForCompany(req.companyId, assignment.jobId);
       if (job && job.status === "planned") {
-        await storage.updateJob(job.id, { status: "in_progress" });
+        await storage.updateJob(req.companyId, job.id, { status: "in_progress" });
       }
 
       res.json({ assignment: { ...assignment, status: "en_route" }, timeEntry });
@@ -1218,7 +1233,7 @@ export async function registerRoutes(
       if (assignment.status !== "planned" && assignment.status !== "en_route")
         return res.status(400).json({ message: "Invalid status transition" });
 
-      await storage.updateAssignment(req.params.id, { status: "on_site" });
+      await storage.updateAssignment(req.companyId, req.params.id, { status: "on_site" });
 
       const now = new Date();
       let timeEntry = await storage.getTimeEntryForAssignment(
@@ -1237,7 +1252,7 @@ export async function registerRoutes(
           status: "on_site",
         });
       } else {
-        timeEntry = await storage.updateTimeEntry(timeEntry.id, {
+        timeEntry = await storage.updateTimeEntry(req.companyId, timeEntry.id, {
           startedAt: timeEntry.startedAt ?? now,
           arrivedAt: timeEntry.arrivedAt ?? now,
           endedAt: null,
@@ -1248,7 +1263,7 @@ export async function registerRoutes(
 
       const job = await storage.getJobForCompany(req.companyId, assignment.jobId);
       if (job && job.status === "planned") {
-        await storage.updateJob(job.id, { status: "in_progress" });
+        await storage.updateJob(req.companyId, job.id, { status: "in_progress" });
       }
 
       res.json({ assignment: { ...assignment, status: "on_site" }, timeEntry });
@@ -1267,14 +1282,14 @@ export async function registerRoutes(
       if (assignment.status !== "en_route")
         return res.status(400).json({ message: "Invalid status transition" });
 
-      await storage.updateAssignment(req.params.id, { status: "on_site" });
+      await storage.updateAssignment(req.companyId, req.params.id, { status: "on_site" });
       const timeEntry = await storage.getTimeEntryForAssignment(
         req.companyId,
         req.params.id,
         req.employee.id
       );
       if (timeEntry) {
-        await storage.updateTimeEntry(timeEntry.id, {
+        await storage.updateTimeEntry(req.companyId, timeEntry.id, {
           arrivedAt: new Date(),
           status: "on_site",
         });
@@ -1294,14 +1309,14 @@ export async function registerRoutes(
       if (assignment.status !== "on_site")
         return res.status(400).json({ message: "Invalid status transition" });
 
-      await storage.updateAssignment(req.params.id, { status: "break" });
+      await storage.updateAssignment(req.companyId, req.params.id, { status: "break" });
       const timeEntry = await storage.getTimeEntryForAssignment(
         req.companyId,
         req.params.id,
         req.employee.id
       );
       if (timeEntry) {
-        await storage.updateTimeEntry(timeEntry.id, { status: "break" });
+        await storage.updateTimeEntry(req.companyId, timeEntry.id, { status: "break" });
         await storage.createBreakEntry(req.companyId, timeEntry.id);
       }
       res.json({ ok: true });
@@ -1319,14 +1334,14 @@ export async function registerRoutes(
       if (assignment.status !== "break")
         return res.status(400).json({ message: "Invalid status transition" });
 
-      await storage.updateAssignment(req.params.id, { status: "on_site" });
+      await storage.updateAssignment(req.companyId, req.params.id, { status: "on_site" });
       const timeEntry = await storage.getTimeEntryForAssignment(
         req.companyId,
         req.params.id,
         req.employee.id
       );
       if (timeEntry) {
-        await storage.updateTimeEntry(timeEntry.id, { status: "on_site" });
+        await storage.updateTimeEntry(req.companyId, timeEntry.id, { status: "on_site" });
         await storage.endBreakEntry(req.companyId, timeEntry.id);
       }
       res.json({ ok: true });
@@ -1344,7 +1359,7 @@ export async function registerRoutes(
       if (assignment.status !== "on_site" && assignment.status !== "problem")
         return res.status(400).json({ message: "Invalid status transition" });
 
-      await storage.updateAssignment(req.params.id, { status: "completed" });
+      await storage.updateAssignment(req.companyId, req.params.id, { status: "completed" });
       const timeEntry = await storage.getTimeEntryForAssignment(
         req.companyId,
         req.params.id,
@@ -1360,7 +1375,7 @@ export async function registerRoutes(
         const startTime = timeEntry.startedAt || now;
         const totalMins =
           Math.round((now.getTime() - startTime.getTime()) / 60000) - totalBreakMins;
-        await storage.updateTimeEntry(timeEntry.id, {
+        await storage.updateTimeEntry(req.companyId, timeEntry.id, {
           endedAt: now,
           totalMinutes: Math.max(0, totalMins),
           status: "completed",
@@ -1385,10 +1400,10 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Validation error", errors: parsed.error.flatten().fieldErrors });
       }
 
-      await storage.updateAssignment(req.params.id, { status: "problem" });
+      await storage.updateAssignment(req.companyId, req.params.id, { status: "problem" });
       const job = await storage.getJobForCompany(req.companyId, assignment.jobId);
       if (job) {
-        await storage.updateJob(job.id, { status: "problem" });
+        await storage.updateJob(req.companyId, job.id, { status: "problem" });
       }
       const timeEntry = await storage.getTimeEntryForAssignment(
         req.companyId,
@@ -1396,7 +1411,7 @@ export async function registerRoutes(
         req.employee.id
       );
       if (timeEntry) {
-        await storage.updateTimeEntry(timeEntry.id, { status: "problem" });
+        await storage.updateTimeEntry(req.companyId, timeEntry.id, { status: "problem" });
       }
       const report = await storage.createIssueReport({
         companyId: req.companyId,
@@ -1422,14 +1437,14 @@ export async function registerRoutes(
       if (assignment.status !== "problem")
         return res.status(400).json({ message: "Invalid status transition" });
 
-      await storage.updateAssignment(req.params.id, { status: "on_site" });
+      await storage.updateAssignment(req.companyId, req.params.id, { status: "on_site" });
       const timeEntry = await storage.getTimeEntryForAssignment(
         req.companyId,
         req.params.id,
         req.employee.id
       );
       if (timeEntry) {
-        await storage.updateTimeEntry(timeEntry.id, { status: "on_site" });
+        await storage.updateTimeEntry(req.companyId, timeEntry.id, { status: "on_site" });
       }
       res.json({ ok: true });
     } catch (error) {
@@ -1437,7 +1452,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/issues/job/:jobId", isAuthenticated, requireAuth, async (req: any, res) => {
+  app.get("/api/issues/job/:jobId", isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const job = await storage.getJobForCompany(req.companyId, req.params.jobId);
       if (!job)
@@ -1467,7 +1482,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/time-entries/job/:jobId", isAuthenticated, requireAuth, async (req: any, res) => {
+  app.get("/api/time-entries/job/:jobId", isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const job = await storage.getJobForCompany(req.companyId, req.params.jobId);
       if (!job)

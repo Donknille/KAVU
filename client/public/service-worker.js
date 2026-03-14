@@ -1,7 +1,7 @@
-const CACHE_VERSION = "kavu-shell-v1";
+const CACHE_VERSION = "meisterplaner-shell-v2";
 const SHELL_CACHE = `shell-${CACHE_VERSION}`;
 const ASSET_CACHE = `assets-${CACHE_VERSION}`;
-const SHELL_URLS = ["/", "/offline.html", "/manifest.webmanifest", "/favicon.png", "/pwa-icon.svg"];
+const SHELL_URLS = ["/", "/offline.html", "/manifest.webmanifest", "/favicon.svg", "/pwa-icon.svg"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -35,7 +35,7 @@ function isCacheableAsset(url) {
 
   return (
     url.pathname.startsWith("/assets/") ||
-    url.pathname === "/favicon.png" ||
+    url.pathname === "/favicon.svg" ||
     url.pathname === "/pwa-icon.svg" ||
     url.pathname === "/manifest.webmanifest"
   );

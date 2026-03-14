@@ -73,7 +73,7 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.get("/favicon.ico", (_req, res) => {
-  res.redirect(308, "/favicon.png");
+  res.redirect(308, "/favicon.svg");
 });
 
 async function getReadinessState() {

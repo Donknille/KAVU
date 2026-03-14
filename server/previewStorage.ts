@@ -100,8 +100,8 @@ function buildPreviewData() {
 
   const previewCompany: Company = {
     id: PREVIEW_COMPANY_ID,
-    name: "KAVU Demo GmbH",
-    accessCode: "KAVU2026",
+    name: "Musterbetrieb Demo GmbH",
+    accessCode: "MPLAN2026",
     logoUrl: null,
     phone: "+49 89 1234567",
     createdAt: new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000),
@@ -811,12 +811,14 @@ export class PreviewStorage {
     return employee;
   }
 
-  async updateEmployee(id: string, data: Partial<InsertEmployee>) {
+  async updateEmployee(companyId: string, id: string, data: Partial<InsertEmployee>) {
     if (data.userId) {
       await this.ensureUserLinkAvailable(data.userId, id);
     }
 
-    const employee = this.data.employees.find((item) => item.id === id);
+    const employee = this.data.employees.find(
+      (item) => item.id === id && item.companyId === companyId,
+    );
     if (!employee) return undefined;
     Object.assign(employee, {
       ...data,
@@ -1121,8 +1123,8 @@ export class PreviewStorage {
     return job;
   }
 
-  async updateJob(id: string, data: Partial<InsertJob>) {
-    const job = this.data.jobs.find((item) => item.id === id);
+  async updateJob(companyId: string, id: string, data: Partial<InsertJob>) {
+    const job = this.data.jobs.find((item) => item.id === id && item.companyId === companyId);
     if (!job) return undefined;
     Object.assign(job, data, { updatedAt: new Date() });
     return job;
@@ -1239,28 +1241,34 @@ export class PreviewStorage {
     return assignment;
   }
 
-  async updateAssignment(id: string, data: Partial<InsertAssignment>) {
-    const assignment = this.data.assignments.find((item) => item.id === id);
+  async updateAssignment(companyId: string, id: string, data: Partial<InsertAssignment>) {
+    const assignment = this.data.assignments.find(
+      (item) => item.id === id && item.companyId === companyId,
+    );
     if (!assignment) return undefined;
     Object.assign(assignment, data, { updatedAt: new Date() });
     return assignment;
   }
 
-  async deleteAssignment(id: string) {
+  async deleteAssignment(companyId: string, id: string) {
     const beforeLength = this.data.assignments.length;
-    this.data.assignments = this.data.assignments.filter((assignment) => assignment.id !== id);
+    this.data.assignments = this.data.assignments.filter(
+      (assignment) => assignment.id !== id || assignment.companyId !== companyId,
+    );
     this.data.assignmentWorkers = this.data.assignmentWorkers.filter(
-      (worker) => worker.assignmentId !== id,
+      (worker) => worker.assignmentId !== id || worker.companyId !== companyId,
     );
     const removedTimeEntryIds = this.data.timeEntries
-      .filter((entry) => entry.assignmentId === id)
+      .filter((entry) => entry.assignmentId === id && entry.companyId === companyId)
       .map((entry) => entry.id);
-    this.data.timeEntries = this.data.timeEntries.filter((entry) => entry.assignmentId !== id);
+    this.data.timeEntries = this.data.timeEntries.filter(
+      (entry) => entry.assignmentId !== id || entry.companyId !== companyId,
+    );
     this.data.breakEntries = this.data.breakEntries.filter(
-      (entry) => !removedTimeEntryIds.includes(entry.timeEntryId),
+      (entry) => entry.companyId !== companyId || !removedTimeEntryIds.includes(entry.timeEntryId),
     );
     this.data.issueReports = this.data.issueReports.filter(
-      (report) => report.assignmentId !== id,
+      (report) => report.assignmentId !== id || report.companyId !== companyId,
     );
     return beforeLength !== this.data.assignments.length;
   }
@@ -1347,8 +1355,10 @@ export class PreviewStorage {
     return entry;
   }
 
-  async updateTimeEntry(id: string, data: Partial<TimeEntry>) {
-    const entry = this.data.timeEntries.find((item) => item.id === id);
+  async updateTimeEntry(companyId: string, id: string, data: Partial<TimeEntry>) {
+    const entry = this.data.timeEntries.find(
+      (item) => item.id === id && item.companyId === companyId,
+    );
     if (!entry) return undefined;
     Object.assign(entry, data, { updatedAt: new Date() });
     return entry;

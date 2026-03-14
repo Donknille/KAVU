@@ -1,13 +1,13 @@
 {
-  "name": "KAVU Einsatz",
-  "short_name": "KAVU",
-  "description": "Mobile Mitarbeiteransicht fuer Einsaetze, Zeiten und Tagesplanung im Handwerk.",
+  "name": "Meisterplaner",
+  "short_name": "Meisterplaner",
+  "description": "Mobile Mitarbeiteransicht von Meisterplaner fuer Einsaetze, Zeiten und Tagesplanung im Handwerk.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#f6f8fa",
-  "theme_color": "#1d4ed8",
+  "background_color": "#f7f6f2",
+  "theme_color": "#173d66",
   "lang": "de-DE",
   "categories": ["business", "productivity"],
   "icons": [
@@ -18,9 +18,9 @@
       "purpose": "any maskable"
     },
     {
-      "src": "/favicon.png",
-      "sizes": "128x128",
-      "type": "image/png",
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
       "purpose": "any"
     }
   ]
