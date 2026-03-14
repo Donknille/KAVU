@@ -2,16 +2,28 @@ import { Card } from "@/components/ui/card";
 import { StatusBadge } from "@/components/StatusBadge";
 import { MapPin, Clock, User } from "lucide-react";
 import { formatAddress } from "@/lib/constants";
+import {
+  AssignmentTeamPreview,
+  formatWorkerShortName,
+  getAssignmentWorkers,
+} from "@/features/employee/AssignmentTeamPreview";
 
 interface AssignmentCardProps {
   assignment: any;
   onClick?: () => void;
   compact?: boolean;
+  emphasizeTeam?: boolean;
 }
 
-export function AssignmentCard({ assignment, onClick, compact = false }: AssignmentCardProps) {
+export function AssignmentCard({
+  assignment,
+  onClick,
+  compact = false,
+  emphasizeTeam = false,
+}: AssignmentCardProps) {
   const job = assignment.job;
   const address = formatAddress(job?.addressStreet, job?.addressZip, job?.addressCity);
+  const workers = getAssignmentWorkers(assignment);
 
   return (
     <Card
@@ -25,10 +37,16 @@ export function AssignmentCard({ assignment, onClick, compact = false }: Assignm
     >
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-base truncate text-[#173d66]" data-testid={`text-job-title-${assignment.id}`}>
+          <h3
+            className="font-semibold text-base truncate brand-ink"
+            data-testid={`text-job-title-${assignment.id}`}
+          >
             {job?.title || "Auftrag"}
           </h3>
-          <p className="text-sm text-[#173d66]/64 truncate" data-testid={`text-customer-${assignment.id}`}>
+          <p
+            className="text-sm truncate brand-ink-soft"
+            data-testid={`text-customer-${assignment.id}`}
+          >
             {job?.customerName}
           </p>
         </div>
@@ -38,14 +56,14 @@ export function AssignmentCard({ assignment, onClick, compact = false }: Assignm
       {!compact && (
         <>
           {address && (
-            <div className="mb-1 flex items-center gap-1.5 text-sm text-[#173d66]/64">
+            <div className="mb-1 flex items-center gap-1.5 text-sm brand-ink-soft">
               <MapPin className="w-3.5 h-3.5 shrink-0" />
               <span className="truncate">{address}</span>
             </div>
           )}
 
           {assignment.plannedStartTime && (
-            <div className="mb-1 flex items-center gap-1.5 text-sm text-[#173d66]/64">
+            <div className="mb-1 flex items-center gap-1.5 text-sm brand-ink-soft">
               <Clock className="w-3.5 h-3.5 shrink-0" />
               <span>
                 {assignment.plannedStartTime?.slice(0, 5)}
@@ -56,20 +74,25 @@ export function AssignmentCard({ assignment, onClick, compact = false }: Assignm
         </>
       )}
 
-      {assignment.workers && assignment.workers.length > 0 && (
+      {emphasizeTeam ? (
+        <AssignmentTeamPreview
+          assignment={assignment}
+          label={compact ? "Team" : "Mit wem"}
+          compact={compact}
+          className={compact ? "mt-2" : "mt-3"}
+        />
+      ) : workers.length > 0 ? (
         <div
-          className={`flex items-center gap-1.5 text-[#173d66]/64 ${
+          className={`flex items-center gap-1.5 brand-ink-soft ${
             compact ? "mt-1 text-xs" : "text-sm"
           }`}
         >
           <User className="w-3.5 h-3.5 shrink-0" />
           <span className="truncate">
-            {assignment.workers
-              .map((w: any) => `${w.firstName} ${w.lastName.charAt(0)}.`)
-              .join(", ")}
+            {workers.map((worker: any) => formatWorkerShortName(worker)).join(", ")}
           </span>
         </div>
-      )}
+      ) : null}
 
       {assignment.offlineSync?.pendingItems?.length > 0 && (
         <div className="mt-2 text-xs font-medium text-amber-700">

@@ -7,6 +7,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ConnectionStatusBadge } from "@/components/ConnectionStatusBadge";
 import { EmployeeTimeTrackerCard } from "@/features/employee-time/EmployeeTimeTrackerCard";
+import { AssignmentTeamPreview, getAssignmentTeamNames } from "@/features/employee/AssignmentTeamPreview";
+import {
+  addDays,
+  formatPlannedWindow,
+  getNextAssignmentAfterCurrent,
+} from "@/features/employee/assignmentSchedule";
 import { OfflineQueueAlert } from "@/features/employee-offline/OfflineQueueAlert";
 import { useEmployeeOfflineQueue } from "@/features/employee-offline/EmployeeOfflineQueueProvider";
 import { type AssignmentAction } from "@/features/employee-offline/shared";
@@ -14,7 +20,6 @@ import { useToast } from "@/hooks/use-toast";
 import {
   formatAddress,
   formatDate,
-  formatTime,
   getNavigationUrl,
   getPhoneUrl,
   ISSUE_TYPE_LABELS,
@@ -23,6 +28,7 @@ import {
 import {
   AlertTriangle,
   ArrowLeft,
+  ArrowRight,
   CalendarDays,
   FileText,
   MapPin,
@@ -30,17 +36,6 @@ import {
   Phone,
   User,
 } from "lucide-react";
-
-function formatPlannedWindow(detail: any) {
-  const start = detail?.plannedStartTime?.slice(0, 5);
-  const end = detail?.plannedEndTime?.slice(0, 5);
-
-  if (!start) {
-    return "Ohne feste Uhrzeit";
-  }
-
-  return end ? `${start} - ${end}` : start;
-}
 
 function getStatusSummary(status: string) {
   switch (status) {
@@ -73,12 +68,21 @@ export default function AssignmentDetail() {
     getPendingItemsForAssignment,
     getConflictItemsForAssignment,
   } = useEmployeeOfflineQueue();
+  const today = toDateStr(new Date());
+  const endDate = toDateStr(addDays(new Date(), 13));
 
   const { data: detail, isLoading } = useQuery<any>({
     queryKey: ["/api/assignments", id],
   });
+  const { data: assignmentList = [] } = useQuery<any[]>({
+    queryKey: [`/api/assignments/my?startDate=${today}&endDate=${endDate}`],
+    enabled: !!id,
+  });
 
   const effectiveDetail = detail ? applyOptimisticAssignmentState(detail) : null;
+  const effectiveAssignments = assignmentList.map((assignment) =>
+    applyOptimisticAssignmentState(assignment),
+  );
 
   async function runAction(action: AssignmentAction) {
     if (!effectiveDetail) {
@@ -138,8 +142,12 @@ export default function AssignmentDetail() {
   const address = formatAddress(job?.addressStreet, job?.addressZip, job?.addressCity);
   const timeEntry = effectiveDetail.timeEntry;
   const plannedWindow = formatPlannedWindow(effectiveDetail);
+  const nextAssignment = getNextAssignmentAfterCurrent(
+    effectiveAssignments.filter((assignment) => (assignment.assignmentDate ?? "") >= today),
+    effectiveDetail.id,
+  );
   const assignmentDateLabel = effectiveDetail.assignmentDate
-    ? effectiveDetail.assignmentDate === toDateStr(new Date())
+    ? effectiveDetail.assignmentDate === today
       ? "Heute"
       : formatDate(effectiveDetail.assignmentDate)
     : "Einsatz";
@@ -165,40 +173,40 @@ export default function AssignmentDetail() {
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <BrandMark size={36} />
-              <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#173d66]/58">
+              <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.22em] brand-ink-muted">
                 {assignmentDateLabel}
               </p>
               <h1
-                className="mt-2 text-2xl font-semibold leading-tight text-[#173d66]"
+                className="mt-2 text-2xl font-semibold leading-tight brand-ink"
                 data-testid="text-assignment-title"
               >
                 {job?.title}
               </h1>
-              <p className="mt-1 text-sm text-[#173d66]/68">{job?.customerName}</p>
+              <p className="mt-1 text-sm brand-ink-soft">{job?.customerName}</p>
             </div>
             <StatusBadge status={effectiveDetail.status} className="shrink-0" />
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="brand-soft-card rounded-[20px] p-3">
-              <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#173d66]/58">
-                <CalendarDays className="h-3.5 w-3.5 text-[#173d66]" />
+              <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] brand-ink-muted">
+                <CalendarDays className="h-3.5 w-3.5 brand-ink" />
                 Zeitpunkt
               </div>
-              <p className="mt-2 text-base font-semibold text-[#173d66]">{plannedWindow}</p>
+              <p className="mt-2 text-base font-semibold brand-ink">{plannedWindow}</p>
             </div>
             <div className="brand-soft-card rounded-[20px] p-3">
-              <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#173d66]/58">
-                <MapPin className="h-3.5 w-3.5 text-[#173d66]" />
+              <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] brand-ink-muted">
+                <MapPin className="h-3.5 w-3.5 brand-ink" />
                 Ort
               </div>
-              <p className="mt-2 text-sm leading-5 text-[#173d66]">
+              <p className="mt-2 text-sm leading-5 brand-ink">
                 {address || "Adresse fehlt noch"}
               </p>
             </div>
           </div>
 
-          <p className="text-sm leading-6 text-[#173d66]/72">{getStatusSummary(effectiveDetail.status)}</p>
+          <p className="text-sm leading-6 brand-ink-soft">{getStatusSummary(effectiveDetail.status)}</p>
         </div>
       </Card>
 
@@ -206,9 +214,49 @@ export default function AssignmentDetail() {
 
       <Card className="brand-panel rounded-[28px] p-4">
         <div className="mb-3">
+          <p className="brand-kicker">Team</p>
+          <h2 className="mt-2 font-semibold brand-ink">Heute auf diesem Einsatz</h2>
+          <p className="text-sm brand-ink-soft">
+            Sehen Sie direkt, mit wem dieser Auftrag umgesetzt wird und was danach als Naechstes ansteht.
+          </p>
+        </div>
+
+        <AssignmentTeamPreview assignment={effectiveDetail} label="Mit wem" />
+
+        {nextAssignment && (
+          <button
+            type="button"
+            className="brand-soft-card mt-3 flex w-full items-center justify-between rounded-[22px] px-4 py-3 text-left transition hover:border-[color:var(--brand-highlight-border)]"
+            onClick={() => navigate(`/assignment/${nextAssignment.id}`)}
+          >
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] brand-ink-muted">
+                Danach
+              </p>
+              <p className="mt-1 truncate text-sm font-semibold brand-ink">
+                {nextAssignment.job?.title || "Naechster Einsatz"}
+              </p>
+              <p className="truncate text-xs brand-ink-soft">
+                {formatPlannedWindow(nextAssignment)} | {getAssignmentTeamNames(nextAssignment, 2)}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <p className="shrink-0 rounded-full bg-[var(--brand-chip-bg)] px-2 py-1 text-[10px] font-medium brand-ink">
+                {nextAssignment.assignmentDate === today
+                  ? "Heute"
+                  : formatDate(nextAssignment.assignmentDate)}
+              </p>
+              <ArrowRight className="h-4 w-4 brand-ink" />
+            </div>
+          </button>
+        )}
+      </Card>
+
+      <Card className="brand-panel rounded-[28px] p-4">
+        <div className="mb-3">
           <p className="brand-kicker">Vor Ort</p>
-          <h2 className="mt-2 font-semibold text-[#173d66]">Kontakt und Navigation</h2>
-          <p className="text-sm text-[#173d66]/68">
+          <h2 className="mt-2 font-semibold brand-ink">Kontakt und Navigation</h2>
+          <p className="text-sm brand-ink-soft">
             Ansprechpartner und Wegbeschreibung fuer diesen Einsatz.
           </p>
         </div>
@@ -224,7 +272,7 @@ export default function AssignmentDetail() {
               >
                 <Button
                   variant="secondary"
-                  className="h-14 w-full justify-start gap-2 rounded-2xl border border-[#173d66]/10 bg-white/85 text-base text-[#173d66] shadow-sm"
+                  className="brand-outline-control h-14 w-full justify-start gap-2 rounded-2xl text-base shadow-sm"
                   size="lg"
                 >
                   <Navigation className="h-5 w-5" />
@@ -237,7 +285,7 @@ export default function AssignmentDetail() {
               <a href={getPhoneUrl(job.contactPhone)} className="w-full" data-testid="link-phone">
                 <Button
                   variant="secondary"
-                  className="h-14 w-full justify-start gap-2 rounded-2xl border border-[#173d66]/10 bg-white/85 text-base text-[#173d66] shadow-sm"
+                  className="brand-outline-control h-14 w-full justify-start gap-2 rounded-2xl text-base shadow-sm"
                   size="lg"
                 >
                   <Phone className="h-5 w-5" />
@@ -247,7 +295,7 @@ export default function AssignmentDetail() {
             )}
           </div>
         ) : (
-          <p className="text-sm text-[#173d66]/68">
+          <p className="text-sm brand-ink-soft">
             Fuer diesen Einsatz sind derzeit keine Kontakt- oder Navigationsdaten hinterlegt.
           </p>
         )}
@@ -256,23 +304,23 @@ export default function AssignmentDetail() {
       <Card className="brand-panel space-y-3 rounded-[28px] p-4">
         <div>
           <p className="brand-kicker">Details</p>
-          <h2 className="mt-2 font-semibold text-[#173d66]">Einsatzdaten</h2>
+          <h2 className="mt-2 font-semibold brand-ink">Einsatzdaten</h2>
         </div>
         {address && (
-          <div className="flex items-start gap-2 text-[#173d66]/74">
-            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#173d66]/54" />
+          <div className="flex items-start gap-2 brand-ink-soft">
+            <MapPin className="mt-0.5 h-4 w-4 shrink-0 brand-ink-muted" />
             <span className="text-sm">{address}</span>
           </div>
         )}
         {job?.contactName && (
-          <div className="flex items-center gap-2 text-[#173d66]/74">
-            <User className="h-4 w-4 shrink-0 text-[#173d66]/54" />
+          <div className="flex items-center gap-2 brand-ink-soft">
+            <User className="h-4 w-4 shrink-0 brand-ink-muted" />
             <span className="text-sm">{job.contactName}</span>
           </div>
         )}
         {job?.description && (
-          <div className="flex items-start gap-2 text-[#173d66]/74">
-            <FileText className="mt-0.5 h-4 w-4 shrink-0 text-[#173d66]/54" />
+          <div className="flex items-start gap-2 brand-ink-soft">
+            <FileText className="mt-0.5 h-4 w-4 shrink-0 brand-ink-muted" />
             <span className="text-sm">{job.description}</span>
           </div>
         )}
@@ -320,7 +368,7 @@ export default function AssignmentDetail() {
       {effectiveDetail.note && (
         <Card className="brand-panel rounded-[28px] p-4">
           <h3 className="mb-1 text-sm font-medium">Dispo-Notiz</h3>
-          <p className="text-sm text-[#173d66]/68">{effectiveDetail.note}</p>
+          <p className="text-sm brand-ink-soft">{effectiveDetail.note}</p>
         </Card>
       )}
 
@@ -335,7 +383,7 @@ export default function AssignmentDetail() {
           disabled={assignmentConflicts.length > 0}
         />
       ) : (
-        <div className="safe-area-bottom fixed bottom-0 left-0 right-0 border-t border-[#173d66]/10 bg-[#f7f6f2]/88 p-4 backdrop-blur-xl">
+        <div className="safe-area-bottom fixed bottom-0 left-0 right-0 border-t border-[color:var(--brand-panel-border)] bg-[var(--brand-header-bg)] p-4 backdrop-blur-xl">
           <div className="mx-auto max-w-xl">
             <EmployeeTimeTrackerCard
               status={effectiveDetail.status}

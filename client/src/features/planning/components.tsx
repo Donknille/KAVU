@@ -89,7 +89,7 @@ export const BacklogJobCard = memo(function BacklogJobCard({
       className={cn(
         "brand-soft-card w-full rounded-xl text-left transition",
         compact ? "min-h-[5rem] p-2" : "min-h-[6.75rem] p-2.5",
-        "hover:border-[#173d66]/18 hover:shadow-[0_16px_30px_rgba(16,38,62,0.1)]",
+        "hover:border-[color:var(--brand-highlight-border)] hover:shadow-[0_16px_30px_rgba(16,38,62,0.1)]",
         isDragging && "opacity-60"
       )}
       style={{
@@ -114,7 +114,7 @@ export const BacklogJobCard = memo(function BacklogJobCard({
           <div className="flex items-start gap-1.5">
             <p
               className={cn(
-                "min-w-0 flex-1 font-semibold leading-tight text-[#173d66]",
+                "min-w-0 flex-1 font-semibold leading-tight brand-ink",
                 compact ? "line-clamp-2 text-[11px]" : "line-clamp-2 text-[13px]"
               )}
             >
@@ -132,7 +132,7 @@ export const BacklogJobCard = memo(function BacklogJobCard({
           </div>
           <p
             className={cn(
-              "mt-0.5 line-clamp-2 text-[#173d66]/64",
+              "mt-0.5 line-clamp-2 brand-ink-soft",
               compact ? "text-[10px] leading-snug" : "text-xs"
             )}
           >
@@ -140,7 +140,7 @@ export const BacklogJobCard = memo(function BacklogJobCard({
           </p>
           <p
             className={cn(
-              "mt-1 text-[#173d66]/64",
+              "mt-1 brand-ink-soft",
               compact ? "line-clamp-2 text-[10px] leading-snug" : "line-clamp-2 text-[11px]"
             )}
           >
@@ -150,7 +150,7 @@ export const BacklogJobCard = memo(function BacklogJobCard({
         <span
           ref={setActivatorNodeRef}
           className={cn(
-            "mt-0.5 shrink-0 rounded-md p-1 text-[#173d66]/54 transition hover:bg-[#173d66]/6 touch-none",
+            "mt-0.5 shrink-0 rounded-md p-1 brand-ink-muted transition hover:bg-[var(--brand-highlight-bg)] touch-none",
             compact ? "h-5 w-5" : "h-6 w-6"
           )}
           aria-label="Auftrag ziehen"
@@ -194,10 +194,10 @@ export const TeamMemberCard = memo(function TeamMemberCard({
 
   const statusClass =
     badgeTone === "free"
-      ? "bg-sky-100 text-sky-800"
+      ? "bg-sky-100 text-sky-800 dark:bg-sky-950/40 dark:text-sky-200"
       : badgeTone === "scheduled"
-        ? "bg-emerald-100 text-emerald-800"
-        : "bg-slate-100 text-slate-700";
+        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200"
+        : "bg-slate-100 text-slate-700 dark:bg-slate-900/60 dark:text-slate-200";
 
   const metaLine = [detailLabel, employee.phone].filter(Boolean).join(" | ");
 
@@ -208,7 +208,7 @@ export const TeamMemberCard = memo(function TeamMemberCard({
       className={cn(
         "brand-soft-card w-full rounded-xl text-left transition",
         compact ? "min-h-[4.5rem] p-2" : "min-h-[4.75rem] p-2.5",
-        "hover:border-[#173d66]/18 hover:shadow-[0_16px_30px_rgba(16,38,62,0.1)]",
+        "hover:border-[color:var(--brand-highlight-border)] hover:shadow-[0_16px_30px_rgba(16,38,62,0.1)]",
         isDragging && "opacity-60"
       )}
       style={{
@@ -227,10 +227,10 @@ export const TeamMemberCard = memo(function TeamMemberCard({
           {getEmployeeShortLabel(employee)}
         </div>
         <div className="min-w-0 flex-1">
-          <p className={cn("truncate font-semibold leading-tight text-[#173d66]", compact ? "text-xs" : "text-[13px]")}>
+          <p className={cn("truncate font-semibold leading-tight brand-ink", compact ? "text-xs" : "text-[13px]")}>
             {getEmployeeLabel(employee)}
           </p>
-          <p className={cn("truncate text-[#173d66]/64", compact ? "text-[10px]" : "text-[11px]")}>
+          <p className={cn("truncate brand-ink-soft", compact ? "text-[10px]" : "text-[11px]")}>
             {metaLine}
           </p>
         </div>
@@ -248,7 +248,7 @@ export const TeamMemberCard = memo(function TeamMemberCard({
           <span
             ref={setActivatorNodeRef}
             className={cn(
-              "rounded-md p-1 text-[#173d66]/54 transition hover:bg-[#173d66]/6 touch-none",
+              "rounded-md p-1 brand-ink-muted transition hover:bg-[var(--brand-highlight-bg)] touch-none",
               compact ? "h-5 w-5" : "h-6 w-6"
             )}
             aria-label="Mitarbeiter ziehen"
@@ -287,7 +287,7 @@ export const DayColumnDropZone = memo(function DayColumnDropZone({
       ref={setNodeRef}
       className={cn(
         "rounded-xl border-2 border-dashed transition",
-        isEnabled ? "border-[#173d66]/12" : "border-transparent",
+        isEnabled ? "border-[color:var(--brand-panel-border)]" : "border-transparent",
         isEnabled && isOver && "border-[#68d5c8] bg-[#68d5c8]/18"
       )}
       style={{
@@ -387,10 +387,10 @@ export const PlanningBlockCard = memo(function PlanningBlockCard({
     <div
       ref={setRefs}
       className={cn(
-        "group relative flex h-full min-w-0 overflow-hidden rounded-xl border bg-[rgba(255,255,255,0.92)] shadow-[0_10px_24px_rgba(16,38,62,0.08)] transition",
+        "group relative flex h-full min-w-0 overflow-hidden rounded-xl border bg-[var(--brand-soft-start)] shadow-[0_10px_24px_rgba(16,38,62,0.08)] transition",
         CATEGORY_BG[category] ?? CATEGORY_BG.other,
         block.canMove && "cursor-grab active:cursor-grabbing",
-        selected && "ring-2 ring-[#173d66]/22",
+        selected && "ring-2 ring-[color:var(--brand-highlight-border)]",
         isOver && "ring-2 ring-[#68d5c8]",
         isDragging && "opacity-60"
       )}
@@ -412,7 +412,7 @@ export const PlanningBlockCard = memo(function PlanningBlockCard({
               : "border-[#68d5c8]/70 bg-[#68d5c8]/12"
           )}
         >
-          <div className="absolute right-2 top-2 rounded-full border border-[#173d66]/10 bg-white/95 px-2 py-1 text-[10px] font-semibold text-[#173d66] shadow-sm">
+          <div className="brand-outline-chip absolute right-2 top-2 rounded-full px-2 py-1 text-[10px] font-semibold shadow-sm">
             {isEmployeeOver ? "Hier zuweisen" : "Mitarbeiter hier ablegen"}
           </div>
         </div>
@@ -428,7 +428,7 @@ export const PlanningBlockCard = memo(function PlanningBlockCard({
           ref={setStartNodeRef}
           type="button"
           className={cn(
-            "absolute left-1 top-1 bottom-1 z-10 hidden rounded-full border border-transparent bg-white/60 text-[#173d66]/54 transition hover:border-[#173d66]/18 group-hover:block touch-none",
+            "absolute left-1 top-1 bottom-1 z-10 hidden rounded-full border border-transparent bg-[var(--brand-chip-bg)] brand-ink-muted transition hover:border-[color:var(--brand-highlight-border)] group-hover:block touch-none",
             compact ? "w-2.5" : "w-3"
           )}
           aria-label="Start verschieben"
@@ -442,7 +442,7 @@ export const PlanningBlockCard = memo(function PlanningBlockCard({
           ref={setEndNodeRef}
           type="button"
           className={cn(
-            "absolute right-1 top-1 bottom-1 z-10 flex items-center justify-center rounded-full border border-[#68d5c8]/70 bg-white/92 text-[#173d66] shadow-sm transition hover:border-[#68d5c8] hover:bg-[#68d5c8]/16 touch-none",
+            "absolute right-1 top-1 bottom-1 z-10 flex items-center justify-center rounded-full border border-[#68d5c8]/70 bg-[var(--brand-chip-bg)] brand-ink shadow-sm transition hover:border-[#68d5c8] hover:bg-[var(--brand-highlight-bg)] touch-none",
             compact ? "w-4" : "w-10"
           )}
           aria-label="Ende verschieben"
@@ -466,7 +466,7 @@ export const PlanningBlockCard = memo(function PlanningBlockCard({
         <div
           ref={block.canMove ? setMoveActivatorNodeRef : undefined}
           className={cn(
-            "mt-0.5 flex shrink-0 items-center justify-center rounded-lg border bg-white/80 text-[#173d66]/56 touch-none",
+            "mt-0.5 flex shrink-0 items-center justify-center rounded-lg border bg-[var(--brand-chip-bg)] brand-ink-muted touch-none",
             compact ? "h-6 w-6" : "h-7 w-7",
             block.canMove && "shadow-sm"
           )}
@@ -481,7 +481,7 @@ export const PlanningBlockCard = memo(function PlanningBlockCard({
           <div className={cn("flex flex-wrap items-center", compact ? "gap-1.5" : "gap-2")}>
             <p
               className={cn(
-                "font-semibold leading-tight text-[#173d66]",
+                "font-semibold leading-tight brand-ink",
                 shouldWrapTitle ? "line-clamp-2 break-words" : "truncate",
                 overview ? "text-[11px]" : compact ? (readableCompact ? "text-[11px]" : "text-xs") : "text-[13px]"
               )}
@@ -542,7 +542,7 @@ export const PlanningBlockCard = memo(function PlanningBlockCard({
                 <span
                   key={worker.id}
                   className={cn(
-                    "inline-flex items-center justify-center rounded-full border bg-white/85 px-1 font-semibold",
+                    "brand-outline-chip inline-flex items-center justify-center rounded-full px-1 font-semibold",
                     overview ? "h-4 min-w-4 text-[8px]" : "h-5 min-w-5 text-[9px]"
                   )}
                   style={{ borderColor: worker.color ?? "#64748b" }}
@@ -552,7 +552,7 @@ export const PlanningBlockCard = memo(function PlanningBlockCard({
               ) : (
                 <span
                   key={worker.id}
-                  className="inline-flex items-center gap-1 rounded-full border bg-white/80 px-1.5 py-0.5 text-[10px] font-medium text-[#173d66]"
+                  className="brand-outline-chip inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium"
                 >
                   <span
                     className="h-2 w-2 rounded-full"
@@ -565,7 +565,7 @@ export const PlanningBlockCard = memo(function PlanningBlockCard({
             {remainingWorkers > 0 && (
               <span
                 className={cn(
-                  "inline-flex items-center rounded-full border bg-white/80 font-medium",
+                  "brand-outline-chip inline-flex items-center rounded-full font-medium",
                   overview ? "px-1 py-0 text-[8px]" : compact ? "px-1 py-0 text-[9px]" : "px-1.5 py-0.5 text-[10px]"
                 )}
               >
@@ -575,7 +575,7 @@ export const PlanningBlockCard = memo(function PlanningBlockCard({
             {block.workers.length === 0 && (
               <span
                 className={cn(
-                  "inline-flex items-center rounded-full border border-dashed bg-white/60 font-medium text-muted-foreground",
+                  "inline-flex items-center rounded-full border border-dashed bg-[var(--brand-chip-bg)] font-medium text-muted-foreground",
                   overview ? "px-1 py-0 text-[8px]" : compact ? "px-1 py-0 text-[9px]" : "px-1.5 py-0.5 text-[10px]"
                 )}
               >
@@ -605,7 +605,7 @@ export function ResizePreviewGhost({
       <div
         className={cn(
           "pointer-events-none rounded-xl border-2 border-dashed",
-          preview.valid ? "border-sky-400 bg-sky-100/35" : "border-rose-400 bg-rose-100/35"
+          preview.valid ? "border-sky-400 planning-preview-valid" : "planning-preview-invalid planning-preview-invalid-border"
         )}
         style={{
           gridColumn: `${preview.startIndex + 1} / span ${preview.span}`,
@@ -615,10 +615,10 @@ export function ResizePreviewGhost({
       >
         <div className="flex h-full items-start justify-between gap-2 px-2 py-1">
           <div className="min-w-0">
-            <p className={cn("truncate font-semibold text-slate-700", compact ? "text-[10px]" : "text-xs")}>
+            <p className={cn("truncate font-semibold brand-ink", compact ? "text-[10px]" : "text-xs")}>
               {preview.valid ? "Neuer Zeitraum" : "Nicht moeglich"}
             </p>
-            {!compact && <p className="truncate text-[10px] text-slate-500">{preview.label}</p>}
+            {!compact && <p className="truncate text-[10px] brand-ink-soft">{preview.label}</p>}
           </div>
         </div>
       </div>
@@ -627,7 +627,7 @@ export function ResizePreviewGhost({
         <div
           className={cn(
             "pointer-events-none rounded-xl border border-dashed",
-            preview.valid ? "border-sky-500/80 bg-sky-200/55" : "border-rose-500/80 bg-rose-200/55"
+            preview.valid ? "border-sky-500/80 planning-preview-valid" : "planning-preview-invalid planning-preview-invalid-border"
           )}
           style={{
             gridColumn: `${preview.addedStartIndex + 1} / span ${preview.addedSpan}`,
@@ -653,8 +653,8 @@ export function DragOverlayCard({ activeDrag }: { activeDrag: ActiveDrag | null 
             <CategoryIcon category={activeDrag.job.category ?? "other"} className="h-4 w-4" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-[#173d66]">{activeDrag.job.title}</p>
-            <p className="truncate text-xs text-[#173d66]/64">
+            <p className="truncate text-sm font-semibold brand-ink">{activeDrag.job.title}</p>
+            <p className="truncate text-xs brand-ink-soft">
               {activeDrag.job.jobNumber} | {activeDrag.job.customerName}
             </p>
           </div>
@@ -674,8 +674,8 @@ export function DragOverlayCard({ activeDrag }: { activeDrag: ActiveDrag | null 
             {getEmployeeShortLabel(activeDrag.employee)}
           </div>
           <div>
-            <p className="text-sm font-semibold text-[#173d66]">{getEmployeeLabel(activeDrag.employee)}</p>
-            <p className="text-xs text-[#173d66]/64">In Auftrag ziehen</p>
+            <p className="text-sm font-semibold brand-ink">{getEmployeeLabel(activeDrag.employee)}</p>
+            <p className="text-xs brand-ink-soft">In Auftrag ziehen</p>
           </div>
         </div>
       </Card>
@@ -685,10 +685,10 @@ export function DragOverlayCard({ activeDrag }: { activeDrag: ActiveDrag | null 
   return (
     <Card className="brand-panel w-80 rounded-[24px] shadow-xl">
       <div className="p-3">
-        <p className="truncate text-sm font-semibold text-[#173d66]">
+        <p className="truncate text-sm font-semibold brand-ink">
           {activeDrag.block.job.jobNumber} | {activeDrag.block.job.title}
         </p>
-        <p className="text-xs text-[#173d66]/64">
+        <p className="text-xs brand-ink-soft">
           {activeDrag.type === "block-move"
             ? "Auftrag verschieben"
             : activeDrag.type === "block-resize-start"
@@ -876,10 +876,10 @@ export function SelectedBlockPanel({
       <div className="space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="truncate text-base font-semibold text-[#173d66]">
+            <p className="truncate text-base font-semibold brand-ink">
               {selectedBlock.job.jobNumber} | {selectedBlock.job.title}
             </p>
-            <p className="truncate text-sm text-[#173d66]/64">{selectedBlock.job.customerName}</p>
+            <p className="truncate text-sm brand-ink-soft">{selectedBlock.job.customerName}</p>
           </div>
           <StatusBadge status={selectedBlock.status} />
         </div>
@@ -896,7 +896,7 @@ export function SelectedBlockPanel({
         </div>
 
         {(selectedBlock.job.addressStreet || selectedBlock.job.addressCity) && (
-          <div className="flex items-start gap-2 text-sm text-[#173d66]/64">
+          <div className="flex items-start gap-2 text-sm brand-ink-soft">
             <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
             <span>
               {formatAddress(
@@ -909,7 +909,7 @@ export function SelectedBlockPanel({
         )}
 
         {selectedBlock.job.contactPhone && (
-          <div className="flex items-center gap-2 text-sm text-[#173d66]/64">
+          <div className="flex items-center gap-2 text-sm brand-ink-soft">
             <Phone className="h-4 w-4 shrink-0" />
             <span>{selectedBlock.job.contactPhone}</span>
           </div>
@@ -919,8 +919,8 @@ export function SelectedBlockPanel({
           <div className="brand-soft-card space-y-2 rounded-2xl p-3">
             <div className="flex items-center justify-between gap-2">
               <div>
-                <p className="text-sm font-semibold text-[#173d66]">Mitarbeitende zuordnen</p>
-                <p className="text-xs text-[#173d66]/64">
+                <p className="text-sm font-semibold brand-ink">Mitarbeitende zuordnen</p>
+                <p className="text-xs brand-ink-soft">
                   Tagesgenaue Zuordnungen koennen hier gezielt vorgenommen werden.
                 </p>
               </div>
@@ -1041,7 +1041,7 @@ export function SelectedBlockPanel({
                 )}
               </div>
             ) : (
-              <div className="rounded-2xl border border-dashed bg-white/72 p-3 text-sm text-[#173d66]/64">
+              <div className="brand-outline-chip rounded-2xl border-dashed p-3 text-sm brand-ink-soft">
                 Alle aktiven Mitarbeitenden sind fuer diesen Auftrag bereits eingeteilt.
               </div>
             )}
@@ -1051,8 +1051,8 @@ export function SelectedBlockPanel({
         {selectedBlock.canMove && onMoveBlock && availableStartDates.length > 0 && (
           <div className="brand-soft-card space-y-2 rounded-2xl p-3">
             <div>
-              <p className="text-sm font-semibold text-[#173d66]">Auftrag verschieben</p>
-              <p className="text-xs text-[#173d66]/64">
+              <p className="text-sm font-semibold brand-ink">Auftrag verschieben</p>
+              <p className="text-xs brand-ink-soft">
                 Das Startdatum kann innerhalb des verfuegbaren Zeitraums angepasst werden.
               </p>
             </div>
@@ -1091,7 +1091,7 @@ export function SelectedBlockPanel({
 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold text-[#173d66]">Eingeplantes Team</p>
+            <p className="text-sm font-semibold brand-ink">Eingeplantes Team</p>
             {selectedBlock.canAssignWorkers && (
               <Badge variant="outline" className="gap-1">
                 <UserRoundPlus className="h-3 w-3" />
@@ -1100,7 +1100,7 @@ export function SelectedBlockPanel({
             )}
           </div>
           {selectedBlock.workers.length === 0 && (
-            <div className="rounded-2xl border border-dashed bg-white/72 p-4 text-sm text-[#173d66]/64">
+            <div className="brand-outline-chip rounded-2xl border-dashed p-4 text-sm brand-ink-soft">
               Diesem Auftrag sind noch keine Mitarbeitenden zugeordnet.
             </div>
           )}
@@ -1118,8 +1118,8 @@ export function SelectedBlockPanel({
                     {getEmployeeShortLabel(coverage.employee)}
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-[#173d66]">{getEmployeeLabel(coverage.employee)}</p>
-                    <p className="text-xs text-[#173d66]/64">
+                    <p className="text-sm font-semibold brand-ink">{getEmployeeLabel(coverage.employee)}</p>
+                    <p className="text-xs brand-ink-soft">
                       {coverage.label}
                       {coverage.employee.phone ? ` | ${coverage.employee.phone}` : ""}
                     </p>
@@ -1156,8 +1156,8 @@ export function SelectedBlockPanel({
         {selectedBlock.canRemoveWorkers && removableCoverages.length > 0 && (
           <div className="brand-soft-card space-y-2 rounded-2xl p-3">
             <div>
-              <p className="text-sm font-semibold text-[#173d66]">Teilweise aus Tagen entfernen</p>
-              <p className="text-xs text-[#173d66]/64">
+              <p className="text-sm font-semibold brand-ink">Teilweise aus Tagen entfernen</p>
+              <p className="text-xs brand-ink-soft">
                 Entfernt Mitarbeitende nur aus noch nicht gestarteten, ausgewaehlten Tagen.
               </p>
             </div>
@@ -1205,7 +1205,7 @@ export function SelectedBlockPanel({
           </div>
         )}
 
-        <div className="brand-soft-card rounded-2xl p-3 text-xs text-[#173d66]/64">
+        <div className="brand-soft-card rounded-2xl p-3 text-xs brand-ink-soft">
           {selectedBlock.hasProtectedHistory
             ? "Bei laufenden Auftraegen bleiben vergangene oder bereits begonnene Tage unveraendert. Weitere Mitarbeitende koennen ab heute fuer offene Tage ergaenzt oder entfernt werden."
             : "Mehrere Einsaetze pro Tag sind moeglich. Reihenfolge und Uhrzeiten sollten in der Disposition beachtet werden."}
@@ -1239,10 +1239,10 @@ export function CreatePlanningJobDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl border-[#173d66]/12 bg-[#f7f6f2]">
+      <DialogContent className="brand-panel max-w-2xl border-[color:var(--brand-panel-border)] bg-[var(--brand-panel-start)]">
         <DialogHeader>
-          <DialogTitle className="text-[#173d66]">Auftrag im Backlog anlegen</DialogTitle>
-          <DialogDescription className="text-[#173d66]/64">
+          <DialogTitle className="brand-ink">Auftrag im Backlog anlegen</DialogTitle>
+          <DialogDescription className="brand-ink-soft">
             Erfassen Sie die wesentlichen Auftragsdaten fuer die Disposition. Der Auftrag steht anschliessend direkt im Backlog bereit.
           </DialogDescription>
         </DialogHeader>

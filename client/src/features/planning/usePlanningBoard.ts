@@ -1056,9 +1056,9 @@ export function usePlanningBoard() {
   );
   const boardBackgroundStyle = useMemo(
     () => ({
-      backgroundColor: "rgba(255, 255, 255, 0.92)",
+      backgroundColor: "var(--planning-board-surface)",
       backgroundImage:
-        "linear-gradient(to right, rgba(203, 213, 225, 0.9) 1px, transparent 1px), linear-gradient(to bottom, rgba(203, 213, 225, 0.9) 1px, transparent 1px)",
+        "linear-gradient(to right, var(--planning-board-grid-line) 1px, transparent 1px), linear-gradient(to bottom, var(--planning-board-grid-line) 1px, transparent 1px)",
       backgroundSize: `calc(100% / ${visibleDays.length}) calc(100% / ${laneCount})`,
     }),
     [laneCount, visibleDays.length],

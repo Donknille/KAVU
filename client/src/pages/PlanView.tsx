@@ -152,7 +152,7 @@ export default function PlanView() {
             type="button"
             size="icon"
             variant="outline"
-            className="h-8 w-8 rounded-full border-[#173d66]/12 bg-white/85 text-[#173d66]"
+            className="brand-outline-control h-8 w-8 rounded-full"
             onClick={toggleBacklogPanel}
           >
             <ChevronsRight className="h-4 w-4" />
@@ -166,7 +166,7 @@ export default function PlanView() {
           type="button"
           size="icon"
           variant="ghost"
-          className="h-8 w-8 rounded-full text-[#173d66]"
+          className="h-8 w-8 rounded-full brand-ink"
           onClick={() => planning.setShowCreateJobDialog(true)}
         >
           <Plus className="h-4 w-4" />
@@ -179,12 +179,12 @@ export default function PlanView() {
   const backlogExpandedPanel = useMemo(
     () => (
       <Card className="brand-panel flex h-full min-h-0 flex-col overflow-hidden rounded-3xl">
-        <div className="border-b border-[#173d66]/10 p-3">
+        <div className="planning-divider border-b p-3">
           <div className="flex items-center justify-between gap-2">
             <div>
               <p className="brand-kicker">Backlog</p>
-              <p className="mt-1 text-sm font-semibold text-[#173d66]">Ungeplante Auftraege</p>
-              <p className="text-xs text-[#173d66]/64">
+              <p className="mt-1 text-sm font-semibold brand-ink">Ungeplante Auftraege</p>
+              <p className="text-xs brand-ink-soft">
                 {planning.backlogList.length} ungeplante Auftraege
               </p>
             </div>
@@ -193,14 +193,14 @@ export default function PlanView() {
                 type="button"
                 size="icon"
                 variant="outline"
-                className="h-8 w-8 rounded-full border-[#173d66]/12 bg-white/85 text-[#173d66]"
+                className="brand-outline-control h-8 w-8 rounded-full"
                 onClick={toggleBacklogPanel}
               >
                 <ChevronsLeft className="h-4 w-4" />
               </Button>
               <Button
                 size="sm"
-                className="h-8 gap-2 bg-[#173d66] px-2.5 text-white hover:bg-[#123251]"
+                className="h-8 gap-2 px-2.5"
                 onClick={() => planning.setShowCreateJobDialog(true)}
               >
                 <Plus className="h-4 w-4" />
@@ -212,31 +212,31 @@ export default function PlanView() {
             value={planning.backlogSearch}
             onChange={(event) => planning.setBacklogSearch(event.target.value)}
             placeholder="Auftrag suchen..."
-            className="mt-3 h-8 border-[#173d66]/10 bg-white/80"
+            className="brand-input mt-3 h-8"
           />
         </div>
         <div className="min-h-0 flex-1 p-2.5">
           <div className="flex h-full min-h-0 flex-col gap-2">
             <button
               type="button"
-              className="brand-soft-card flex w-full items-center justify-between rounded-xl border-dashed px-2.5 py-2 text-left transition hover:border-[#173d66]/18"
+              className="brand-soft-card flex w-full items-center justify-between rounded-xl border-dashed px-2.5 py-2 text-left transition hover:border-[color:var(--brand-highlight-border)]"
               onClick={() => planning.setShowCreateJobDialog(true)}
             >
               <div>
-                <p className="text-xs font-semibold text-[#173d66]">Neuen Auftrag anlegen</p>
-                <p className="text-[10px] text-[#173d66]/64">
+                <p className="text-xs font-semibold brand-ink">Neuen Auftrag anlegen</p>
+                <p className="text-[10px] brand-ink-soft">
                   Im Backlog erfassen und anschliessend disponieren
                 </p>
               </div>
-              <Plus className="h-4 w-4 text-[#173d66]/56" />
+              <Plus className="h-4 w-4 brand-ink-muted" />
             </button>
 
             {planning.backlogList.length === 0 ? (
-              <div className="brand-soft-card rounded-2xl border-dashed p-6 text-center text-sm text-[#173d66]/64">
+              <div className="brand-soft-card rounded-2xl border-dashed p-6 text-center text-sm brand-ink-soft">
                 <p>Keine offenen Auftraege im Backlog.</p>
                 <Button
                   variant="outline"
-                  className="mt-4 gap-2 border-[#173d66]/12 bg-white/80 text-[#173d66]"
+                  className="brand-outline-control mt-4 gap-2"
                   onClick={() => planning.setShowCreateJobDialog(true)}
                 >
                   <Plus className="h-4 w-4" />
@@ -266,23 +266,23 @@ export default function PlanView() {
   const calendarBoard = useMemo(
     () => (
       <Card className="brand-panel flex h-full min-h-0 flex-col overflow-hidden rounded-3xl">
-        <div className="flex items-center justify-between gap-3 border-b border-[#173d66]/10 px-3 py-2.5">
+        <div className="planning-divider flex items-center justify-between gap-3 border-b px-3 py-2.5">
           <div className="min-w-0">
             <p className="brand-kicker">Kalender</p>
-            <p className="mt-1 truncate text-sm font-semibold text-[#173d66]">
+            <p className="mt-1 truncate text-sm font-semibold brand-ink">
               Einsatzplan im Zeitraum {rangeLabel}
             </p>
           </div>
           <div className="flex items-center gap-1.5">
             <Badge
               variant="outline"
-              className="rounded-full border-[#173d66]/10 bg-white/72 px-2 py-0.5 text-[11px] font-medium text-[#173d66]"
+              className="brand-outline-chip rounded-full px-2 py-0.5 text-[11px] font-medium"
             >
               {planning.blocks.length} geplant
             </Badge>
             <Badge
               variant="outline"
-              className="rounded-full border-[#173d66]/10 bg-white/72 px-2 py-0.5 text-[11px] font-medium text-[#173d66]"
+              className="brand-outline-chip rounded-full px-2 py-0.5 text-[11px] font-medium"
             >
               {planning.teamSummary.freeOnFocusDay} frei
             </Badge>
@@ -291,20 +291,20 @@ export default function PlanView() {
         <div className="min-h-0 overflow-x-auto">
           <div className="w-full">
             <div
-              className="grid gap-px border-b border-[#173d66]/10 bg-[#173d66]/10"
+              className="planning-divider grid gap-px border-b bg-[var(--brand-icon-shell-bg)]"
               style={{ gridTemplateColumns: planning.boardGridStyle.gridTemplateColumns }}
             >
               {dayHeaders.map((header) => (
                 <div
                   key={header.day}
                   className={cn(
-                    "min-w-0 bg-background px-1.5 py-1.5 text-[#173d66]",
+                    "planning-board-header min-w-0 px-1.5 py-1.5 brand-ink",
                     header.isPreviewDay &&
-                      (header.previewTone === "valid" ? "bg-sky-50" : "bg-rose-50"),
-                    header.isToday && "bg-[#68d5c8]/24",
+                      (header.previewTone === "valid" ? "planning-preview-valid" : "planning-preview-invalid"),
+                    header.isToday && "brand-highlight",
                   )}
                 >
-                  <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#173d66]/58">
+                  <p className="text-[9px] font-semibold uppercase tracking-[0.14em] brand-ink-muted">
                     {header.weekdayLabel}
                   </p>
                   <div className="mt-0.5 flex items-end justify-between gap-1">
@@ -316,7 +316,7 @@ export default function PlanView() {
                     >
                       {header.dateLabel}
                     </p>
-                    <div className="text-right text-[9px] text-[#173d66]/58">
+                    <div className="text-right text-[9px] brand-ink-muted">
                       <p>{`${header.assignmentCount} ET`}</p>
                       <p>{`${header.freeCount} frei`}</p>
                     </div>
@@ -327,7 +327,7 @@ export default function PlanView() {
 
             <div className="p-1.5">
               <div
-                className="relative overflow-hidden rounded-2xl border border-[#173d66]/12"
+                className="planning-board-frame relative overflow-hidden rounded-2xl border"
                 style={planning.boardGridStyle}
               >
                 <div
@@ -342,7 +342,7 @@ export default function PlanView() {
                         key={`preview-${day}`}
                         className={cn(
                           "rounded-none",
-                          planning.resizePreview.valid ? "bg-sky-50/70" : "bg-rose-50/70",
+                          planning.resizePreview.valid ? "planning-preview-valid" : "planning-preview-invalid",
                         )}
                         style={{
                           gridColumn: `${index + 1}`,
@@ -412,36 +412,36 @@ export default function PlanView() {
 
     return (
       <Card className="brand-panel flex h-full min-h-0 flex-col overflow-hidden rounded-3xl">
-        <div className="border-b border-[#173d66]/10 p-3">
+        <div className="planning-divider border-b p-3">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="brand-kicker">Team</p>
-              <p className="mt-1 text-sm font-semibold text-[#173d66]">Verfuegbare Mitarbeitende</p>
-              <p className="text-xs text-[#173d66]/64">
+              <p className="mt-1 text-sm font-semibold brand-ink">Verfuegbare Mitarbeitende</p>
+              <p className="text-xs brand-ink-soft">
                 Direkt neben dem Kalender fuer schnelle Zuweisungen.
               </p>
             </div>
-            <Badge variant="secondary" className="bg-[#173d66]/8 text-[#173d66]">
+            <Badge variant="secondary" className="brand-highlight">
               {planning.activeEmployees.length}
             </Badge>
           </div>
 
           <div className="mt-3 grid grid-cols-3 gap-1.5">
             <div className="brand-soft-card rounded-2xl px-2.5 py-2">
-              <p className="text-[10px] uppercase tracking-[0.14em] text-[#173d66]/58">Offen</p>
-              <p className="mt-1 text-lg font-semibold text-[#173d66]">
+              <p className="text-[10px] uppercase tracking-[0.14em] brand-ink-muted">Offen</p>
+              <p className="mt-1 text-lg font-semibold brand-ink">
                 {planning.teamSummary.unassignedInWindow}
               </p>
             </div>
             <div className="brand-soft-card rounded-2xl px-2.5 py-2">
-              <p className="text-[10px] uppercase tracking-[0.14em] text-[#173d66]/58">Frei</p>
-              <p className="mt-1 text-lg font-semibold text-[#173d66]">
+              <p className="text-[10px] uppercase tracking-[0.14em] brand-ink-muted">Frei</p>
+              <p className="mt-1 text-lg font-semibold brand-ink">
                 {planning.teamSummary.freeOnFocusDay}
               </p>
             </div>
             <div className="brand-soft-card rounded-2xl px-2.5 py-2">
-              <p className="text-[10px] uppercase tracking-[0.14em] text-[#173d66]/58">Voll</p>
-              <p className="mt-1 text-lg font-semibold text-[#173d66]">
+              <p className="text-[10px] uppercase tracking-[0.14em] brand-ink-muted">Voll</p>
+              <p className="mt-1 text-lg font-semibold brand-ink">
                 {planning.teamSummary.fullyBookedInWindow}
               </p>
             </div>
@@ -451,7 +451,7 @@ export default function PlanView() {
             value={planning.teamSearch}
             onChange={(event) => planning.setTeamSearch(event.target.value)}
             placeholder="Mitarbeiter suchen..."
-            className="mt-3 h-8 border-[#173d66]/10 bg-white/80"
+            className="brand-input mt-3 h-8"
           />
 
           <div className="mt-2 flex flex-wrap gap-1.5">
@@ -476,7 +476,7 @@ export default function PlanView() {
 
         <div className="min-h-0 flex-1 p-2.5">
           {planning.teamEntries.length === 0 ? (
-            <div className="brand-soft-card rounded-2xl border-dashed p-5 text-center text-sm text-[#173d66]/64">
+            <div className="brand-soft-card rounded-2xl border-dashed p-5 text-center text-sm brand-ink-soft">
               Fuer den aktuellen Filter wurden keine Mitarbeitenden gefunden.
             </div>
           ) : (
@@ -521,10 +521,10 @@ export default function PlanView() {
   const selectedBlockPanel = useMemo(
     () => (
       <Card className="brand-panel flex h-full min-h-0 flex-col overflow-hidden rounded-3xl">
-        <div className="border-b border-[#173d66]/10 p-3">
+        <div className="planning-divider border-b p-3">
           <p className="brand-kicker">Auftrag</p>
-          <p className="mt-1 text-sm font-semibold text-[#173d66]">Details und Teamzuordnung</p>
-          <p className="text-xs text-[#173d66]/64">
+          <p className="mt-1 text-sm font-semibold brand-ink">Details und Teamzuordnung</p>
+          <p className="text-xs brand-ink-soft">
             Aenderungen bleiben neben dem Kalender und nicht in einer separaten Seite.
           </p>
         </div>
@@ -569,16 +569,16 @@ export default function PlanView() {
 
   const mobileDetailsFocusCard = planning.selectedBlock ? (
     <Card className="brand-panel flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl xl:hidden">
-      <div className="flex items-center justify-between gap-3 border-b border-[#173d66]/10 px-3 py-3">
+      <div className="planning-divider flex items-center justify-between gap-3 border-b px-3 py-3">
         <div className="min-w-0">
-          <p className="text-base font-semibold text-[#173d66]">Auftragsdetails</p>
-          <p className="text-xs text-[#173d66]/64">Fokusansicht fuer kleine Breiten.</p>
+          <p className="text-base font-semibold brand-ink">Auftragsdetails</p>
+          <p className="text-xs brand-ink-soft">Fokusansicht fuer kleine Breiten.</p>
         </div>
         <Button
           type="button"
           size="sm"
           variant="outline"
-          className="h-8 gap-1.5 rounded-full border-[#173d66]/12 bg-white/85 px-2.5 text-[#173d66]"
+          className="brand-outline-control h-8 gap-1.5 rounded-full px-2.5"
           onClick={() => planning.setSelectedBlockId(null)}
         >
           <X className="h-4 w-4" />
@@ -618,21 +618,21 @@ export default function PlanView() {
           <div className="mt-3 flex flex-wrap gap-1.5">
             <Badge
               variant="outline"
-              className="gap-1.5 rounded-full border-[#173d66]/10 bg-white/72 px-2 py-0.5 text-[11px] font-medium text-[#173d66]"
+              className="brand-outline-chip gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium"
             >
               <BriefcaseBusiness className="h-3 w-3" />
               {planning.blocks.length} geplant
             </Badge>
             <Badge
               variant="outline"
-              className="gap-1.5 rounded-full border-[#173d66]/10 bg-white/72 px-2 py-0.5 text-[11px] font-medium text-[#173d66]"
+              className="brand-outline-chip gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium"
             >
               <CalendarRange className="h-3 w-3" />
               {planning.backlogJobs.length} im Backlog
             </Badge>
             <Badge
               variant="outline"
-              className="gap-1.5 rounded-full border-[#173d66]/10 bg-white/72 px-2 py-0.5 text-[11px] font-medium text-[#173d66]"
+              className="brand-outline-chip gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium"
             >
               <Users className="h-3 w-3" />
               {planning.activeEmployees.length} aktiv
@@ -644,7 +644,7 @@ export default function PlanView() {
           <Button
             variant="outline"
             size="sm"
-            className="h-8 gap-1.5 border-[#173d66]/12 bg-white/80 px-2.5 text-[#173d66]"
+            className="brand-outline-control h-8 gap-1.5 px-2.5"
             onClick={toggleBacklogPanel}
           >
             {backlogCollapsed ? (
@@ -657,27 +657,27 @@ export default function PlanView() {
           <Button
             variant="outline"
             size="icon"
-            className="h-8 w-8 border-[#173d66]/12 bg-white/80 text-[#173d66]"
+            className="brand-outline-control h-8 w-8"
             onClick={() => planning.changeWindow(-1)}
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <Badge
             variant="secondary"
-            className="h-8 bg-[#173d66]/8 px-3 text-xs font-medium text-[#173d66]"
+            className="brand-highlight h-8 px-3 text-xs font-medium"
           >
             {rangeLabel}
           </Badge>
           <Button
             variant="outline"
             size="icon"
-            className="h-8 w-8 border-[#173d66]/12 bg-white/80 text-[#173d66]"
+            className="brand-outline-control h-8 w-8"
             onClick={() => planning.changeWindow(1)}
           >
             <ArrowRight className="h-4 w-4" />
           </Button>
 
-          <div className="ml-1 flex items-center gap-1 rounded-full border border-[#173d66]/10 bg-white/78 p-0.5">
+          <div className="brand-outline-chip ml-1 flex items-center gap-1 rounded-full p-0.5">
             {[2, 4].map((span) => (
               <Button
                 key={span}
