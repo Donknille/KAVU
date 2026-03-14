@@ -2,6 +2,14 @@ import express, { type Express } from "express";
 import fs from "fs";
 import path from "path";
 
+function isStaticAssetRequest(requestPath: string) {
+  return path.extname(requestPath) !== "" || requestPath.startsWith("/assets/");
+}
+
+function acceptsHtml(acceptHeader: string | undefined) {
+  return typeof acceptHeader === "string" && acceptHeader.includes("text/html");
+}
+
 export function serveStatic(app: Express) {
   const candidatePaths = process.env.VERCEL
     ? [path.resolve(process.cwd(), "public"), path.resolve(process.cwd(), "dist", "public")]
@@ -25,8 +33,13 @@ export function serveStatic(app: Express) {
     }),
   );
 
-  // fall through to index.html if the file doesn't exist
-  app.use("/{*path}", (_req, res) => {
+  // Only SPA-style navigation requests should fall back to index.html.
+  app.use("/{*path}", (req, res) => {
+    if (isStaticAssetRequest(req.path) || !acceptsHtml(req.headers.accept)) {
+      res.status(404).end();
+      return;
+    }
+
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }

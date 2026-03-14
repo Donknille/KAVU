@@ -1,7 +1,7 @@
-const CACHE_VERSION = "meisterplaner-shell-v2";
+const CACHE_VERSION = "meisterplaner-shell-v3";
 const SHELL_CACHE = `shell-${CACHE_VERSION}`;
 const ASSET_CACHE = `assets-${CACHE_VERSION}`;
-const SHELL_URLS = ["/", "/offline.html", "/manifest.webmanifest", "/favicon.svg", "/pwa-icon.svg"];
+const SHELL_URLS = ["/offline.html", "/manifest.webmanifest", "/favicon.svg", "/pwa-icon.svg"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -53,11 +53,7 @@ self.addEventListener("fetch", (event) => {
   if (request.mode === "navigate") {
     event.respondWith(
       fetch(request)
-        .then((response) => {
-          const copy = response.clone();
-          caches.open(SHELL_CACHE).then((cache) => cache.put("/", copy));
-          return response;
-        })
+        .then((response) => response)
         .catch(() => caches.match("/offline.html")),
     );
     return;
@@ -72,7 +68,8 @@ self.addEventListener("fetch", (event) => {
       const cached = await cache.match(request);
       const networkFetch = fetch(request)
         .then((response) => {
-          if (response.ok) {
+          const contentType = response.headers.get("content-type") || "";
+          if (response.ok && !contentType.includes("text/html")) {
             cache.put(request, response.clone());
           }
 
