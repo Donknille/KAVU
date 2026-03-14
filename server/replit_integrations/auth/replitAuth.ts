@@ -8,6 +8,7 @@ import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { authStorage } from "./storage.js";
 import { getPreviewSessionUser, PREVIEW_MODE } from "../../preview.js";
+import { pool } from "../../db.js";
 import { storage } from "../../storage.js";
 import {
   APP_BASE_URL,
@@ -81,12 +82,18 @@ const getOidcConfig = memoize(
 );
 
 export function getSession() {
-  const sessionTtl = 7 * 24 * 60 * 60 * 1000;
+  const sessionTtlMs = 7 * 24 * 60 * 60 * 1000;
+  const sessionTtlSeconds = Math.floor(sessionTtlMs / 1000);
   const pgStore = connectPg(session);
+
+  if (!pool) {
+    throw new Error("DATABASE_URL is required to initialize the session store.");
+  }
+
   const sessionStore = new pgStore({
-    conString: process.env.DATABASE_URL,
+    pool,
     createTableIfMissing: true,
-    ttl: sessionTtl,
+    ttl: sessionTtlSeconds,
     tableName: "sessions",
   });
 
@@ -99,7 +106,7 @@ export function getSession() {
       httpOnly: true,
       secure: COOKIE_SECURE,
       sameSite: COOKIE_SAME_SITE,
-      maxAge: sessionTtl,
+      maxAge: sessionTtlMs,
     },
   });
 }

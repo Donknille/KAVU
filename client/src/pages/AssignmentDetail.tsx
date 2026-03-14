@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation, useParams } from "wouter";
+import { BrandMark } from "@/components/BrandMark";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -144,7 +145,7 @@ export default function AssignmentDetail() {
     : "Einsatz";
 
   return (
-    <div className="mx-auto max-w-lg space-y-4 p-4 pb-72">
+    <div className="mx-auto max-w-xl space-y-4 p-4 pb-72 md:p-6">
       <div className="flex items-center justify-between gap-3">
         <Button
           variant="ghost"
@@ -156,56 +157,58 @@ export default function AssignmentDetail() {
           <ArrowLeft className="h-4 w-4" />
           Zurueck
         </Button>
-        <ConnectionStatusBadge isOnline={isOnline} compact />
+        <ConnectionStatusBadge isOnline={isOnline} compact className="brand-outline-chip" />
       </div>
 
-      <Card className="overflow-hidden border-0 bg-slate-950 text-white shadow-sm">
+      <Card className="brand-panel overflow-hidden rounded-[30px]">
         <div className="space-y-4 p-5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-300">
+              <BrandMark size={36} />
+              <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#173d66]/58">
                 {assignmentDateLabel}
               </p>
               <h1
-                className="mt-2 text-2xl font-semibold leading-tight"
+                className="mt-2 text-2xl font-semibold leading-tight text-[#173d66]"
                 data-testid="text-assignment-title"
               >
                 {job?.title}
               </h1>
-              <p className="mt-1 text-sm text-slate-300">{job?.customerName}</p>
+              <p className="mt-1 text-sm text-[#173d66]/68">{job?.customerName}</p>
             </div>
             <StatusBadge status={effectiveDetail.status} className="shrink-0" />
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-[20px] bg-white/10 p-3">
-              <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-300">
-                <CalendarDays className="h-3.5 w-3.5" />
+            <div className="brand-soft-card rounded-[20px] p-3">
+              <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#173d66]/58">
+                <CalendarDays className="h-3.5 w-3.5 text-[#173d66]" />
                 Zeitpunkt
               </div>
-              <p className="mt-2 text-base font-semibold">{plannedWindow}</p>
+              <p className="mt-2 text-base font-semibold text-[#173d66]">{plannedWindow}</p>
             </div>
-            <div className="rounded-[20px] bg-white/10 p-3">
-              <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-300">
-                <MapPin className="h-3.5 w-3.5" />
+            <div className="brand-soft-card rounded-[20px] p-3">
+              <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#173d66]/58">
+                <MapPin className="h-3.5 w-3.5 text-[#173d66]" />
                 Ort
               </div>
-              <p className="mt-2 text-sm leading-5 text-slate-100">
+              <p className="mt-2 text-sm leading-5 text-[#173d66]">
                 {address || "Adresse fehlt noch"}
               </p>
             </div>
           </div>
 
-          <p className="text-sm leading-6 text-slate-200">{getStatusSummary(effectiveDetail.status)}</p>
+          <p className="text-sm leading-6 text-[#173d66]/72">{getStatusSummary(effectiveDetail.status)}</p>
         </div>
       </Card>
 
       <OfflineQueueAlert assignmentId={effectiveDetail.id} />
 
-      <Card className="p-4">
+      <Card className="brand-panel rounded-[28px] p-4">
         <div className="mb-3">
-          <h2 className="font-semibold">Kontakt und Navigation</h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="brand-kicker">Vor Ort</p>
+          <h2 className="mt-2 font-semibold text-[#173d66]">Kontakt und Navigation</h2>
+          <p className="text-sm text-[#173d66]/68">
             Ansprechpartner und Wegbeschreibung fuer diesen Einsatz.
           </p>
         </div>
@@ -221,7 +224,7 @@ export default function AssignmentDetail() {
               >
                 <Button
                   variant="secondary"
-                  className="h-14 w-full justify-start gap-2 text-base"
+                  className="h-14 w-full justify-start gap-2 rounded-2xl border border-[#173d66]/10 bg-white/85 text-base text-[#173d66] shadow-sm"
                   size="lg"
                 >
                   <Navigation className="h-5 w-5" />
@@ -234,7 +237,7 @@ export default function AssignmentDetail() {
               <a href={getPhoneUrl(job.contactPhone)} className="w-full" data-testid="link-phone">
                 <Button
                   variant="secondary"
-                  className="h-14 w-full justify-start gap-2 text-base"
+                  className="h-14 w-full justify-start gap-2 rounded-2xl border border-[#173d66]/10 bg-white/85 text-base text-[#173d66] shadow-sm"
                   size="lg"
                 >
                   <Phone className="h-5 w-5" />
@@ -244,29 +247,32 @@ export default function AssignmentDetail() {
             )}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-[#173d66]/68">
             Fuer diesen Einsatz sind derzeit keine Kontakt- oder Navigationsdaten hinterlegt.
           </p>
         )}
       </Card>
 
-      <Card className="space-y-3 p-4">
-        <h2 className="font-semibold">Einsatzdaten</h2>
+      <Card className="brand-panel space-y-3 rounded-[28px] p-4">
+        <div>
+          <p className="brand-kicker">Details</p>
+          <h2 className="mt-2 font-semibold text-[#173d66]">Einsatzdaten</h2>
+        </div>
         {address && (
-          <div className="flex items-start gap-2">
-            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+          <div className="flex items-start gap-2 text-[#173d66]/74">
+            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#173d66]/54" />
             <span className="text-sm">{address}</span>
           </div>
         )}
         {job?.contactName && (
-          <div className="flex items-center gap-2">
-            <User className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <div className="flex items-center gap-2 text-[#173d66]/74">
+            <User className="h-4 w-4 shrink-0 text-[#173d66]/54" />
             <span className="text-sm">{job.contactName}</span>
           </div>
         )}
         {job?.description && (
-          <div className="flex items-start gap-2">
-            <FileText className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+          <div className="flex items-start gap-2 text-[#173d66]/74">
+            <FileText className="mt-0.5 h-4 w-4 shrink-0 text-[#173d66]/54" />
             <span className="text-sm">{job.description}</span>
           </div>
         )}
@@ -312,9 +318,9 @@ export default function AssignmentDetail() {
       )}
 
       {effectiveDetail.note && (
-        <Card className="p-4">
+        <Card className="brand-panel rounded-[28px] p-4">
           <h3 className="mb-1 text-sm font-medium">Dispo-Notiz</h3>
-          <p className="text-sm text-muted-foreground">{effectiveDetail.note}</p>
+          <p className="text-sm text-[#173d66]/68">{effectiveDetail.note}</p>
         </Card>
       )}
 
@@ -329,8 +335,8 @@ export default function AssignmentDetail() {
           disabled={assignmentConflicts.length > 0}
         />
       ) : (
-        <div className="safe-area-bottom fixed bottom-0 left-0 right-0 border-t bg-background/80 p-4 backdrop-blur-xl">
-          <div className="mx-auto max-w-lg">
+        <div className="safe-area-bottom fixed bottom-0 left-0 right-0 border-t border-[#173d66]/10 bg-[#f7f6f2]/88 p-4 backdrop-blur-xl">
+          <div className="mx-auto max-w-xl">
             <EmployeeTimeTrackerCard
               status={effectiveDetail.status}
               timeEntry={timeEntry}

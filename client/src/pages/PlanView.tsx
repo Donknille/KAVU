@@ -28,6 +28,7 @@ import { VirtualStack } from "@/features/planning/virtual";
 import { formatRange, parseDateString, toDateStr } from "@/features/planning/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { BrandMark } from "@/components/BrandMark";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -90,18 +91,18 @@ export default function PlanView() {
   }
 
   const backlogCollapsedRail = (
-    <Card className="flex h-full min-h-0 flex-col items-center justify-between rounded-3xl border px-2 py-3 shadow-sm">
+    <Card className="brand-panel flex h-full min-h-0 flex-col items-center justify-between rounded-3xl px-2 py-3">
       <div className="flex flex-col items-center gap-2">
         <Button
           type="button"
           size="icon"
           variant="outline"
-          className="h-8 w-8 rounded-full"
+          className="h-8 w-8 rounded-full border-[#173d66]/12 bg-white/85 text-[#173d66]"
           onClick={toggleBacklogPanel}
         >
           <ChevronsRight className="h-4 w-4" />
         </Button>
-        <div className="rounded-full border bg-slate-50 px-2 py-1 text-[10px] font-semibold text-slate-600">
+        <div className="brand-outline-chip rounded-full px-2 py-1 text-[10px] font-semibold">
           {planning.backlogList.length}
         </div>
       </div>
@@ -110,7 +111,7 @@ export default function PlanView() {
         type="button"
         size="icon"
         variant="ghost"
-        className="h-8 w-8 rounded-full"
+        className="h-8 w-8 rounded-full text-[#173d66]"
         onClick={() => planning.setShowCreateJobDialog(true)}
       >
         <Plus className="h-4 w-4" />
@@ -119,12 +120,13 @@ export default function PlanView() {
   );
 
   const backlogExpandedPanel = (
-    <Card className="flex min-h-0 flex-col overflow-hidden rounded-3xl border shadow-sm">
-      <div className="border-b p-3">
+    <Card className="brand-panel flex min-h-0 flex-col overflow-hidden rounded-3xl">
+      <div className="border-b border-[#173d66]/10 p-3">
         <div className="flex items-center justify-between gap-2">
           <div>
-            <p className="text-sm font-semibold">Backlog</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="brand-kicker">Backlog</p>
+            <p className="mt-1 text-sm font-semibold text-[#173d66]">Ungeplante Auftraege</p>
+            <p className="text-xs text-[#173d66]/64">
               {planning.backlogList.length} ungeplante Auftraege
             </p>
           </div>
@@ -133,14 +135,14 @@ export default function PlanView() {
               type="button"
               size="icon"
               variant="outline"
-              className="h-8 w-8 rounded-full"
+              className="h-8 w-8 rounded-full border-[#173d66]/12 bg-white/85 text-[#173d66]"
               onClick={toggleBacklogPanel}
             >
               <ChevronsLeft className="h-4 w-4" />
             </Button>
             <Button
               size="sm"
-              className="h-8 gap-2 px-2.5"
+              className="h-8 gap-2 bg-[#173d66] px-2.5 text-white hover:bg-[#123251]"
               onClick={() => planning.setShowCreateJobDialog(true)}
             >
               <Plus className="h-4 w-4" />
@@ -152,31 +154,31 @@ export default function PlanView() {
           value={planning.backlogSearch}
           onChange={(event) => planning.setBacklogSearch(event.target.value)}
           placeholder="Auftrag suchen..."
-          className="mt-3 h-8"
+          className="mt-3 h-8 border-[#173d66]/10 bg-white/80"
         />
       </div>
       <div className="min-h-0 flex-1 p-2.5">
         <div className="flex h-full min-h-0 flex-col gap-2">
           <button
             type="button"
-            className="flex w-full items-center justify-between rounded-xl border border-dashed border-slate-300 bg-slate-50/80 px-2.5 py-2 text-left transition hover:border-slate-400 hover:bg-slate-100"
+            className="brand-soft-card flex w-full items-center justify-between rounded-xl border-dashed px-2.5 py-2 text-left transition hover:border-[#173d66]/18"
             onClick={() => planning.setShowCreateJobDialog(true)}
           >
             <div>
-              <p className="text-xs font-semibold">Neuen Auftrag anlegen</p>
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-xs font-semibold text-[#173d66]">Neuen Auftrag anlegen</p>
+              <p className="text-[10px] text-[#173d66]/64">
                 Im Backlog erfassen und anschliessend disponieren
               </p>
             </div>
-            <Plus className="h-4 w-4 text-slate-500" />
+            <Plus className="h-4 w-4 text-[#173d66]/56" />
           </button>
 
           {planning.backlogList.length === 0 && (
-            <div className="rounded-2xl border border-dashed p-6 text-center text-sm text-muted-foreground">
+            <div className="brand-soft-card rounded-2xl border-dashed p-6 text-center text-sm text-[#173d66]/64">
               <p>Keine offenen Auftraege im Backlog.</p>
               <Button
                 variant="outline"
-                className="mt-4 gap-2"
+                className="mt-4 gap-2 border-[#173d66]/12 bg-white/80 text-[#173d66]"
                 onClick={() => planning.setShowCreateJobDialog(true)}
               >
                 <Plus className="h-4 w-4" />
@@ -198,11 +200,11 @@ export default function PlanView() {
   );
 
   const calendarBoard = (
-    <Card className="flex h-full min-h-0 flex-col overflow-hidden rounded-3xl border shadow-sm">
+    <Card className="brand-panel flex h-full min-h-0 flex-col overflow-hidden rounded-3xl">
       <div className="overflow-x-auto">
         <div className="w-full">
           <div
-            className="grid gap-px border-b bg-slate-200/80"
+            className="grid gap-px border-b border-[#173d66]/10 bg-[#173d66]/10"
             style={{ gridTemplateColumns: planning.boardGridStyle.gridTemplateColumns }}
           >
             {planning.daySummaries.map((summary) => {
@@ -211,13 +213,13 @@ export default function PlanView() {
                 <div
                   key={summary.day}
                   className={cn(
-                    "min-w-0 bg-background px-1.5 py-1.5",
+                    "min-w-0 bg-background px-1.5 py-1.5 text-[#173d66]",
                     planning.resizePreview?.addedDays.includes(summary.day) &&
                       (planning.resizePreview.valid ? "bg-sky-50" : "bg-rose-50"),
-                    isToday && "bg-blue-50/80"
+                    isToday && "bg-[#68d5c8]/24"
                   )}
                 >
-                  <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#173d66]/58">
                     {parseDateString(summary.day).toLocaleDateString("de-DE", {
                       weekday: isOverviewMode && !planning.isMobile ? "narrow" : "short",
                     })}
@@ -229,7 +231,7 @@ export default function PlanView() {
                         month: "2-digit",
                       })}
                     </p>
-                    <div className="text-right text-[9px] text-muted-foreground">
+                    <div className="text-right text-[9px] text-[#173d66]/58">
                       <p>{`${summary.assignments} ET`}</p>
                       <p>{`${Math.max(0, planning.activeEmployees.length - summary.workers)} frei`}</p>
                     </div>
@@ -241,7 +243,7 @@ export default function PlanView() {
 
           <div className="p-1.5">
             <div
-              className="relative overflow-hidden rounded-2xl border border-slate-200/80"
+              className="relative overflow-hidden rounded-2xl border border-[#173d66]/12"
               style={planning.boardGridStyle}
             >
               <div className="pointer-events-none absolute inset-0" style={planning.boardBackgroundStyle} />
@@ -308,29 +310,32 @@ export default function PlanView() {
   );
 
   const teamCard = (
-    <Card className="overflow-hidden rounded-3xl border shadow-sm">
-      <div className="border-b p-2.5">
+    <Card className="brand-panel overflow-hidden rounded-3xl">
+      <div className="border-b border-[#173d66]/10 p-2.5">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-semibold">Team</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="brand-kicker">Team</p>
+            <p className="mt-1 text-sm font-semibold text-[#173d66]">Verfuegbare Mitarbeitende</p>
+            <p className="text-xs text-[#173d66]/64">
               Sortiert nach Verfuegbarkeit fuer {planning.teamFocusLabel.toLowerCase()}.
             </p>
           </div>
           <div className="flex items-center gap-2">
             {planning.selectedBlock && (
-              <Badge variant="outline" className="rounded-full px-2 py-0.5 text-[10px]">
+              <Badge variant="outline" className="rounded-full border-[#173d66]/10 bg-white/70 px-2 py-0.5 text-[10px] text-[#173d66]">
                 Detailansicht aktiv
               </Badge>
             )}
-            <Badge variant="secondary">{planning.activeEmployees.length}</Badge>
+            <Badge variant="secondary" className="bg-[#173d66]/8 text-[#173d66]">
+              {planning.activeEmployees.length}
+            </Badge>
           </div>
         </div>
         <Input
           value={planning.teamSearch}
           onChange={(event) => planning.setTeamSearch(event.target.value)}
           placeholder="Mitarbeiter suchen..."
-          className="mt-2 h-8"
+          className="mt-2 h-8 border-[#173d66]/10 bg-white/80"
         />
         <div className="mt-2 flex flex-wrap gap-1.5">
           {[
@@ -354,7 +359,7 @@ export default function PlanView() {
       <ScrollArea className="h-[min(30vh,18rem)]">
         <div className="space-y-3 p-2">
           {planning.teamSections.length === 0 && (
-            <div className="rounded-2xl border border-dashed p-5 text-center text-sm text-muted-foreground">
+            <div className="brand-soft-card rounded-2xl border-dashed p-5 text-center text-sm text-[#173d66]/64">
               Fuer den aktuellen Filter wurden keine Mitarbeitenden gefunden.
             </div>
           )}
@@ -362,12 +367,12 @@ export default function PlanView() {
             <div key={section.id} className="space-y-2">
               <div className="flex items-center justify-between gap-2 px-1">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#173d66]/58">
                     {section.title}
                   </p>
-                  <p className="text-[11px] text-muted-foreground">{section.description}</p>
+                  <p className="text-[11px] text-[#173d66]/64">{section.description}</p>
                 </div>
-                <Badge variant="outline" className="rounded-full px-2 py-0.5 text-[10px]">
+                <Badge variant="outline" className="rounded-full border-[#173d66]/10 bg-white/70 px-2 py-0.5 text-[10px] text-[#173d66]">
                   {section.items.length}
                 </Badge>
               </div>
@@ -398,11 +403,11 @@ export default function PlanView() {
     : [];
 
   const mobileDetailsFocusCard = planning.selectedBlock ? (
-    <Card className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border bg-card shadow-xl xl:hidden">
-      <div className="flex items-center justify-between gap-3 border-b bg-card px-3 py-3">
+    <Card className="brand-panel flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl xl:hidden">
+      <div className="flex items-center justify-between gap-3 border-b border-[#173d66]/10 px-3 py-3">
         <div className="min-w-0">
-          <p className="text-base font-semibold">Auftragsdetails</p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-base font-semibold text-[#173d66]">Auftragsdetails</p>
+          <p className="text-xs text-[#173d66]/64">
             Fokusansicht fuer kleine Breiten.
           </p>
         </div>
@@ -410,7 +415,7 @@ export default function PlanView() {
           type="button"
           size="sm"
           variant="outline"
-          className="h-8 gap-1.5 rounded-full px-2.5"
+          className="h-8 gap-1.5 rounded-full border-[#173d66]/12 bg-white/85 px-2.5 text-[#173d66]"
           onClick={() => planning.setSelectedBlockId(null)}
         >
           <X className="h-4 w-4" />
@@ -444,36 +449,37 @@ export default function PlanView() {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3 p-3 lg:p-4">
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
+      <div className="brand-panel flex flex-col gap-4 rounded-[34px] p-4 md:p-5 xl:flex-row xl:items-end xl:justify-between">
         <div>
-          <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          <BrandMark showWordmark subtitle="Disposition" size={44} labelClassName="text-[1.7rem]" />
+          <div className="mt-4 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#173d66]/58">
             <CalendarRange className="h-3.5 w-3.5" />
             Einsatzplanung
           </div>
-          <h1 className="mt-1.5 text-2xl font-semibold tracking-tight">Wochenplanung nach Auftrag</h1>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <h1 className="mt-1.5 text-2xl font-semibold tracking-tight text-[#173d66]">Wochenplanung nach Auftrag</h1>
+          <p className="mt-0.5 text-sm text-[#173d66]/68">
             Backlog, Wochenplanung und Teamuebersicht in einer zentralen Arbeitsflaeche.
           </p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            <Badge variant="outline" className="gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium">
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            <Badge variant="outline" className="gap-1.5 rounded-full border-[#173d66]/10 bg-white/72 px-2 py-0.5 text-[11px] font-medium text-[#173d66]">
               <BriefcaseBusiness className="h-3 w-3" />
               {planning.blocks.length} geplant
             </Badge>
-            <Badge variant="outline" className="gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium">
+            <Badge variant="outline" className="gap-1.5 rounded-full border-[#173d66]/10 bg-white/72 px-2 py-0.5 text-[11px] font-medium text-[#173d66]">
               <CalendarRange className="h-3 w-3" />
               {planning.backlogJobs.length} im Backlog
             </Badge>
-            <Badge variant="outline" className="gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium">
+            <Badge variant="outline" className="gap-1.5 rounded-full border-[#173d66]/10 bg-white/72 px-2 py-0.5 text-[11px] font-medium text-[#173d66]">
               <Users className="h-3 w-3" />
               {planning.activeEmployees.length} aktiv
             </Badge>
-            <Badge variant="outline" className="rounded-full px-2 py-0.5 text-[11px] font-medium">
+            <Badge variant="outline" className="rounded-full border-[#173d66]/10 bg-white/72 px-2 py-0.5 text-[11px] font-medium text-[#173d66]">
               {planning.teamSummary.unassignedInWindow} ohne Einsatz
             </Badge>
-            <Badge variant="outline" className="rounded-full px-2 py-0.5 text-[11px] font-medium">
+            <Badge variant="outline" className="rounded-full border-[#173d66]/10 bg-white/72 px-2 py-0.5 text-[11px] font-medium text-[#173d66]">
               {planning.teamSummary.freeOnFocusDay} {planning.teamFocusLabel.toLowerCase()} frei
             </Badge>
-            <Badge variant="outline" className="rounded-full px-2 py-0.5 text-[11px] font-medium">
+            <Badge variant="outline" className="rounded-full border-[#173d66]/10 bg-white/72 px-2 py-0.5 text-[11px] font-medium text-[#173d66]">
               {planning.teamSummary.fullyBookedInWindow} durchgehend eingeplant
             </Badge>
           </div>
@@ -483,26 +489,26 @@ export default function PlanView() {
           <Button
             variant="outline"
             size="sm"
-            className="h-8 gap-1.5 px-2.5"
+            className="h-8 gap-1.5 border-[#173d66]/12 bg-white/80 px-2.5 text-[#173d66]"
             onClick={toggleBacklogPanel}
           >
             {backlogCollapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
             Backlog
           </Button>
-          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => planning.changeWindow(-1)}>
+          <Button variant="outline" size="icon" className="h-8 w-8 border-[#173d66]/12 bg-white/80 text-[#173d66]" onClick={() => planning.changeWindow(-1)}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <Badge variant="secondary" className="h-8 px-3 text-xs font-medium">
+          <Badge variant="secondary" className="h-8 bg-[#173d66]/8 px-3 text-xs font-medium text-[#173d66]">
             {formatRange(
               planning.visibleDays[0],
               planning.visibleDays[planning.visibleDays.length - 1]
             )}
           </Badge>
-          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => planning.changeWindow(1)}>
+          <Button variant="outline" size="icon" className="h-8 w-8 border-[#173d66]/12 bg-white/80 text-[#173d66]" onClick={() => planning.changeWindow(1)}>
             <ArrowRight className="h-4 w-4" />
           </Button>
 
-          <div className="ml-1 flex items-center gap-1 rounded-full border bg-background p-0.5">
+          <div className="ml-1 flex items-center gap-1 rounded-full border border-[#173d66]/10 bg-white/78 p-0.5">
             {[2, 4].map((span) => (
               <Button
                 key={span}
@@ -590,11 +596,11 @@ export default function PlanView() {
           <SheetContent
             side="right"
             showOverlay={false}
-            className="w-[28rem] border-l bg-background sm:max-w-[28rem]"
+            className="w-[28rem] border-l border-[#173d66]/10 bg-[#f7f6f2] sm:max-w-[28rem]"
           >
             <SheetHeader className="pr-8">
-              <SheetTitle>Auftragsdetails</SheetTitle>
-              <SheetDescription>
+              <SheetTitle className="text-[#173d66]">Auftragsdetails</SheetTitle>
+              <SheetDescription className="text-[#173d66]/64">
                 Details bleiben aus dem Board raus, damit die Wochenplanung kompakt bleibt.
               </SheetDescription>
             </SheetHeader>

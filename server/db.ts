@@ -1,12 +1,27 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
-// WICHTIG: Die Endung .ts beim Import entfernen, damit Node/TypeScript keine Probleme bekommt
 import * as schema from "../shared/schema.js";
 
 const { Pool } = pg;
 const connectionString = process.env.DATABASE_URL;
 
-// Prüfung, ob die URL überhaupt da ist
+function parsePositiveInt(value: string | undefined, fallback: number) {
+  if (!value) {
+    return fallback;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+const databasePoolMax = parsePositiveInt(process.env.DATABASE_POOL_MAX, 3);
+const databaseIdleTimeoutMs = parsePositiveInt(process.env.DATABASE_IDLE_TIMEOUT_MS, 10000);
+const databaseConnectTimeoutMs = parsePositiveInt(
+  process.env.DATABASE_CONNECT_TIMEOUT_MS,
+  5000,
+);
+const databaseMaxUses = parsePositiveInt(process.env.DATABASE_MAX_USES, 7500);
+
 export const hasDatabaseConnection = Boolean(connectionString);
 
 if (!connectionString) {
@@ -14,10 +29,13 @@ if (!connectionString) {
 }
 
 export const pool = connectionString
-  ? new Pool({ 
+  ? new Pool({
       connectionString,
-      // Hilft gegen Verbindungsabbrüche bei Cloud-Datenbanken (wie Supabase)
-      connectionTimeoutMillis: 5000 
+      // Kleine, begrenzte Pools vermeiden Ueberlastung im Supabase Session Pooler.
+      max: databasePoolMax,
+      idleTimeoutMillis: databaseIdleTimeoutMs,
+      connectionTimeoutMillis: databaseConnectTimeoutMs,
+      maxUses: databaseMaxUses,
     })
   : (null as unknown as pg.Pool);
 
@@ -36,7 +54,7 @@ export async function pingDatabase() {
       await client.query("SELECT 1");
       return true;
     } finally {
-      client.release(); // Verbindung immer wieder freigeben!
+      client.release();
     }
   } catch (error) {
     console.error("Datenbank-Ping fehlgeschlagen:", error);

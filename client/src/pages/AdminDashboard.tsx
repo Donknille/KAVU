@@ -1,18 +1,55 @@
 import { useQuery } from "@tanstack/react-query";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useLocation } from "wouter";
 import { AssignmentCard } from "@/components/AssignmentCard";
+import { BrandMark } from "@/components/BrandMark";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/StatusBadge";
 import {
-  ClipboardList,
   AlertTriangle,
-  Clock,
-  CheckCircle,
-  Plus,
   Calendar,
+  CheckCircle,
+  ClipboardList,
+  Clock,
+  Plus,
 } from "lucide-react";
-import { useLocation } from "wouter";
+
+const statCards = [
+  {
+    key: "todayAssignmentCount",
+    testId: "text-today-count",
+    label: "Heute",
+    helper: "Einsaetze",
+    icon: ClipboardList,
+    iconTone: "bg-[#173d66]/8 text-[#173d66]",
+  },
+  {
+    key: "todayInProgress",
+    testId: "text-active-count",
+    label: "Aktiv",
+    helper: "laufend",
+    icon: Clock,
+    iconTone: "bg-[#68d5c8]/24 text-[#173d66]",
+  },
+  {
+    key: "problemCount",
+    testId: "text-problem-count",
+    label: "Abstimmung",
+    helper: "auffaellig",
+    icon: AlertTriangle,
+    iconTone: "bg-amber-100 text-amber-700",
+    valueTone: "text-amber-700",
+  },
+  {
+    key: "todayCompleted",
+    testId: "text-completed-count",
+    label: "Erledigt",
+    helper: "heute",
+    icon: CheckCircle,
+    iconTone: "bg-emerald-100 text-emerald-700",
+  },
+] as const;
 
 export default function AdminDashboard() {
   const [, navigate] = useLocation();
@@ -22,14 +59,14 @@ export default function AdminDashboard() {
 
   if (isLoading) {
     return (
-      <div className="p-4 space-y-4">
-        <Skeleton className="h-8 w-48" />
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="mx-auto max-w-6xl space-y-4 p-4 md:p-6">
+        <Skeleton className="h-40 rounded-[32px]" />
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-24" />
+            <Skeleton key={i} className="h-32 rounded-[26px]" />
           ))}
         </div>
-        <Skeleton className="h-64" />
+        <Skeleton className="h-72 rounded-[32px]" />
       </div>
     );
   }
@@ -37,155 +74,185 @@ export default function AdminDashboard() {
   const stats = data?.stats;
   const todayAssignments = data?.todayAssignments || [];
   const unassignedJobs = data?.unassignedJobs || [];
+  const attentionAssignments = todayAssignments.filter((a: any) => a.status === "problem");
 
   return (
-    <div className="p-4 space-y-6 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between gap-2">
-        <h1 className="text-2xl font-bold" data-testid="text-dashboard-title">Dashboard</h1>
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            onClick={() => navigate("/jobs/new")}
-            data-testid="button-new-job"
-          >
-            <Plus className="w-4 h-4 mr-1" />
-            Auftrag
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => navigate("/")}
-            data-testid="button-open-plan"
-          >
-            <Calendar className="w-4 h-4 mr-1" />
-            Plan
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <ClipboardList className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Heute</span>
+    <div className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
+      <section className="brand-panel rounded-[34px] p-5 md:p-7">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl">
+            <BrandMark showWordmark subtitle="Zentrale" size={46} labelClassName="text-[1.85rem]" />
+            <p className="brand-kicker mt-5">Tagessteuerung</p>
+            <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[#173d66]" data-testid="text-dashboard-title">
+              Dashboard fuer Disposition und Betriebsueberblick
+            </h1>
+            <p className="mt-3 text-sm leading-6 text-[#173d66]/72 md:text-base">
+              Heutige Einsaetze, offene Abstimmungen und nicht disponierte Auftraege liegen in einer gemeinsamen Arbeitsoberflaeche.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <span className="brand-highlight rounded-full px-4 py-2 text-sm font-medium">
+                {stats?.todayAssignmentCount || 0} Einsaetze fuer heute
+              </span>
+              <span className="brand-highlight rounded-full px-4 py-2 text-sm font-medium">
+                {unassignedJobs.length} noch nicht disponiert
+              </span>
+              <span className="brand-highlight rounded-full px-4 py-2 text-sm font-medium">
+                {stats?.todayCompleted || 0} heute abgeschlossen
+              </span>
+            </div>
           </div>
-          <p className="text-2xl font-bold" data-testid="text-today-count">
-            {stats?.todayAssignmentCount || 0}
-          </p>
-          <p className="text-xs text-muted-foreground">Einsätze</p>
-        </Card>
 
-        <Card className="p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Clock className="w-4 h-4 text-green-600" />
-            <span className="text-sm text-muted-foreground">Aktiv</span>
-          </div>
-          <p className="text-2xl font-bold" data-testid="text-active-count">
-            {stats?.todayInProgress || 0}
-          </p>
-          <p className="text-xs text-muted-foreground">laufend</p>
-        </Card>
-
-        <Card className="p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <AlertTriangle className="w-4 h-4 text-red-500" />
-            <span className="text-sm text-muted-foreground">Probleme</span>
-          </div>
-          <p className="text-2xl font-bold text-red-600 dark:text-red-400" data-testid="text-problem-count">
-            {stats?.problemCount || 0}
-          </p>
-          <p className="text-xs text-muted-foreground">offen</p>
-        </Card>
-
-        <Card className="p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <CheckCircle className="w-4 h-4 text-emerald-600" />
-            <span className="text-sm text-muted-foreground">Erledigt</span>
-          </div>
-          <p className="text-2xl font-bold" data-testid="text-completed-count">
-            {stats?.todayCompleted || 0}
-          </p>
-          <p className="text-xs text-muted-foreground">heute</p>
-        </Card>
-      </div>
-
-      {(stats?.problemCount || 0) > 0 && (
-        <Card className="p-4 ring-2 ring-red-400 dark:ring-red-600">
-          <h2 className="font-semibold text-red-600 dark:text-red-400 flex items-center gap-2 mb-3">
-            <AlertTriangle className="w-4 h-4" />
-            Probleme erfordern Aufmerksamkeit
-          </h2>
-          <div className="space-y-2">
-            {todayAssignments
-              .filter((a: any) => a.status === "problem")
-              .map((a: any) => (
-                <AssignmentCard
-                  key={a.id}
-                  assignment={a}
-                  onClick={() => navigate(`/jobs/${a.jobId}`)}
-                  compact
-                />
-              ))}
-          </div>
-        </Card>
-      )}
-
-      <div>
-        <h2 className="font-semibold text-lg mb-3">Heutige Einsätze</h2>
-        {todayAssignments.length === 0 ? (
-          <Card className="p-8 text-center">
-            <ClipboardList className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
-            <p className="text-muted-foreground">Keine Einsätze für heute geplant</p>
+          <div className="grid gap-2 sm:grid-cols-2">
             <Button
-              variant="secondary"
-              className="mt-3"
-              onClick={() => navigate("/plan")}
-              data-testid="button-go-plan-empty"
+              className="h-12 rounded-2xl bg-[#173d66] px-5 text-base text-white hover:bg-[#123251]"
+              onClick={() => navigate("/jobs/new")}
+              data-testid="button-new-job"
             >
-              Einsatz planen
+              <Plus className="mr-2 h-4 w-4" />
+              Auftrag anlegen
             </Button>
-          </Card>
-        ) : (
-          <div className="space-y-2">
-            {todayAssignments.map((a: any) => (
+            <Button
+              variant="outline"
+              className="h-12 rounded-2xl border-[#173d66]/12 bg-white/80 px-5 text-base text-[#173d66]"
+              onClick={() => navigate("/")}
+              data-testid="button-open-plan"
+            >
+              <Calendar className="mr-2 h-4 w-4" />
+              Planung oeffnen
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        {statCards.map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <Card key={stat.key} className="brand-soft-card rounded-[28px] p-4 md:p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${stat.iconTone}`}>
+                  <Icon className="h-5 w-5" />
+                </div>
+                <p className="brand-kicker text-right">{stat.label}</p>
+              </div>
+              <p
+                className={`mt-5 text-3xl font-semibold tracking-tight text-[#173d66] ${stat.key === "problemCount" ? "text-amber-700" : ""}`}
+                data-testid={stat.testId}
+              >
+                {stats?.[stat.key] || 0}
+              </p>
+              <p className="mt-1 text-sm text-[#173d66]/64">{stat.helper}</p>
+            </Card>
+          );
+        })}
+      </section>
+
+      {attentionAssignments.length > 0 && (
+        <section className="brand-panel rounded-[32px] p-5 md:p-6">
+          <div className="flex items-start gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+              <AlertTriangle className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="brand-kicker text-amber-700">Abstimmung erforderlich</p>
+              <h2 className="mt-2 text-xl font-semibold text-[#173d66]">
+                Auffaellige Einsaetze fuer heute
+              </h2>
+              <p className="mt-1 text-sm text-[#173d66]/72">
+                Diese Einsaetze sollten in der Disposition zuerst geprueft werden.
+              </p>
+            </div>
+          </div>
+          <div className="mt-5 space-y-3">
+            {attentionAssignments.map((assignment: any) => (
               <AssignmentCard
-                key={a.id}
-                assignment={a}
-                onClick={() => navigate(`/jobs/${a.jobId}`)}
+                key={assignment.id}
+                assignment={assignment}
+                onClick={() => navigate(`/jobs/${assignment.jobId}`)}
               />
             ))}
           </div>
-        )}
-      </div>
-
-      {unassignedJobs.length > 0 && (
-        <div>
-          <h2 className="font-semibold text-lg mb-3 flex items-center gap-2">
-            Nicht zugewiesen
-            <span className="text-sm font-normal text-muted-foreground">
-              ({unassignedJobs.length})
-            </span>
-          </h2>
-          <div className="space-y-2">
-            {unassignedJobs.map((job: any) => (
-              <Card
-                key={job.id}
-                className="p-3 cursor-pointer hover-elevate"
-                onClick={() => navigate(`/jobs/${job.id}`)}
-                data-testid={`card-unassigned-${job.id}`}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <div>
-                    <p className="font-medium text-sm">{job.title}</p>
-                    <p className="text-xs text-muted-foreground">{job.customerName}</p>
-                  </div>
-                  <StatusBadge status={job.status} type="job" />
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
+        </section>
       )}
+
+      <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+        <Card className="brand-panel rounded-[32px] p-5 md:p-6">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="brand-kicker">Heute im Betrieb</p>
+              <h2 className="mt-2 text-xl font-semibold text-[#173d66]">Heutige Einsaetze</h2>
+              <p className="mt-1 text-sm text-[#173d66]/72">
+                Alle disponierten Einsaetze fuer den aktuellen Tag.
+              </p>
+            </div>
+          </div>
+
+          {todayAssignments.length === 0 ? (
+            <Card className="brand-soft-card mt-5 rounded-[26px] p-8 text-center">
+              <ClipboardList className="mx-auto mb-3 h-10 w-10 text-[#173d66]/42" />
+              <p className="font-medium text-[#173d66]/76">Keine Einsaetze fuer heute geplant</p>
+              <Button
+                variant="outline"
+                className="mt-4 rounded-2xl border-[#173d66]/12 bg-white/80 text-[#173d66]"
+                onClick={() => navigate("/plan")}
+                data-testid="button-go-plan-empty"
+              >
+                Einsatz planen
+              </Button>
+            </Card>
+          ) : (
+            <div className="mt-5 space-y-3">
+              {todayAssignments.map((assignment: any) => (
+                <AssignmentCard
+                  key={assignment.id}
+                  assignment={assignment}
+                  onClick={() => navigate(`/jobs/${assignment.jobId}`)}
+                />
+              ))}
+            </div>
+          )}
+        </Card>
+
+        <Card className="brand-panel rounded-[32px] p-5 md:p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="brand-kicker">Offene Disposition</p>
+              <h2 className="mt-2 text-xl font-semibold text-[#173d66]">Nicht zugewiesen</h2>
+            </div>
+            <span className="brand-outline-chip rounded-full px-3 py-1 text-xs font-semibold">
+              {unassignedJobs.length}
+            </span>
+          </div>
+
+          {unassignedJobs.length === 0 ? (
+            <Card className="brand-soft-card mt-5 rounded-[26px] p-6 text-center">
+              <p className="font-medium text-[#173d66]/76">Aktuell ist kein Auftrag offen.</p>
+              <p className="mt-1 text-sm text-[#173d66]/64">
+                Neue oder verschobene Auftraege erscheinen hier automatisch.
+              </p>
+            </Card>
+          ) : (
+            <div className="mt-5 space-y-3">
+              {unassignedJobs.map((job: any) => (
+                <Card
+                  key={job.id}
+                  className="brand-soft-card cursor-pointer rounded-[24px] p-4"
+                  onClick={() => navigate(`/jobs/${job.id}`)}
+                  data-testid={`card-unassigned-${job.id}`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-base font-semibold text-[#173d66]">{job.title}</p>
+                      <p className="truncate text-sm text-[#173d66]/64">{job.customerName}</p>
+                    </div>
+                    <StatusBadge status={job.status} type="job" />
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </Card>
+      </section>
     </div>
   );
 }

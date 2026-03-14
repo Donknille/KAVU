@@ -239,7 +239,7 @@ export function EmployeeTimeTrackerCard({
   }, [effectiveTimeEntry?.startedAt, effectiveTimeEntry?.endedAt, effectiveBreaks.length, status]);
 
   return (
-    <Card className="overflow-hidden rounded-[30px] border-0 bg-slate-950 text-white shadow-2xl">
+    <Card className="brand-navy-panel overflow-hidden rounded-[30px] text-white shadow-2xl">
       <div className="space-y-5 p-4 sm:p-5">
         <div className="flex items-center justify-between gap-3">
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
@@ -278,7 +278,7 @@ export function EmployeeTimeTrackerCard({
 
       <div className="grid grid-cols-3 gap-px bg-white/10">
         {facts.map((item) => (
-          <div key={item.label} className="bg-slate-950 px-3 py-3 text-center">
+          <div key={item.label} className="bg-[#173d66]/92 px-3 py-3 text-center">
             <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">{item.label}</p>
             <p className="mt-1 font-medium tabular-nums text-slate-100">{item.value}</p>
           </div>

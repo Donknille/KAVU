@@ -15,7 +15,7 @@ export function AssignmentCard({ assignment, onClick, compact = false }: Assignm
 
   return (
     <Card
-      className={`p-4 cursor-pointer hover-elevate transition-all ${
+      className={`brand-soft-card rounded-[24px] p-4 cursor-pointer transition-all ${
         assignment.status === "problem"
           ? "ring-2 ring-red-400 dark:ring-red-600"
           : ""
@@ -25,10 +25,10 @@ export function AssignmentCard({ assignment, onClick, compact = false }: Assignm
     >
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-base truncate" data-testid={`text-job-title-${assignment.id}`}>
+          <h3 className="font-semibold text-base truncate text-[#173d66]" data-testid={`text-job-title-${assignment.id}`}>
             {job?.title || "Auftrag"}
           </h3>
-          <p className="text-sm text-muted-foreground truncate" data-testid={`text-customer-${assignment.id}`}>
+          <p className="text-sm text-[#173d66]/64 truncate" data-testid={`text-customer-${assignment.id}`}>
             {job?.customerName}
           </p>
         </div>
@@ -38,14 +38,14 @@ export function AssignmentCard({ assignment, onClick, compact = false }: Assignm
       {!compact && (
         <>
           {address && (
-            <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-1">
+            <div className="mb-1 flex items-center gap-1.5 text-sm text-[#173d66]/64">
               <MapPin className="w-3.5 h-3.5 shrink-0" />
               <span className="truncate">{address}</span>
             </div>
           )}
 
           {assignment.plannedStartTime && (
-            <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-1">
+            <div className="mb-1 flex items-center gap-1.5 text-sm text-[#173d66]/64">
               <Clock className="w-3.5 h-3.5 shrink-0" />
               <span>
                 {assignment.plannedStartTime?.slice(0, 5)}
@@ -58,7 +58,7 @@ export function AssignmentCard({ assignment, onClick, compact = false }: Assignm
 
       {assignment.workers && assignment.workers.length > 0 && (
         <div
-          className={`flex items-center gap-1.5 text-muted-foreground ${
+          className={`flex items-center gap-1.5 text-[#173d66]/64 ${
             compact ? "mt-1 text-xs" : "text-sm"
           }`}
         >

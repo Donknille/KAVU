@@ -81,9 +81,9 @@ export function BacklogJobCard({ job, compact }: { job: PlanJob; compact: boolea
       ref={setNodeRef}
       type="button"
       className={cn(
-        "w-full rounded-xl border bg-background text-left shadow-sm transition",
+        "brand-soft-card w-full rounded-xl text-left transition",
         compact ? "min-h-[5rem] p-2" : "min-h-[6.75rem] p-2.5",
-        "hover:border-slate-300 hover:shadow-md",
+        "hover:border-[#173d66]/18 hover:shadow-[0_16px_30px_rgba(16,38,62,0.1)]",
         isDragging && "opacity-60"
       )}
       style={{
@@ -108,7 +108,7 @@ export function BacklogJobCard({ job, compact }: { job: PlanJob; compact: boolea
           <div className="flex items-start gap-1.5">
             <p
               className={cn(
-                "min-w-0 flex-1 font-semibold leading-tight text-slate-900",
+                "min-w-0 flex-1 font-semibold leading-tight text-[#173d66]",
                 compact ? "line-clamp-2 text-[11px]" : "line-clamp-2 text-[13px]"
               )}
             >
@@ -126,7 +126,7 @@ export function BacklogJobCard({ job, compact }: { job: PlanJob; compact: boolea
           </div>
           <p
             className={cn(
-              "mt-0.5 line-clamp-2 text-muted-foreground",
+              "mt-0.5 line-clamp-2 text-[#173d66]/64",
               compact ? "text-[10px] leading-snug" : "text-xs"
             )}
           >
@@ -134,7 +134,7 @@ export function BacklogJobCard({ job, compact }: { job: PlanJob; compact: boolea
           </p>
           <p
             className={cn(
-              "mt-1 text-muted-foreground",
+              "mt-1 text-[#173d66]/64",
               compact ? "line-clamp-2 text-[10px] leading-snug" : "line-clamp-2 text-[11px]"
             )}
           >
@@ -144,7 +144,7 @@ export function BacklogJobCard({ job, compact }: { job: PlanJob; compact: boolea
         <span
           ref={setActivatorNodeRef}
           className={cn(
-            "mt-0.5 shrink-0 rounded-md p-1 text-muted-foreground transition hover:bg-slate-100 touch-none",
+            "mt-0.5 shrink-0 rounded-md p-1 text-[#173d66]/54 transition hover:bg-[#173d66]/6 touch-none",
             compact ? "h-5 w-5" : "h-6 w-6"
           )}
           aria-label="Auftrag ziehen"
@@ -200,9 +200,9 @@ export function TeamMemberCard({
       ref={setNodeRef}
       type="button"
       className={cn(
-        "w-full rounded-xl border bg-background text-left shadow-sm transition",
+        "brand-soft-card w-full rounded-xl text-left transition",
         compact ? "min-h-[4.5rem] p-2" : "min-h-[4.75rem] p-2.5",
-        "hover:border-slate-300 hover:shadow-md",
+        "hover:border-[#173d66]/18 hover:shadow-[0_16px_30px_rgba(16,38,62,0.1)]",
         isDragging && "opacity-60"
       )}
       style={{
@@ -221,10 +221,10 @@ export function TeamMemberCard({
           {getEmployeeShortLabel(employee)}
         </div>
         <div className="min-w-0 flex-1">
-          <p className={cn("truncate font-semibold leading-tight", compact ? "text-xs" : "text-[13px]")}>
+          <p className={cn("truncate font-semibold leading-tight text-[#173d66]", compact ? "text-xs" : "text-[13px]")}>
             {getEmployeeLabel(employee)}
           </p>
-          <p className={cn("truncate text-muted-foreground", compact ? "text-[10px]" : "text-[11px]")}>
+          <p className={cn("truncate text-[#173d66]/64", compact ? "text-[10px]" : "text-[11px]")}>
             {metaLine}
           </p>
         </div>
@@ -242,7 +242,7 @@ export function TeamMemberCard({
           <span
             ref={setActivatorNodeRef}
             className={cn(
-              "rounded-md p-1 text-muted-foreground transition hover:bg-slate-100 touch-none",
+              "rounded-md p-1 text-[#173d66]/54 transition hover:bg-[#173d66]/6 touch-none",
               compact ? "h-5 w-5" : "h-6 w-6"
             )}
             aria-label="Mitarbeiter ziehen"
@@ -281,8 +281,8 @@ export function DayColumnDropZone({
       ref={setNodeRef}
       className={cn(
         "rounded-xl border-2 border-dashed transition",
-        isEnabled ? "border-slate-200/80" : "border-transparent",
-        isEnabled && isOver && "border-blue-400 bg-blue-100/50"
+        isEnabled ? "border-[#173d66]/12" : "border-transparent",
+        isEnabled && isOver && "border-[#68d5c8] bg-[#68d5c8]/18"
       )}
       style={{
         gridColumn: column,
@@ -381,11 +381,11 @@ export function PlanningBlockCard({
     <div
       ref={setRefs}
       className={cn(
-        "group relative flex h-full min-w-0 overflow-hidden rounded-xl border bg-background shadow-sm transition",
+        "group relative flex h-full min-w-0 overflow-hidden rounded-xl border bg-[rgba(255,255,255,0.92)] shadow-[0_10px_24px_rgba(16,38,62,0.08)] transition",
         CATEGORY_BG[category] ?? CATEGORY_BG.other,
         block.canMove && "cursor-grab active:cursor-grabbing",
-        selected && "ring-2 ring-slate-900/20",
-        isOver && "ring-2 ring-blue-400",
+        selected && "ring-2 ring-[#173d66]/22",
+        isOver && "ring-2 ring-[#68d5c8]",
         isDragging && "opacity-60"
       )}
       style={{
@@ -402,11 +402,11 @@ export function PlanningBlockCard({
           className={cn(
             "pointer-events-none absolute inset-0 z-20 rounded-xl border-2 border-dashed transition",
             isEmployeeOver
-              ? "border-emerald-500 bg-emerald-100/75 shadow-[inset_0_0_0_1px_rgba(16,185,129,0.3)]"
-              : "border-emerald-300/80 bg-emerald-50/55"
+              ? "border-[#68d5c8] bg-[#68d5c8]/26 shadow-[inset_0_0_0_1px_rgba(104,213,200,0.36)]"
+              : "border-[#68d5c8]/70 bg-[#68d5c8]/12"
           )}
         >
-          <div className="absolute right-2 top-2 rounded-full border bg-white/95 px-2 py-1 text-[10px] font-semibold text-emerald-700 shadow-sm">
+          <div className="absolute right-2 top-2 rounded-full border border-[#173d66]/10 bg-white/95 px-2 py-1 text-[10px] font-semibold text-[#173d66] shadow-sm">
             {isEmployeeOver ? "Hier zuweisen" : "Mitarbeiter hier ablegen"}
           </div>
         </div>
@@ -422,7 +422,7 @@ export function PlanningBlockCard({
           ref={setStartNodeRef}
           type="button"
           className={cn(
-            "absolute left-1 top-1 bottom-1 z-10 hidden rounded-full border border-transparent bg-white/60 text-slate-500 transition hover:border-slate-300 group-hover:block touch-none",
+            "absolute left-1 top-1 bottom-1 z-10 hidden rounded-full border border-transparent bg-white/60 text-[#173d66]/54 transition hover:border-[#173d66]/18 group-hover:block touch-none",
             compact ? "w-2.5" : "w-3"
           )}
           aria-label="Start verschieben"
@@ -436,7 +436,7 @@ export function PlanningBlockCard({
           ref={setEndNodeRef}
           type="button"
           className={cn(
-            "absolute right-1 top-1 bottom-1 z-10 flex items-center justify-center rounded-full border border-sky-200 bg-white/90 text-sky-700 shadow-sm transition hover:border-sky-300 hover:bg-sky-50 touch-none",
+            "absolute right-1 top-1 bottom-1 z-10 flex items-center justify-center rounded-full border border-[#68d5c8]/70 bg-white/92 text-[#173d66] shadow-sm transition hover:border-[#68d5c8] hover:bg-[#68d5c8]/16 touch-none",
             compact ? "w-4" : "w-10"
           )}
           aria-label="Ende verschieben"
@@ -453,14 +453,14 @@ export function PlanningBlockCard({
 
       <div
         className={cn(
-          "flex min-w-0 flex-1 items-start",
+            "flex min-w-0 flex-1 items-start",
           compact ? (readableCompact ? "gap-2 px-2 py-2" : "gap-2 px-2 py-1.5") : "gap-2.5 px-3 py-2.5"
         )}
       >
         <div
           ref={block.canMove ? setMoveActivatorNodeRef : undefined}
           className={cn(
-            "mt-0.5 flex shrink-0 items-center justify-center rounded-lg border bg-white/80 text-slate-500 touch-none",
+            "mt-0.5 flex shrink-0 items-center justify-center rounded-lg border bg-white/80 text-[#173d66]/56 touch-none",
             compact ? "h-6 w-6" : "h-7 w-7",
             block.canMove && "shadow-sm"
           )}
@@ -475,7 +475,7 @@ export function PlanningBlockCard({
           <div className={cn("flex flex-wrap items-center", compact ? "gap-1.5" : "gap-2")}>
             <p
               className={cn(
-                "font-semibold leading-tight",
+                "font-semibold leading-tight text-[#173d66]",
                 shouldWrapTitle ? "line-clamp-2 break-words" : "truncate",
                 overview ? "text-[11px]" : compact ? (readableCompact ? "text-[11px]" : "text-xs") : "text-[13px]"
               )}
@@ -546,7 +546,7 @@ export function PlanningBlockCard({
               ) : (
                 <span
                   key={worker.id}
-                  className="inline-flex items-center gap-1 rounded-full border bg-white/80 px-1.5 py-0.5 text-[10px] font-medium"
+                  className="inline-flex items-center gap-1 rounded-full border bg-white/80 px-1.5 py-0.5 text-[10px] font-medium text-[#173d66]"
                 >
                   <span
                     className="h-2 w-2 rounded-full"
@@ -641,14 +641,14 @@ export function DragOverlayCard({ activeDrag }: { activeDrag: ActiveDrag | null 
 
   if (activeDrag.type === "job") {
     return (
-      <Card className="w-72 border shadow-xl">
+      <Card className="brand-panel w-72 rounded-[24px] shadow-xl">
         <div className="flex items-start gap-3 p-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl border">
             <CategoryIcon category={activeDrag.job.category ?? "other"} className="h-4 w-4" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold">{activeDrag.job.title}</p>
-            <p className="truncate text-xs text-muted-foreground">
+            <p className="truncate text-sm font-semibold text-[#173d66]">{activeDrag.job.title}</p>
+            <p className="truncate text-xs text-[#173d66]/64">
               {activeDrag.job.jobNumber} | {activeDrag.job.customerName}
             </p>
           </div>
@@ -659,7 +659,7 @@ export function DragOverlayCard({ activeDrag }: { activeDrag: ActiveDrag | null 
 
   if (activeDrag.type === "employee") {
     return (
-      <Card className="w-64 border shadow-xl">
+      <Card className="brand-panel w-64 rounded-[24px] shadow-xl">
         <div className="flex items-center gap-3 p-3">
           <div
             className="flex h-10 w-10 items-center justify-center rounded-full text-xs font-semibold text-white"
@@ -668,8 +668,8 @@ export function DragOverlayCard({ activeDrag }: { activeDrag: ActiveDrag | null 
             {getEmployeeShortLabel(activeDrag.employee)}
           </div>
           <div>
-            <p className="text-sm font-semibold">{getEmployeeLabel(activeDrag.employee)}</p>
-            <p className="text-xs text-muted-foreground">In Auftrag ziehen</p>
+            <p className="text-sm font-semibold text-[#173d66]">{getEmployeeLabel(activeDrag.employee)}</p>
+            <p className="text-xs text-[#173d66]/64">In Auftrag ziehen</p>
           </div>
         </div>
       </Card>
@@ -677,12 +677,12 @@ export function DragOverlayCard({ activeDrag }: { activeDrag: ActiveDrag | null 
   }
 
   return (
-    <Card className="w-80 border shadow-xl">
+    <Card className="brand-panel w-80 rounded-[24px] shadow-xl">
       <div className="p-3">
-        <p className="truncate text-sm font-semibold">
+        <p className="truncate text-sm font-semibold text-[#173d66]">
           {activeDrag.block.job.jobNumber} | {activeDrag.block.job.title}
         </p>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-[#173d66]/64">
           {activeDrag.type === "block-move"
             ? "Auftrag verschieben"
             : activeDrag.type === "block-resize-start"
@@ -859,21 +859,21 @@ export function SelectedBlockPanel({
 
   if (!selectedBlock) {
     return (
-      <Card className="rounded-3xl border bg-card p-5 shadow-sm">
+      <Card className="brand-panel rounded-3xl p-5">
         Bitte waehlen Sie einen Auftrag aus, um Details und Teamzuordnungen zu bearbeiten.
       </Card>
     );
   }
 
   return (
-    <Card className="rounded-3xl border bg-card p-4 shadow-sm">
+    <Card className="brand-panel rounded-3xl p-4">
       <div className="space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="truncate text-base font-semibold">
+            <p className="truncate text-base font-semibold text-[#173d66]">
               {selectedBlock.job.jobNumber} | {selectedBlock.job.title}
             </p>
-            <p className="truncate text-sm text-muted-foreground">{selectedBlock.job.customerName}</p>
+            <p className="truncate text-sm text-[#173d66]/64">{selectedBlock.job.customerName}</p>
           </div>
           <StatusBadge status={selectedBlock.status} />
         </div>
@@ -890,7 +890,7 @@ export function SelectedBlockPanel({
         </div>
 
         {(selectedBlock.job.addressStreet || selectedBlock.job.addressCity) && (
-          <div className="flex items-start gap-2 text-sm text-muted-foreground">
+          <div className="flex items-start gap-2 text-sm text-[#173d66]/64">
             <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
             <span>
               {formatAddress(
@@ -903,18 +903,18 @@ export function SelectedBlockPanel({
         )}
 
         {selectedBlock.job.contactPhone && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 text-sm text-[#173d66]/64">
             <Phone className="h-4 w-4 shrink-0" />
             <span>{selectedBlock.job.contactPhone}</span>
           </div>
         )}
 
         {selectedBlock.canAssignWorkers && (
-          <div className="space-y-2 rounded-2xl border bg-muted/60 p-3">
+          <div className="brand-soft-card space-y-2 rounded-2xl p-3">
             <div className="flex items-center justify-between gap-2">
               <div>
-                <p className="text-sm font-semibold">Mitarbeitende zuordnen</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm font-semibold text-[#173d66]">Mitarbeitende zuordnen</p>
+                <p className="text-xs text-[#173d66]/64">
                   Tagesgenaue Zuordnungen koennen hier gezielt vorgenommen werden.
                 </p>
               </div>
@@ -1035,7 +1035,7 @@ export function SelectedBlockPanel({
                 )}
               </div>
             ) : (
-              <div className="rounded-2xl border border-dashed bg-card p-3 text-sm text-muted-foreground">
+              <div className="rounded-2xl border border-dashed bg-white/72 p-3 text-sm text-[#173d66]/64">
                 Alle aktiven Mitarbeitenden sind fuer diesen Auftrag bereits eingeteilt.
               </div>
             )}
@@ -1043,10 +1043,10 @@ export function SelectedBlockPanel({
         )}
 
         {selectedBlock.canMove && onMoveBlock && availableStartDates.length > 0 && (
-          <div className="space-y-2 rounded-2xl border bg-muted/60 p-3">
+          <div className="brand-soft-card space-y-2 rounded-2xl p-3">
             <div>
-              <p className="text-sm font-semibold">Auftrag verschieben</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm font-semibold text-[#173d66]">Auftrag verschieben</p>
+              <p className="text-xs text-[#173d66]/64">
                 Das Startdatum kann innerhalb des verfuegbaren Zeitraums angepasst werden.
               </p>
             </div>
@@ -1085,7 +1085,7 @@ export function SelectedBlockPanel({
 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold">Eingeplantes Team</p>
+            <p className="text-sm font-semibold text-[#173d66]">Eingeplantes Team</p>
             {selectedBlock.canAssignWorkers && (
               <Badge variant="outline" className="gap-1">
                 <UserRoundPlus className="h-3 w-3" />
@@ -1094,7 +1094,7 @@ export function SelectedBlockPanel({
             )}
           </div>
           {selectedBlock.workers.length === 0 && (
-            <div className="rounded-2xl border border-dashed bg-card p-4 text-sm text-muted-foreground">
+            <div className="rounded-2xl border border-dashed bg-white/72 p-4 text-sm text-[#173d66]/64">
               Diesem Auftrag sind noch keine Mitarbeitenden zugeordnet.
             </div>
           )}
@@ -1102,7 +1102,7 @@ export function SelectedBlockPanel({
             {selectedBlock.workerCoverage.map((coverage) => (
               <div
                 key={coverage.employee.id}
-                className="flex items-center justify-between gap-3 rounded-2xl border bg-background px-3 py-2"
+                className="brand-soft-card flex items-center justify-between gap-3 rounded-2xl px-3 py-2"
               >
                 <div className="flex items-center gap-3">
                   <div
@@ -1112,8 +1112,8 @@ export function SelectedBlockPanel({
                     {getEmployeeShortLabel(coverage.employee)}
                   </div>
                   <div>
-                    <p className="text-sm font-semibold">{getEmployeeLabel(coverage.employee)}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-sm font-semibold text-[#173d66]">{getEmployeeLabel(coverage.employee)}</p>
+                    <p className="text-xs text-[#173d66]/64">
                       {coverage.label}
                       {coverage.employee.phone ? ` | ${coverage.employee.phone}` : ""}
                     </p>
@@ -1148,10 +1148,10 @@ export function SelectedBlockPanel({
         </div>
 
         {selectedBlock.canRemoveWorkers && removableCoverages.length > 0 && (
-          <div className="space-y-2 rounded-2xl border bg-muted/60 p-3">
+          <div className="brand-soft-card space-y-2 rounded-2xl p-3">
             <div>
-              <p className="text-sm font-semibold">Teilweise aus Tagen entfernen</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm font-semibold text-[#173d66]">Teilweise aus Tagen entfernen</p>
+              <p className="text-xs text-[#173d66]/64">
                 Entfernt Mitarbeitende nur aus noch nicht gestarteten, ausgewaehlten Tagen.
               </p>
             </div>
@@ -1199,7 +1199,7 @@ export function SelectedBlockPanel({
           </div>
         )}
 
-        <div className="rounded-2xl border bg-muted p-3 text-xs text-muted-foreground">
+        <div className="brand-soft-card rounded-2xl p-3 text-xs text-[#173d66]/64">
           {selectedBlock.hasProtectedHistory
             ? "Bei laufenden Auftraegen bleiben vergangene oder bereits begonnene Tage unveraendert. Weitere Mitarbeitende koennen ab heute fuer offene Tage ergaenzt oder entfernt werden."
             : "Mehrere Einsaetze pro Tag sind moeglich. Reihenfolge und Uhrzeiten sollten in der Disposition beachtet werden."}
@@ -1233,10 +1233,10 @@ export function CreatePlanningJobDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl border-[#173d66]/12 bg-[#f7f6f2]">
         <DialogHeader>
-          <DialogTitle>Auftrag im Backlog anlegen</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-[#173d66]">Auftrag im Backlog anlegen</DialogTitle>
+          <DialogDescription className="text-[#173d66]/64">
             Erfassen Sie die wesentlichen Auftragsdaten fuer die Disposition. Der Auftrag steht anschliessend direkt im Backlog bereit.
           </DialogDescription>
         </DialogHeader>

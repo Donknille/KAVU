@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { BrandMark } from "@/components/BrandMark";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AssignmentCard } from "@/components/AssignmentCard";
 import { ConnectionStatusBadge } from "@/components/ConnectionStatusBadge";
@@ -91,7 +92,7 @@ export default function EmployeeDayView() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4 p-4">
+      <div className="space-y-4 p-4 md:p-6">
         <Skeleton className="h-8 w-56" />
         {[1, 2, 3].map((i) => (
           <Skeleton key={i} className="h-32" />
@@ -101,50 +102,47 @@ export default function EmployeeDayView() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4 p-4">
-      <section className="overflow-hidden rounded-[28px] bg-slate-950 text-white shadow-sm">
+    <div className="mx-auto max-w-3xl space-y-5 p-4 md:p-6">
+      <section className="brand-panel overflow-hidden rounded-[30px]">
         <div className="space-y-5 p-5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <Sun className="h-5 w-5 text-amber-400" />
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-300">
-                  Mitarbeiteransicht
-                </p>
-              </div>
+              <BrandMark
+                showWordmark
+                subtitle="Mitarbeiteransicht"
+                size={40}
+                labelClassName="text-lg"
+                subtitleClassName="text-[10px]"
+              />
               <h1
-                className="mt-3 text-2xl font-semibold tracking-tight"
+                className="mt-4 text-2xl font-semibold tracking-tight text-[#173d66]"
                 data-testid="text-today-title"
               >
                 Heute im Blick
               </h1>
-              <p className="mt-1 max-w-md text-sm text-slate-300">
+              <p className="mt-1 max-w-md text-sm text-[#173d66]/72">
                 Aktuelle Einsaetze, anstehende Termine und der Tagesverlauf auf einen Blick.
               </p>
             </div>
-            <ConnectionStatusBadge
-              isOnline={isOnline}
-              compact
-              className="border-white/15 bg-white/10 text-white"
-            />
+            <ConnectionStatusBadge isOnline={isOnline} compact className="brand-outline-chip" />
           </div>
 
           <div className="grid grid-cols-3 gap-2">
-            <div className="rounded-2xl bg-white/10 p-3">
-              <p className="text-[11px] uppercase tracking-[0.16em] text-slate-300">Aktiv</p>
-              <p className="mt-1 text-2xl font-semibold">{activeAssignments.length}</p>
+            <div className="brand-soft-card rounded-2xl p-3">
+              <p className="brand-kicker">Aktiv</p>
+              <p className="mt-1 text-2xl font-semibold text-[#173d66]">{activeAssignments.length}</p>
             </div>
-            <div className="rounded-2xl bg-white/10 p-3">
-              <p className="text-[11px] uppercase tracking-[0.16em] text-slate-300">Heute</p>
-              <p className="mt-1 text-2xl font-semibold">{todayAssignments.length}</p>
+            <div className="brand-soft-card rounded-2xl p-3">
+              <p className="brand-kicker">Heute</p>
+              <p className="mt-1 text-2xl font-semibold text-[#173d66]">{todayAssignments.length}</p>
             </div>
-            <div className="rounded-2xl bg-white/10 p-3">
-              <p className="text-[11px] uppercase tracking-[0.16em] text-slate-300">Geplant</p>
-              <p className="mt-1 text-2xl font-semibold">{upcomingAssignments.length}</p>
+            <div className="brand-soft-card rounded-2xl p-3">
+              <p className="brand-kicker">Geplant</p>
+              <p className="mt-1 text-2xl font-semibold text-[#173d66]">{upcomingAssignments.length}</p>
             </div>
           </div>
 
-          <div className="rounded-[24px] bg-white/10 p-4">
+          <div className="brand-navy-panel rounded-[26px] p-4">
             {focusAssignment ? (
               <div className="space-y-4">
                 <div className="flex items-start justify-between gap-3">
@@ -204,21 +202,21 @@ export default function EmployeeDayView() {
       {activeAssignments.length > 0 && (
         <section className="space-y-3">
           <div className="flex items-center gap-2">
-            <Sun className="h-4 w-4 text-amber-500" />
-            <h2 className="font-semibold">Jetzt dran</h2>
+            <Sun className="h-4 w-4 text-[#173d66]" />
+            <h2 className="font-semibold text-[#173d66]">Jetzt dran</h2>
           </div>
           <div className="space-y-3">
             {activeAssignments.map((assignment) => (
               <Card
                 key={assignment.id}
-                className="cursor-pointer p-4 ring-2 ring-primary"
+                className="brand-panel cursor-pointer rounded-[26px] p-4 ring-2 ring-[#68d5c8]/50"
                 onClick={() => navigate(`/assignment/${assignment.id}`)}
                 data-testid={`card-active-assignment-${assignment.id}`}
               >
                 <div className="mb-2 flex items-center justify-between gap-2">
-                  <p className="text-xs font-medium text-primary">AKTIVER EINSATZ</p>
+                  <p className="brand-kicker text-[#173d66]">Aktiver Einsatz</p>
                   {assignment.assignmentDate !== today && (
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="text-[11px] text-[#173d66]/64">
                       Geplant fuer {formatDate(assignment.assignmentDate)}
                     </p>
                   )}
@@ -232,18 +230,18 @@ export default function EmployeeDayView() {
 
       <section className="space-y-3">
         <div className="flex items-center gap-2">
-          <ClipboardList className="h-4 w-4 text-slate-500" />
-          <h2 className="font-semibold">
+          <ClipboardList className="h-4 w-4 text-[#173d66]" />
+          <h2 className="font-semibold text-[#173d66]">
             {activeAssignments.length > 0 ? "Weitere Einsaetze heute" : "Heute"}
           </h2>
         </div>
 
         {todayAssignments.length === 0 ? (
-          <Card className="p-6 text-center">
-            <p className="font-medium text-muted-foreground">
+          <Card className="brand-soft-card rounded-[26px] p-6 text-center">
+            <p className="font-medium text-[#173d66]/76">
               {totalAssignments === 0 ? "Keine Einsaetze fuer heute" : "Heute ist nichts Weiteres offen"}
             </p>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-sm text-[#173d66]/64">
               {totalAssignments === 0
                 ? "Sobald ein Einsatz fuer heute disponiert ist, wird er hier angezeigt."
                 : "Weitere Einsaetze fuer den heutigen Tag werden hier fortlaufend ergaenzt."}
@@ -264,14 +262,14 @@ export default function EmployeeDayView() {
 
       <section className="space-y-3">
         <div className="flex items-center gap-2">
-          <CalendarDays className="h-4 w-4 text-slate-500" />
-          <h2 className="font-semibold">Kommende Einsaetze</h2>
+          <CalendarDays className="h-4 w-4 text-[#173d66]" />
+          <h2 className="font-semibold text-[#173d66]">Kommende Einsaetze</h2>
         </div>
 
         {upcomingAssignments.length === 0 ? (
-          <Card className="p-6 text-center">
-            <p className="font-medium text-muted-foreground">Keine weiteren Einsaetze geplant</p>
-            <p className="mt-1 text-sm text-muted-foreground">
+          <Card className="brand-soft-card rounded-[26px] p-6 text-center">
+            <p className="font-medium text-[#173d66]/76">Keine weiteren Einsaetze geplant</p>
+            <p className="mt-1 text-sm text-[#173d66]/64">
               Zukuenftige Einsaetze werden in dieser Uebersicht angezeigt.
             </p>
           </Card>
@@ -279,7 +277,7 @@ export default function EmployeeDayView() {
           <div className="space-y-3">
             {upcomingAssignments.map((assignment) => (
               <div key={assignment.id} className="space-y-1">
-                <p className="px-1 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                <p className="px-1 text-xs font-medium uppercase tracking-[0.14em] text-[#173d66]/58">
                   {formatDate(assignment.assignmentDate)}
                 </p>
                 <AssignmentCard
