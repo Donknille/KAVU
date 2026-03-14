@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { BrandMark } from "@/components/BrandMark";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   getInviteToken,
   getInvitationRoleLabel,
@@ -35,7 +36,7 @@ export default function LandingPage() {
 
   return (
     <div className="brand-grid-shell flex min-h-screen flex-col">
-      <header className="border-b border-[#173d66]/10 bg-white/82 backdrop-blur-xl">
+      <header className="brand-header-glass border-b">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4">
           <BrandMark
             showWordmark
@@ -46,12 +47,13 @@ export default function LandingPage() {
           />
 
           <div className="flex items-center gap-2">
-            <Button asChild size="sm" variant="outline" className="border-[#173d66]/12 bg-white/80">
+            <ThemeToggle />
+            <Button asChild size="sm" variant="outline" className="brand-outline-chip border-[color:var(--brand-chip-border)] bg-[color:var(--brand-chip-bg)] text-[color:var(--brand-chip-text)]">
               <Link href={adminLoginHref} data-testid="button-login-header">
                 Admin
               </Link>
             </Button>
-            <Button asChild size="sm" className="bg-[#173d66] text-white hover:bg-[#123251]">
+            <Button asChild size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
               <Link href="/login/employee" data-testid="button-employee-header">
                 Mitarbeiter
               </Link>
@@ -66,15 +68,15 @@ export default function LandingPage() {
             {inviteToken && invitation && (
               <Card className="brand-panel mx-auto mb-6 max-w-3xl rounded-[28px] p-5 text-left">
                 <div className="flex items-start gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#173d66]/8 text-[#173d66]">
+                  <div className="brand-icon-shell flex h-11 w-11 items-center justify-center rounded-2xl">
                     <Mail className="h-5 w-5" />
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm font-semibold text-[#173d66]">Einladung erkannt</p>
-                    <p className="text-sm text-[#173d66]/72">
+                    <p className="text-sm font-semibold brand-ink">Einladung erkannt</p>
+                    <p className="text-sm brand-ink-soft">
                       {invitation.companyName} hat {invitation.email} eingeladen.
                     </p>
-                    <p className="text-sm text-[#173d66]/72">
+                    <p className="text-sm brand-ink-soft">
                       Melde dich an oder erstelle ein Konto mit dieser E-Mail-Adresse.
                     </p>
                   </div>

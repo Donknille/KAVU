@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Link } from "wouter";
 import { Card } from "@/components/ui/card";
 import { BrandMark } from "@/components/BrandMark";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 
 type AuthShellProps = {
@@ -31,7 +32,7 @@ export function AuthShell({
 }: AuthShellProps) {
   return (
     <div className="brand-grid-shell min-h-screen">
-      <header className="border-b border-[#173d66]/10 bg-white/82 backdrop-blur-xl">
+      <header className="brand-header-glass border-b">
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-3 px-4">
           <Link href="/" className="flex items-center gap-2">
             <BrandMark
@@ -43,14 +44,17 @@ export function AuthShell({
             />
           </Link>
 
-          <Link href="/" className="text-sm font-medium text-[#173d66]/72 transition-colors hover:text-[#173d66]">
-            Startseite
-          </Link>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Link href="/" className="text-sm font-medium brand-ink-soft transition-colors hover:text-[color:var(--brand-ink)]">
+              Startseite
+            </Link>
+          </div>
         </div>
       </header>
 
       <main className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-5xl gap-6 px-4 py-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:py-10">
-        <section className="brand-panel hidden rounded-[34px] p-8 text-[#173d66] lg:block">
+        <section className="brand-panel hidden rounded-[34px] p-8 brand-ink lg:block">
           <BrandMark
             showWordmark
             subtitle="Digitale Disposition"
@@ -61,15 +65,15 @@ export function AuthShell({
             {asideEyebrow}
           </p>
           <h1 className="mt-4 text-3xl font-semibold tracking-tight">{asideTitle}</h1>
-          <p className="mt-3 max-w-md text-sm leading-6 text-[#173d66]/72">{asideDescription}</p>
+          <p className="mt-3 max-w-md text-sm leading-6 brand-ink-soft">{asideDescription}</p>
 
           <div className="mt-8 space-y-3">
             {asideItems.map((item) => (
               <div
                 key={item}
-                className="brand-soft-card flex items-start gap-3 rounded-2xl px-4 py-3 text-sm text-[#173d66]"
+                className="brand-soft-card flex items-start gap-3 rounded-2xl px-4 py-3 text-sm brand-ink"
               >
-                <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#68d5c8]" />
+                <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[color:var(--brand-accent-solid)]" />
                 {item}
               </div>
             ))}

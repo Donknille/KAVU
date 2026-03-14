@@ -117,14 +117,14 @@ function AuthenticatedApp() {
   if (meError || !meData) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
-        <div className="w-full max-w-md rounded-3xl border border-[#173d66]/12 bg-white/95 p-6 shadow-[0_28px_80px_rgba(23,61,102,0.14)]">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#173d66]/56">
+        <div className="brand-panel w-full max-w-md rounded-3xl p-6">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] brand-ink-muted">
             Meisterplaner
           </p>
-          <h1 className="mt-3 text-2xl font-semibold text-[#173d66]">
+          <h1 className="mt-3 text-2xl font-semibold brand-ink">
             Sitzung konnte nicht geladen werden
           </h1>
-          <p className="mt-3 text-sm leading-6 text-[#173d66]/74">
+          <p className="mt-3 text-sm leading-6 brand-ink-soft">
             Der aktuelle Benutzerkontext konnte nicht sicher geladen werden. Wir zeigen deshalb
             bewusst keine Rolle oder Ansicht an, bis die Sitzung erneut geprüft wurde.
           </p>
@@ -176,14 +176,14 @@ function AuthenticatedApp() {
   if (!employee?.role) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
-        <div className="w-full max-w-md rounded-3xl border border-[#173d66]/12 bg-white/95 p-6 shadow-[0_28px_80px_rgba(23,61,102,0.14)]">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#173d66]/56">
+        <div className="brand-panel w-full max-w-md rounded-3xl p-6">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] brand-ink-muted">
             Meisterplaner
           </p>
-          <h1 className="mt-3 text-2xl font-semibold text-[#173d66]">
+          <h1 className="mt-3 text-2xl font-semibold brand-ink">
             Rolle konnte nicht bestimmt werden
           </h1>
-          <p className="mt-3 text-sm leading-6 text-[#173d66]/74">
+          <p className="mt-3 text-sm leading-6 brand-ink-soft">
             Die Sitzung ist zwar vorhanden, enthaelt aber keine gueltige Rolleninformation. Bitte
             melden Sie sich erneut an.
           </p>

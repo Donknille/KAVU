@@ -4,6 +4,7 @@
 
 /* LIGHT MODE */
 :root {
+  color-scheme: light;
   --button-outline: rgba(0,0,0, .10);
   --badge-outline: rgba(0,0,0, .05);
   --opaque-button-border-intensity: -8;
@@ -92,9 +93,44 @@
   /* Fallback for older browsers */
   --destructive-border: hsl(var(--destructive));
   --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  --brand-ink: #173d66;
+  --brand-ink-soft: rgba(23, 61, 102, 0.74);
+  --brand-ink-muted: rgba(23, 61, 102, 0.58);
+  --brand-accent-solid: #68d5c8;
+  --brand-grid-radial: rgba(104, 213, 200, 0.16);
+  --brand-grid-line: rgba(23, 61, 102, 0.08);
+  --brand-header-bg: rgba(255, 255, 255, 0.82);
+  --brand-header-border: rgba(23, 61, 102, 0.1);
+  --brand-panel-start: rgba(255, 255, 255, 0.98);
+  --brand-panel-end: rgba(247, 249, 252, 0.94);
+  --brand-panel-border: rgba(23, 61, 102, 0.14);
+  --brand-panel-shadow: 0 18px 42px rgba(16, 38, 62, 0.12);
+  --brand-panel-inset: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  --brand-soft-start: rgba(255, 255, 255, 0.95);
+  --brand-soft-end: rgba(244, 248, 250, 0.88);
+  --brand-soft-border: rgba(23, 61, 102, 0.12);
+  --brand-soft-shadow: 0 12px 28px rgba(16, 38, 62, 0.08);
+  --brand-navy-accent: rgba(104, 213, 200, 0.18);
+  --brand-navy-start: rgba(23, 61, 102, 0.98);
+  --brand-navy-end: rgba(18, 50, 81, 0.98);
+  --brand-navy-border: rgba(255, 255, 255, 0.08);
+  --brand-navy-shadow: 0 20px 42px rgba(16, 38, 62, 0.18);
+  --brand-chip-bg: rgba(255, 255, 255, 0.72);
+  --brand-chip-border: rgba(23, 61, 102, 0.1);
+  --brand-chip-text: #173d66;
+  --brand-highlight-bg: rgba(104, 213, 200, 0.24);
+  --brand-highlight-border: rgba(23, 61, 102, 0.08);
+  --brand-highlight-text: #173d66;
+  --brand-icon-shell-bg: rgba(23, 61, 102, 0.08);
+  --brand-icon-shell-accent-bg: rgba(104, 213, 200, 0.26);
+  --brand-mark-surface: rgba(255, 255, 255, 0.94);
+  --brand-mark-border: rgba(23, 61, 102, 0.15);
+  --brand-mark-shadow: 0 14px 28px rgba(21, 58, 99, 0.14);
 }
 
 .dark {
+  color-scheme: dark;
   --button-outline: rgba(255,255,255, .10);
   --badge-outline: rgba(255,255,255, .05);
   --opaque-button-border-intensity: 9;
@@ -170,6 +206,40 @@
   /* Fallback for older browsers */
   --destructive-border: hsl(var(--destructive));
   --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  --brand-ink: #eef4ff;
+  --brand-ink-soft: rgba(238, 244, 255, 0.76);
+  --brand-ink-muted: rgba(238, 244, 255, 0.58);
+  --brand-accent-solid: #6fdaca;
+  --brand-grid-radial: rgba(104, 213, 200, 0.14);
+  --brand-grid-line: rgba(141, 177, 214, 0.1);
+  --brand-header-bg: rgba(10, 18, 30, 0.76);
+  --brand-header-border: rgba(141, 177, 214, 0.12);
+  --brand-panel-start: rgba(14, 22, 34, 0.94);
+  --brand-panel-end: rgba(11, 19, 31, 0.9);
+  --brand-panel-border: rgba(141, 177, 214, 0.14);
+  --brand-panel-shadow: 0 22px 50px rgba(0, 0, 0, 0.34);
+  --brand-panel-inset: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --brand-soft-start: rgba(16, 25, 40, 0.92);
+  --brand-soft-end: rgba(13, 21, 34, 0.88);
+  --brand-soft-border: rgba(141, 177, 214, 0.12);
+  --brand-soft-shadow: 0 16px 34px rgba(0, 0, 0, 0.28);
+  --brand-navy-accent: rgba(104, 213, 200, 0.12);
+  --brand-navy-start: rgba(11, 22, 37, 0.98);
+  --brand-navy-end: rgba(9, 18, 31, 0.98);
+  --brand-navy-border: rgba(141, 177, 214, 0.12);
+  --brand-navy-shadow: 0 22px 48px rgba(0, 0, 0, 0.34);
+  --brand-chip-bg: rgba(20, 31, 48, 0.84);
+  --brand-chip-border: rgba(141, 177, 214, 0.16);
+  --brand-chip-text: #eef4ff;
+  --brand-highlight-bg: rgba(104, 213, 200, 0.16);
+  --brand-highlight-border: rgba(104, 213, 200, 0.28);
+  --brand-highlight-text: #eefbff;
+  --brand-icon-shell-bg: rgba(104, 213, 200, 0.12);
+  --brand-icon-shell-accent-bg: rgba(104, 213, 200, 0.2);
+  --brand-mark-surface: rgba(16, 25, 40, 0.92);
+  --brand-mark-border: rgba(141, 177, 214, 0.16);
+  --brand-mark-shadow: 0 16px 34px rgba(0, 0, 0, 0.32);
 }
 
 @layer base {
@@ -186,9 +256,9 @@
   body {
     @apply font-sans antialiased bg-background text-foreground;
     background-image:
-      radial-gradient(circle at top, rgba(104, 213, 200, 0.16), transparent 26%),
-      linear-gradient(rgba(23, 61, 102, 0.08) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(23, 61, 102, 0.08) 1px, transparent 1px);
+      radial-gradient(circle at top, var(--brand-grid-radial), transparent 26%),
+      linear-gradient(var(--brand-grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--brand-grid-line) 1px, transparent 1px);
     background-size: auto, 40px 40px, 40px 40px;
     background-position: top center, center center, center center;
   }
@@ -312,47 +382,43 @@
 
   .brand-grid-shell {
     background-image:
-      radial-gradient(circle at top right, rgba(104, 213, 200, 0.22), transparent 28%),
-      linear-gradient(rgba(23, 61, 102, 0.1) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(23, 61, 102, 0.1) 1px, transparent 1px);
+      radial-gradient(circle at top right, var(--brand-grid-radial), transparent 28%),
+      linear-gradient(var(--brand-grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--brand-grid-line) 1px, transparent 1px);
     background-size: auto, 44px 44px, 44px 44px;
     background-position: top right, center center, center center;
   }
 
   .brand-panel {
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 249, 252, 0.94));
-    border: 1px solid rgba(23, 61, 102, 0.14);
-    box-shadow:
-      0 18px 42px rgba(16, 38, 62, 0.12),
-      inset 0 1px 0 rgba(255, 255, 255, 0.75);
+    background: linear-gradient(180deg, var(--brand-panel-start), var(--brand-panel-end));
+    border: 1px solid var(--brand-panel-border);
+    box-shadow: var(--brand-panel-shadow), var(--brand-panel-inset);
     backdrop-filter: blur(14px);
   }
 
   .brand-soft-card {
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(244, 248, 250, 0.88));
-    border: 1px solid rgba(23, 61, 102, 0.12);
-    box-shadow: 0 12px 28px rgba(16, 38, 62, 0.08);
+    background: linear-gradient(180deg, var(--brand-soft-start), var(--brand-soft-end));
+    border: 1px solid var(--brand-soft-border);
+    box-shadow: var(--brand-soft-shadow);
   }
 
   .brand-navy-panel {
     background:
-      radial-gradient(circle at top right, rgba(104, 213, 200, 0.18), transparent 28%),
-      linear-gradient(180deg, rgba(23, 61, 102, 0.98), rgba(18, 50, 81, 0.98));
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 20px 42px rgba(16, 38, 62, 0.18);
+      radial-gradient(circle at top right, var(--brand-navy-accent), transparent 28%),
+      linear-gradient(180deg, var(--brand-navy-start), var(--brand-navy-end));
+    border: 1px solid var(--brand-navy-border);
+    box-shadow: var(--brand-navy-shadow);
   }
 
   .brand-outline-chip {
-    background: rgba(255, 255, 255, 0.72);
-    border: 1px solid rgba(23, 61, 102, 0.1);
-    color: #173d66;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+    background: var(--brand-chip-bg);
+    border: 1px solid var(--brand-chip-border);
+    color: var(--brand-chip-text);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
   .brand-kicker {
-    color: #173d66;
+    color: var(--brand-ink-muted);
     font-size: 0.72rem;
     font-weight: 700;
     letter-spacing: 0.22em;
@@ -360,9 +426,97 @@
   }
 
   .brand-highlight {
-    color: #173d66;
-    background: rgba(104, 213, 200, 0.24);
-    border: 1px solid rgba(23, 61, 102, 0.08);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+    color: var(--brand-highlight-text);
+    background: var(--brand-highlight-bg);
+    border: 1px solid var(--brand-highlight-border);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .brand-header-glass {
+    background: var(--brand-header-bg);
+    border-color: var(--brand-header-border);
+    backdrop-filter: blur(18px);
+  }
+
+  .brand-icon-shell {
+    background: var(--brand-icon-shell-bg);
+    color: var(--brand-ink);
+  }
+
+  .brand-icon-shell-accent {
+    background: var(--brand-icon-shell-accent-bg);
+    color: var(--brand-ink);
+  }
+
+  .brand-ink {
+    color: var(--brand-ink);
+  }
+
+  .brand-ink-soft {
+    color: var(--brand-ink-soft);
+  }
+
+  .brand-ink-muted {
+    color: var(--brand-ink-muted);
+  }
+
+  .dark [class~="text-[#173d66]"] {
+    color: var(--brand-ink) !important;
+  }
+
+  .dark :is(
+    [class~="text-[#173d66]/76"],
+    [class~="text-[#173d66]/74"],
+    [class~="text-[#173d66]/72"],
+    [class~="text-[#173d66]/68"],
+    [class~="text-[#173d66]/64"]
+  ) {
+    color: var(--brand-ink-soft) !important;
+  }
+
+  .dark :is(
+    [class~="text-[#173d66]/58"],
+    [class~="text-[#173d66]/56"],
+    [class~="text-[#173d66]/54"],
+    [class~="text-[#173d66]/42"]
+  ) {
+    color: var(--brand-ink-muted) !important;
+  }
+
+  .dark :is(
+    [class~="bg-white/95"],
+    [class~="bg-white/92"],
+    [class~="bg-white/85"],
+    [class~="bg-white/82"],
+    [class~="bg-white/80"],
+    [class~="bg-white/78"],
+    [class~="bg-white/72"],
+    [class~="bg-white/60"]
+  ) {
+    background-color: var(--brand-chip-bg) !important;
+  }
+
+  .dark :is(
+    [class~="border-[#173d66]/18"],
+    [class~="border-[#173d66]/14"],
+    [class~="border-[#173d66]/12"],
+    [class~="border-[#173d66]/10"],
+    [class~="border-[#173d66]/8"]
+  ) {
+    border-color: var(--brand-panel-border) !important;
+  }
+
+  .dark [class~="bg-[#173d66]/8"] {
+    background-color: var(--brand-icon-shell-bg) !important;
+  }
+
+  .dark :is(
+    [class~="bg-[#68d5c8]/26"],
+    [class~="bg-[#68d5c8]/24"],
+    [class~="bg-[#68d5c8]/18"],
+    [class~="bg-[#68d5c8]/16"],
+    [class~="bg-[#68d5c8]/12"]
+  ) {
+    background-color: var(--brand-icon-shell-accent-bg) !important;
   }
 }

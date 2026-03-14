@@ -27,6 +27,7 @@ import {
 import { Link, useLocation } from "wouter";
 import { ConnectionStatusBadge } from "@/components/ConnectionStatusBadge";
 import { BrandMark } from "@/components/BrandMark";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useEmployeeOfflineQueue } from "@/features/employee-offline/EmployeeOfflineQueueProvider";
 import { getPreviewEmployeeToken } from "@/lib/preview-session";
 
@@ -94,7 +95,7 @@ export function AppShell({ children, role, employee }: AppShellProps) {
                 iconClassName="rounded-[14px] group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8"
               />
               <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
-                <p className="truncate text-sm font-bold text-[#173d66]">Meisterplaner</p>
+                <p className="truncate text-sm font-bold brand-ink">Meisterplaner</p>
                 <div className="flex items-center gap-1.5">
                   <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                     {role === "admin" ? "Zentrale" : "Mitarbeiter"}
@@ -113,6 +114,7 @@ export function AppShell({ children, role, employee }: AppShellProps) {
                   )}
                 </div>
               </div>
+              <ThemeToggle compact className="group-data-[collapsible=icon]:hidden" />
               <SidebarTrigger
                 className="hidden h-8 w-8 md:inline-flex group-data-[collapsible=icon]:ml-0"
                 data-testid="button-sidebar-toggle-desktop"
@@ -214,6 +216,7 @@ export function AppShell({ children, role, employee }: AppShellProps) {
               </p>
               <p className="truncate text-sm font-semibold">{mobileTitle}</p>
             </div>
+            <ThemeToggle compact />
             {role === "employee" && <ConnectionStatusBadge isOnline={isOnline} compact />}
           </header>
 
