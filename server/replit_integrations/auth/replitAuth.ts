@@ -85,6 +85,7 @@ export function getSession() {
   const sessionTtlMs = 7 * 24 * 60 * 60 * 1000;
   const sessionTtlSeconds = Math.floor(sessionTtlMs / 1000);
   const pgStore = connectPg(session);
+  const isServerlessRuntime = Boolean(process.env.VERCEL);
 
   if (!pool) {
     throw new Error("DATABASE_URL is required to initialize the session store.");
@@ -92,9 +93,11 @@ export function getSession() {
 
   const sessionStore = new pgStore({
     pool,
-    createTableIfMissing: true,
+    createTableIfMissing: !isServerlessRuntime,
     ttl: sessionTtlSeconds,
     tableName: "sessions",
+    disableTouch: true,
+    pruneSessionInterval: false,
   });
 
   return session({

@@ -4,6 +4,7 @@ import * as schema from "../shared/schema.js";
 
 const { Pool } = pg;
 const connectionString = process.env.DATABASE_URL;
+const isServerlessRuntime = Boolean(process.env.VERCEL);
 
 function parsePositiveInt(value: string | undefined, fallback: number) {
   if (!value) {
@@ -14,8 +15,11 @@ function parsePositiveInt(value: string | undefined, fallback: number) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-const databasePoolMax = parsePositiveInt(process.env.DATABASE_POOL_MAX, 3);
-const databaseIdleTimeoutMs = parsePositiveInt(process.env.DATABASE_IDLE_TIMEOUT_MS, 10000);
+const databasePoolMax = parsePositiveInt(process.env.DATABASE_POOL_MAX, isServerlessRuntime ? 1 : 3);
+const databaseIdleTimeoutMs = parsePositiveInt(
+  process.env.DATABASE_IDLE_TIMEOUT_MS,
+  isServerlessRuntime ? 5000 : 10000,
+);
 const databaseConnectTimeoutMs = parsePositiveInt(
   process.env.DATABASE_CONNECT_TIMEOUT_MS,
   5000,
@@ -36,6 +40,7 @@ export const pool = connectionString
       idleTimeoutMillis: databaseIdleTimeoutMs,
       connectionTimeoutMillis: databaseConnectTimeoutMs,
       maxUses: databaseMaxUses,
+      allowExitOnIdle: isServerlessRuntime,
     })
   : (null as unknown as pg.Pool);
 

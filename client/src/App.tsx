@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/use-auth";
 import { AppShell } from "@/components/AppShell";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { EmployeeOfflineQueueProvider } from "@/features/employee-offline/EmployeeOfflineQueueProvider";
 import NotFound from "@/pages/not-found";
 import { applyPreviewIdentityFromUrl } from "@/lib/preview-session";
@@ -97,7 +98,7 @@ function EmployeeRouter({ employee, company }: EmployeeRouterProps) {
 }
 
 function AuthenticatedApp() {
-  const { data: meData, isLoading: meLoading } = useQuery<any>({
+  const { data: meData, isLoading: meLoading, error: meError, refetch: refetchMe } = useQuery<any>({
     queryKey: ["/api/me"],
   });
 
@@ -108,6 +109,44 @@ function AuthenticatedApp() {
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-3/4" />
           <Skeleton className="h-4 w-1/2" />
+        </div>
+      </div>
+    );
+  }
+
+  if (meError || !meData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <div className="w-full max-w-md rounded-3xl border border-[#173d66]/12 bg-white/95 p-6 shadow-[0_28px_80px_rgba(23,61,102,0.14)]">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#173d66]/56">
+            Meisterplaner
+          </p>
+          <h1 className="mt-3 text-2xl font-semibold text-[#173d66]">
+            Sitzung konnte nicht geladen werden
+          </h1>
+          <p className="mt-3 text-sm leading-6 text-[#173d66]/74">
+            Der aktuelle Benutzerkontext konnte nicht sicher geladen werden. Wir zeigen deshalb
+            bewusst keine Rolle oder Ansicht an, bis die Sitzung erneut geprüft wurde.
+          </p>
+          <div className="mt-6 flex gap-3">
+            <Button
+              className="h-11"
+              onClick={() => {
+                void refetchMe();
+              }}
+            >
+              Erneut prüfen
+            </Button>
+            <Button
+              variant="outline"
+              className="h-11"
+              onClick={() => {
+                window.location.href = "/api/logout";
+              }}
+            >
+              Neu anmelden
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -134,7 +173,36 @@ function AuthenticatedApp() {
   }
 
   const employee = meData?.employee;
-  const role = employee?.role || "employee";
+  if (!employee?.role) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <div className="w-full max-w-md rounded-3xl border border-[#173d66]/12 bg-white/95 p-6 shadow-[0_28px_80px_rgba(23,61,102,0.14)]">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#173d66]/56">
+            Meisterplaner
+          </p>
+          <h1 className="mt-3 text-2xl font-semibold text-[#173d66]">
+            Rolle konnte nicht bestimmt werden
+          </h1>
+          <p className="mt-3 text-sm leading-6 text-[#173d66]/74">
+            Die Sitzung ist zwar vorhanden, enthaelt aber keine gueltige Rolleninformation. Bitte
+            melden Sie sich erneut an.
+          </p>
+          <div className="mt-6">
+            <Button
+              className="h-11"
+              onClick={() => {
+                window.location.href = "/api/logout";
+              }}
+            >
+              Neu anmelden
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const role = employee.role;
 
   return (
     <EmployeeOfflineQueueProvider employeeId={employee?.id} enabled={role === "employee"}>
