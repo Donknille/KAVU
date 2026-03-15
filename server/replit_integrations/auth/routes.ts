@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { z } from "zod";
 import { authStorage } from "./storage.js";
 import { isAuthenticated } from "./replitAuth.js";
+import { invalidateLocalAuthIdentity } from "./replitAuth.js";
 import { hashPassword, verifyPassword } from "../../passwords.js";
 import {
   PREVIEW_AUTH_USER,
@@ -304,6 +305,7 @@ export function registerAuthRoutes(app: Express): void {
         currentPassword: parsed.data.currentPassword,
         newPassword: parsed.data.newPassword,
       });
+      invalidateLocalAuthIdentity(userId, "employee_access");
       return res.json({ employee: toPublicEmployee(employee) });
     } catch (error) {
       if (error instanceof Error && error.message === "Current password is invalid") {

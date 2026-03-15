@@ -1,62 +1,19 @@
 import { lazy, Suspense, useEffect } from "react";
-import { Switch, Route } from "wouter";
-import { queryClient } from "./lib/queryClient";
-import { QueryClientProvider, useQuery } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { Route, Switch } from "wouter";
+import { PageFallback } from "@/components/PageFallback";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthenticatedShell } from "@/features/session/AuthenticatedShell";
 import { useAuth } from "@/hooks/use-auth";
-import { AppShell } from "@/components/AppShell";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import { EmployeeOfflineQueueProvider } from "@/features/employee-offline/EmployeeOfflineQueueProvider";
-import NotFound from "@/pages/not-found";
 import { applyPreviewIdentityFromUrl } from "@/lib/preview-session";
+import { queryClient } from "@/lib/queryClient";
+import { Skeleton } from "@/components/ui/skeleton";
+import NotFound from "@/pages/not-found";
 
 const LandingPage = lazy(() => import("@/pages/LandingPage"));
 const AdminAuthPage = lazy(() => import("@/pages/AdminAuthPage"));
 const EmployeeLoginPage = lazy(() => import("@/pages/EmployeeLoginPage"));
-const SetupPage = lazy(() => import("@/pages/SetupPage"));
-const ChangePasswordPage = lazy(() => import("@/pages/ChangePasswordPage"));
-const AdminDashboard = lazy(() => import("@/pages/AdminDashboard"));
-const EmployeeDayView = lazy(() => import("@/pages/EmployeeDayView"));
-const AssignmentDetail = lazy(() => import("@/pages/AssignmentDetail"));
-const PlanView = lazy(() => import("@/pages/PlanView"));
-const JobsList = lazy(() => import("@/pages/JobsList"));
-const JobDetail = lazy(() => import("@/pages/JobDetail"));
-const CreateJob = lazy(() => import("@/pages/CreateJob"));
-const EmployeesList = lazy(() => import("@/pages/EmployeesList"));
-const ArchiveSearch = lazy(() => import("@/pages/ArchiveSearch"));
-
-function PageFallback() {
-  return (
-    <div className="min-h-[40vh] flex items-center justify-center">
-      <div className="space-y-3 w-56">
-        <Skeleton className="h-5 w-40" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-5/6" />
-      </div>
-    </div>
-  );
-}
-
-function AdminRouter() {
-  return (
-    <Suspense fallback={<PageFallback />}>
-      <Switch>
-        <Route path="/" component={PlanView} />
-        <Route path="/plan" component={PlanView} />
-        <Route path="/dashboard" component={AdminDashboard} />
-        <Route path="/jobs" component={JobsList} />
-        <Route path="/jobs/new" component={CreateJob} />
-        <Route path="/jobs/:id" component={JobDetail} />
-        <Route path="/employees" component={EmployeesList} />
-        <Route path="/archive" component={ArchiveSearch} />
-        <Route path="/assignment/:id" component={AssignmentDetail} />
-        <Route component={NotFound} />
-      </Switch>
-    </Suspense>
-  );
-}
 
 function PublicRouter() {
   return (
@@ -76,144 +33,14 @@ function PublicRouter() {
   );
 }
 
-type EmployeeRouterProps = {
-  employee: any;
-  company: any;
-};
-
-function EmployeeRouter({ employee, company }: EmployeeRouterProps) {
+function AuthBootstrapScreen() {
   return (
-    <Suspense fallback={<PageFallback />}>
-      <Switch>
-        <Route path="/" component={EmployeeDayView} />
-        <Route path="/assignment/:id" component={AssignmentDetail} />
-        <Route path="/assignments" component={EmployeeDayView} />
-        <Route path="/account/password">
-          {() => <ChangePasswordPage employee={employee} company={company} required={false} />}
-        </Route>
-        <Route component={NotFound} />
-      </Switch>
-    </Suspense>
-  );
-}
-
-function AuthenticatedApp() {
-  const { data: meData, isLoading: meLoading, error: meError, refetch: refetchMe } = useQuery<any>({
-    queryKey: ["/api/me"],
-  });
-
-  if (meLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="space-y-3 w-48">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
-        </div>
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="space-y-3 w-48">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-3/4" />
       </div>
-    );
-  }
-
-  if (meError || !meData) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6">
-        <div className="brand-panel w-full max-w-md rounded-3xl p-6">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] brand-ink-muted">
-            Meisterplaner
-          </p>
-          <h1 className="mt-3 text-2xl font-semibold brand-ink">
-            Sitzung konnte nicht geladen werden
-          </h1>
-          <p className="mt-3 text-sm leading-6 brand-ink-soft">
-            Der aktuelle Benutzerkontext konnte nicht sicher geladen werden. Wir zeigen deshalb
-            bewusst keine Rolle oder Ansicht an, bis die Sitzung erneut geprüft wurde.
-          </p>
-          <div className="mt-6 flex gap-3">
-            <Button
-              className="h-11"
-              onClick={() => {
-                void refetchMe();
-              }}
-            >
-              Erneut prüfen
-            </Button>
-            <Button
-              variant="outline"
-              className="h-11"
-              onClick={() => {
-                window.location.href = "/api/logout";
-              }}
-            >
-              Neu anmelden
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (meData?.needsSetup) {
-    return (
-      <Suspense fallback={<PageFallback />}>
-        <SetupPage />
-      </Suspense>
-    );
-  }
-
-  if (meData?.requiresPasswordChange) {
-    return (
-      <Suspense fallback={<PageFallback />}>
-        <ChangePasswordPage
-          employee={meData?.employee}
-          company={meData?.company}
-          required
-        />
-      </Suspense>
-    );
-  }
-
-  const employee = meData?.employee;
-  if (!employee?.role) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6">
-        <div className="brand-panel w-full max-w-md rounded-3xl p-6">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] brand-ink-muted">
-            Meisterplaner
-          </p>
-          <h1 className="mt-3 text-2xl font-semibold brand-ink">
-            Rolle konnte nicht bestimmt werden
-          </h1>
-          <p className="mt-3 text-sm leading-6 brand-ink-soft">
-            Die Sitzung ist zwar vorhanden, enthaelt aber keine gueltige Rolleninformation. Bitte
-            melden Sie sich erneut an.
-          </p>
-          <div className="mt-6">
-            <Button
-              className="h-11"
-              onClick={() => {
-                window.location.href = "/api/logout";
-              }}
-            >
-              Neu anmelden
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const role = employee.role;
-
-  return (
-    <EmployeeOfflineQueueProvider employeeId={employee?.id} enabled={role === "employee"}>
-      <AppShell role={role} employee={employee}>
-        {role === "admin" ? (
-          <AdminRouter />
-        ) : (
-          <EmployeeRouter employee={meData?.employee} company={meData?.company} />
-        )}
-      </AppShell>
-    </EmployeeOfflineQueueProvider>
+    </div>
   );
 }
 
@@ -225,21 +52,14 @@ function App() {
   const { isLoading, isAuthenticated } = useAuth();
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="space-y-3 w-48">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-3/4" />
-        </div>
-      </div>
-    );
+    return <AuthBootstrapScreen />;
   }
 
   if (!isAuthenticated) {
     return <PublicRouter />;
   }
 
-  return <AuthenticatedApp />;
+  return <AuthenticatedShell />;
 }
 
 export default function AppWrapper() {

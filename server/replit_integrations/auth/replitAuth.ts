@@ -10,6 +10,7 @@ import { authStorage } from "./storage.js";
 import { getPreviewSessionUser, PREVIEW_MODE } from "../../preview.js";
 import { pool } from "../../db.js";
 import { storage } from "../../storage.js";
+import { TtlCache } from "../../ttlCache.js";
 import {
   APP_BASE_URL,
   AUTH_PROVIDER,
@@ -46,6 +47,88 @@ function getOidcClientAuth() {
     default:
       return client.ClientSecretBasic(OIDC_CLIENT_SECRET);
   }
+}
+
+function parsePositiveInt(value: string | undefined, fallback: number) {
+  if (!value) {
+    return fallback;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+class CachedSessionStore extends session.Store {
+  private cache: TtlCache<string, any>;
+
+  constructor(
+    private readonly baseStore: session.Store,
+    private readonly ttlMs: number,
+    maxEntries = 500,
+  ) {
+    super();
+    this.cache = new TtlCache<string, any>(maxEntries);
+  }
+
+  override get(sid: string, callback: (error?: any, session?: any | null) => void) {
+    const cached = this.cache.get(sid);
+    if (cached) {
+      callback(undefined, cached);
+      return;
+    }
+
+    this.baseStore.get(sid, (error, nextSession) => {
+      if (!error && nextSession) {
+        this.cache.set(sid, nextSession, this.ttlMs);
+      }
+      callback(error, nextSession);
+    });
+  }
+
+  override set(sid: string, nextSession: any, callback?: (error?: any) => void) {
+    this.baseStore.set(sid, nextSession, (error) => {
+      if (!error) {
+        this.cache.set(sid, nextSession, this.ttlMs);
+      }
+      callback?.(error);
+    });
+  }
+
+  override destroy(sid: string, callback?: (error?: any) => void) {
+    this.cache.delete(sid);
+    this.baseStore.destroy(sid, callback);
+  }
+
+  override touch(sid: string, nextSession: any, callback?: () => void) {
+    this.cache.set(sid, nextSession, this.ttlMs);
+    if (typeof this.baseStore.touch === "function") {
+      this.baseStore.touch(sid, nextSession, callback);
+      return;
+    }
+    callback?.();
+  }
+}
+
+const localAuthIdentityCache = new TtlCache<
+  string,
+  { found: boolean; user: ReturnType<typeof buildLocalSessionUser> | null }
+>(500);
+const localAuthIdentityTtlMs = parsePositiveInt(
+  process.env.LOCAL_AUTH_CACHE_TTL_MS,
+  5000,
+);
+
+export function invalidateLocalAuthIdentity(
+  userId: string,
+  kind?: "employee_access" | "password",
+) {
+  if (kind) {
+    localAuthIdentityCache.delete(`${kind}:${userId}`);
+    return;
+  }
+
+  localAuthIdentityCache.delete(`employee_access:${userId}`);
+  localAuthIdentityCache.delete(`password:${userId}`);
 }
 
 const getOidcConfig = memoize(
@@ -86,12 +169,16 @@ export function getSession() {
   const sessionTtlSeconds = Math.floor(sessionTtlMs / 1000);
   const pgStore = connectPg(session);
   const isServerlessRuntime = Boolean(process.env.VERCEL);
+  const sessionCacheTtlMs = parsePositiveInt(
+    process.env.SESSION_STORE_CACHE_TTL_MS,
+    isServerlessRuntime ? 15000 : 5000,
+  );
 
   if (!pool) {
     throw new Error("DATABASE_URL is required to initialize the session store.");
   }
 
-  const sessionStore = new pgStore({
+  const baseStore = new pgStore({
     pool,
     createTableIfMissing: !isServerlessRuntime,
     ttl: sessionTtlSeconds,
@@ -99,6 +186,7 @@ export function getSession() {
     disableTouch: true,
     pruneSessionInterval: false,
   });
+  const sessionStore = new CachedSessionStore(baseStore, sessionCacheTtlMs);
 
   return session({
     secret: process.env.SESSION_SECRET!,
@@ -130,25 +218,44 @@ async function attachLocalSession(req: any) {
     return;
   }
 
-  if (localSession.kind === "employee_access") {
-    const employee = await storage.getEmployeeByUserId(localSession.userId);
-    if (!employee || !employee.passwordHash || !employee.isActive) {
+  const cacheKey = `${localSession.kind}:${localSession.userId}`;
+  const cachedIdentity = localAuthIdentityCache.get(cacheKey);
+  if (cachedIdentity) {
+    if (!cachedIdentity.found) {
       delete req.session.localAuth;
       return;
     }
 
-    req.user = buildLocalSessionUser(localSession.userId, localSession.kind);
+    req.user = cachedIdentity.user;
+    req.isAuthenticated = () => true;
+    return;
+  }
+
+  if (localSession.kind === "employee_access") {
+    const employee = await storage.getEmployeeByUserId(localSession.userId);
+    if (!employee || !employee.passwordHash || !employee.isActive) {
+      localAuthIdentityCache.set(cacheKey, { found: false, user: null }, localAuthIdentityTtlMs);
+      delete req.session.localAuth;
+      return;
+    }
+
+    const localUser = buildLocalSessionUser(localSession.userId, localSession.kind);
+    localAuthIdentityCache.set(cacheKey, { found: true, user: localUser }, localAuthIdentityTtlMs);
+    req.user = localUser;
     req.isAuthenticated = () => true;
     return;
   }
 
   const user = await authStorage.getUser(localSession.userId);
   if (!user || !user.email || !user.passwordHash) {
+    localAuthIdentityCache.set(cacheKey, { found: false, user: null }, localAuthIdentityTtlMs);
     delete req.session.localAuth;
     return;
   }
 
-  req.user = buildLocalSessionUser(localSession.userId, localSession.kind);
+  const localUser = buildLocalSessionUser(localSession.userId, localSession.kind);
+  localAuthIdentityCache.set(cacheKey, { found: true, user: localUser }, localAuthIdentityTtlMs);
+  req.user = localUser;
   req.isAuthenticated = () => true;
 }
 
@@ -222,7 +329,7 @@ function rememberReturnTo(req: any) {
 
 export async function setupAuth(app: Express) {
   if (PREVIEW_MODE) {
-    app.use((req: any, _res, next) => {
+    app.use("/api", (req: any, _res, next) => {
       req.user = getPreviewSessionUser();
       req.isAuthenticated = () => true;
       req.logout = (cb?: () => void) => cb?.();
@@ -249,10 +356,10 @@ export async function setupAuth(app: Express) {
   }
 
   app.set("trust proxy", TRUST_PROXY ? 1 : 0);
-  app.use(getSession());
+  app.use("/api", getSession());
 
   if (AUTH_PROVIDER === "local") {
-    app.use(async (req: any, _res, next) => {
+    app.use("/api", async (req: any, _res, next) => {
       try {
         const claims = getLocalAuthClaims();
         await upsertUser(claims);
@@ -290,7 +397,7 @@ export async function setupAuth(app: Express) {
   }
 
   if (AUTH_PROVIDER === "app") {
-    app.use(async (req: any, _res, next) => {
+    app.use("/api", async (req: any, _res, next) => {
       try {
         await attachLocalSession(req);
         next();
@@ -324,9 +431,9 @@ export async function setupAuth(app: Express) {
     return;
   }
 
-  app.use(passport.initialize());
-  app.use(passport.session());
-  app.use(async (req: any, _res, next) => {
+  app.use("/api", passport.initialize());
+  app.use("/api", passport.session());
+  app.use("/api", async (req: any, _res, next) => {
     try {
       await attachLocalSession(req);
       next();

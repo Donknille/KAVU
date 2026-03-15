@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { z } from "zod";
 import { storage } from "./storage.js";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth/index.js";
+import { invalidateLocalAuthIdentity } from "./replit_integrations/auth/replitAuth.js";
 import {
   isUserTenantConflict,
   USER_TENANT_CONFLICT_MESSAGE,
@@ -38,6 +39,15 @@ import {
   normalizePreviewEmployeeToken,
   toPreviewEmployeeSlug,
 } from "./preview.js";
+import {
+  getCachedDashboardResponse,
+  getCachedMeResponse,
+  getCachedPlanningBoardResponse,
+  invalidateCompanyReadCaches,
+  setCachedDashboardResponse,
+  setCachedMeResponse,
+  setCachedPlanningBoardResponse,
+} from "./readCaches.js";
 
 function toDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -290,17 +300,25 @@ export async function registerRoutes(
       if (!employee) {
         return res.json({ employee: null, company: null, needsSetup: true });
       }
+      const authMethod = req.user?.auth_method ?? "oidc";
+      const cacheKey = `${employee.companyId}:me:${employee.id}:${authMethod}`;
+      const cached = getCachedMeResponse<any>(cacheKey);
+      if (cached) {
+        return res.json(cached);
+      }
       const company = await storage.getCompany(employee.companyId);
-      return res.json({
+      const responsePayload = {
         employee: toPublicEmployee(employee),
         company: toPublicCompany(company, {
           includeAccessCode: employee.role === "admin",
         }),
         needsSetup: false,
-        authMethod: req.user?.auth_method ?? "oidc",
+        authMethod,
         requiresPasswordChange:
-          req.user?.auth_method === "employee_access" && employee.mustChangePassword === true,
-      });
+          authMethod === "employee_access" && employee.mustChangePassword === true,
+      };
+      setCachedMeResponse(cacheKey, responsePayload);
+      return res.json(responsePayload);
     } catch (error) {
       console.error("Error in /api/me:", error);
       res.status(500).json({ message: "Internal error" });
@@ -336,6 +354,7 @@ export async function registerRoutes(
         phone,
       });
 
+      invalidateCompanyReadCaches(company.id);
       return res.json({ employee: toPublicEmployee(employee), company });
     } catch (error) {
       if (userId && isUserTenantConflict(error)) {
@@ -413,6 +432,7 @@ export async function registerRoutes(
         userEmail,
       });
 
+      invalidateCompanyReadCaches(result.company.id);
       return res.json({
         employee: toPublicEmployee(result.employee),
         company: result.company,
@@ -432,15 +452,22 @@ export async function registerRoutes(
 
   app.get("/api/dashboard", isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
-      const stats = await storage.getDashboardStats(req.companyId);
       const today = toDateStr(new Date());
+      const cacheKey = `${req.companyId}:dashboard:${today}`;
+      const cached = getCachedDashboardResponse<any>(cacheKey);
+      if (cached) {
+        return res.json(cached);
+      }
+      const stats = await storage.getDashboardStats(req.companyId);
       const todayAssignments = await storage.getAssignmentsByDate(req.companyId, today);
       const unassigned = await storage.getUnassignedJobs(req.companyId);
-      res.json({
+      const responsePayload = {
         stats,
         todayAssignments: todayAssignments.map((assignment) => toPublicAssignment(assignment)),
         unassignedJobs: unassigned,
-      });
+      };
+      setCachedDashboardResponse(cacheKey, responsePayload);
+      res.json(responsePayload);
     } catch (error) {
       console.error("Error in /api/dashboard:", error);
       res.status(500).json({ message: "Internal error" });
@@ -465,6 +492,11 @@ export async function registerRoutes(
           errors: parsed.error.flatten().fieldErrors,
         });
       }
+      const cacheKey = `${req.companyId}:planning:${parsed.data.startDate}:${parsed.data.endDate}`;
+      const cached = getCachedPlanningBoardResponse<any>(cacheKey);
+      if (cached) {
+        return res.json(cached);
+      }
 
       const [employeesList, backlogJobs, planningAssignments] = await Promise.all([
         storage.getEmployeesByCompany(req.companyId),
@@ -478,15 +510,17 @@ export async function registerRoutes(
 
       const visibleDays = getPlanningDaysInRange(parsed.data.startDate, parsed.data.endDate);
 
+      const responsePayload = createPlanningBoardReadModel(
+        {
+          employees: employeesList.map((employee) => toPublicEmployee(employee)),
+          backlogJobs,
+          assignments: planningAssignments.map((assignment) => toPublicAssignment(assignment)),
+        },
+        visibleDays
+      );
+      setCachedPlanningBoardResponse(cacheKey, responsePayload);
       res.json(
-        createPlanningBoardReadModel(
-          {
-            employees: employeesList.map((employee) => toPublicEmployee(employee)),
-            backlogJobs,
-            assignments: planningAssignments.map((assignment) => toPublicAssignment(assignment)),
-          },
-          visibleDays
-        )
+        responsePayload
       );
     } catch (error) {
       console.error("Error in /api/planning/board:", error);
@@ -616,6 +650,7 @@ export async function registerRoutes(
       });
 
       if (!parsed.data.createAccess) {
+        invalidateCompanyReadCaches(req.companyId);
         return res.json({
           employee: toPublicEmployee(employee, { includeAccess: true }),
           access: null,
@@ -636,6 +671,10 @@ export async function registerRoutes(
         parsed.data.sendCredentialsToAdmin,
       );
 
+      if (provisioned.employee.userId) {
+        invalidateLocalAuthIdentity(provisioned.employee.userId, "employee_access");
+      }
+      invalidateCompanyReadCaches(req.companyId);
       res.json({
         employee: toPublicEmployee(provisioned.employee, { includeAccess: true }),
         company: provisioned.company,
@@ -665,6 +704,10 @@ export async function registerRoutes(
       }
       const employee = await storage.updateEmployee(req.companyId, req.params.id, parsed.data);
       if (!employee) return res.status(404).json({ message: "Not found" });
+      if (employee.userId) {
+        invalidateLocalAuthIdentity(employee.userId, "employee_access");
+      }
+      invalidateCompanyReadCaches(req.companyId);
       res.json(toPublicEmployee(employee, { includeAccess: true }));
     } catch (error) {
       if (isUserTenantConflict(error)) {
@@ -699,6 +742,10 @@ export async function registerRoutes(
         parsed.data.sendCredentialsToAdmin,
       );
 
+      if (provisioned.employee.userId) {
+        invalidateLocalAuthIdentity(provisioned.employee.userId, "employee_access");
+      }
+      invalidateCompanyReadCaches(req.companyId);
       return res.json({
         employee: toPublicEmployee(provisioned.employee, { includeAccess: true }),
         company: provisioned.company,
@@ -768,6 +815,7 @@ export async function registerRoutes(
         companyId: req.companyId,
         createdBy: req.employee.userId,
       });
+      invalidateCompanyReadCaches(req.companyId);
       res.json(job);
     } catch (error) {
       console.error("Error creating job:", error);
@@ -788,6 +836,7 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Validation error", errors: parsed.error.flatten().fieldErrors });
       }
       const job = await storage.updateJob(req.companyId, req.params.id, parsed.data);
+      invalidateCompanyReadCaches(req.companyId);
       res.json(job);
     } catch (error) {
       res.status(500).json({ message: "Internal error" });
@@ -903,6 +952,7 @@ export async function registerRoutes(
           });
         }
       }
+      invalidateCompanyReadCaches(req.companyId);
       res.json(assignment);
     } catch (error) {
       console.error("Error creating assignment:", error);
@@ -927,6 +977,7 @@ export async function registerRoutes(
       }
       const assignment = await storage.updateAssignment(req.companyId, req.params.id, safeData);
       if (!assignment) return res.status(404).json({ message: "Not found" });
+      invalidateCompanyReadCaches(req.companyId);
       res.json(assignment);
     } catch (error) {
       res.status(500).json({ message: "Internal error" });
@@ -949,6 +1000,7 @@ export async function registerRoutes(
         assignmentId: req.params.id,
         employeeId: parsed.data.employeeId,
       });
+      invalidateCompanyReadCaches(req.companyId);
       res.json({ ok: true });
     } catch (error) {
       res.status(500).json({ message: "Internal error" });
@@ -965,6 +1017,7 @@ export async function registerRoutes(
         if (!existing)
           return res.status(404).json({ message: "Not found" });
         await storage.removeWorkerFromAssignment(req.companyId, req.params.id, req.params.employeeId);
+        invalidateCompanyReadCaches(req.companyId);
         res.json({ ok: true });
       } catch (error) {
         res.status(500).json({ message: "Internal error" });
@@ -980,6 +1033,7 @@ export async function registerRoutes(
       if (existing.status !== "planned")
         return res.status(400).json({ message: "Nur geplante Einsätze können gelöscht werden" });
       await storage.deleteAssignment(req.companyId, req.params.id);
+      invalidateCompanyReadCaches(req.companyId);
       res.json({ ok: true });
     } catch (error) {
       res.status(500).json({ message: "Internal error" });
@@ -1030,6 +1084,7 @@ export async function registerRoutes(
         );
       }
 
+      invalidateCompanyReadCaches(req.companyId);
       res.json({ ok: true });
     } catch (error) {
       console.error("Error assigning workers in batch:", error);
@@ -1061,6 +1116,7 @@ export async function registerRoutes(
         });
       }
 
+      invalidateCompanyReadCaches(req.companyId);
       res.json({ ok: true });
     } catch (error) {
       console.error("Error moving planning block:", error);
@@ -1135,6 +1191,7 @@ export async function registerRoutes(
         createdAssignments.push(assignment);
       }
 
+      invalidateCompanyReadCaches(req.companyId);
       res.json({ ok: true, createdAssignments });
     } catch (error) {
       console.error("Error resizing planning block:", error);
@@ -1173,6 +1230,7 @@ export async function registerRoutes(
         await storage.deleteAssignment(req.companyId, assignmentId);
       }
 
+      invalidateCompanyReadCaches(req.companyId);
       res.json({ ok: true });
     } catch (error) {
       console.error("Error removing planning block:", error);
@@ -1217,6 +1275,7 @@ export async function registerRoutes(
         await storage.updateJob(req.companyId, job.id, { status: "in_progress" });
       }
 
+      invalidateCompanyReadCaches(req.companyId);
       res.json({ assignment: { ...assignment, status: "en_route" }, timeEntry });
     } catch (error) {
       console.error("Error starting travel:", error);
@@ -1266,6 +1325,7 @@ export async function registerRoutes(
         await storage.updateJob(req.companyId, job.id, { status: "in_progress" });
       }
 
+      invalidateCompanyReadCaches(req.companyId);
       res.json({ assignment: { ...assignment, status: "on_site" }, timeEntry });
     } catch (error) {
       console.error("Error starting work:", error);
@@ -1294,6 +1354,7 @@ export async function registerRoutes(
           status: "on_site",
         });
       }
+      invalidateCompanyReadCaches(req.companyId);
       res.json({ ok: true });
     } catch (error) {
       res.status(500).json({ message: "Internal error" });
@@ -1319,6 +1380,7 @@ export async function registerRoutes(
         await storage.updateTimeEntry(req.companyId, timeEntry.id, { status: "break" });
         await storage.createBreakEntry(req.companyId, timeEntry.id);
       }
+      invalidateCompanyReadCaches(req.companyId);
       res.json({ ok: true });
     } catch (error) {
       res.status(500).json({ message: "Internal error" });
@@ -1344,6 +1406,7 @@ export async function registerRoutes(
         await storage.updateTimeEntry(req.companyId, timeEntry.id, { status: "on_site" });
         await storage.endBreakEntry(req.companyId, timeEntry.id);
       }
+      invalidateCompanyReadCaches(req.companyId);
       res.json({ ok: true });
     } catch (error) {
       res.status(500).json({ message: "Internal error" });
@@ -1381,6 +1444,7 @@ export async function registerRoutes(
           status: "completed",
         });
       }
+      invalidateCompanyReadCaches(req.companyId);
       res.json({ ok: true });
     } catch (error) {
       res.status(500).json({ message: "Internal error" });
@@ -1421,6 +1485,7 @@ export async function registerRoutes(
         issueType: parsed.data.issueType,
         note: parsed.data.note,
       });
+      invalidateCompanyReadCaches(req.companyId);
       res.json(report);
     } catch (error) {
       console.error("Error reporting problem:", error);
@@ -1446,6 +1511,7 @@ export async function registerRoutes(
       if (timeEntry) {
         await storage.updateTimeEntry(req.companyId, timeEntry.id, { status: "on_site" });
       }
+      invalidateCompanyReadCaches(req.companyId);
       res.json({ ok: true });
     } catch (error) {
       res.status(500).json({ message: "Internal error" });
@@ -1476,6 +1542,7 @@ export async function registerRoutes(
 
       const report = await storage.resolveIssueReport(req.companyId, req.params.id);
       if (!report) return res.status(404).json({ message: "Not found" });
+      invalidateCompanyReadCaches(req.companyId);
       res.json(report);
     } catch (error) {
       res.status(500).json({ message: "Internal error" });
