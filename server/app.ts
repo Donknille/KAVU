@@ -25,8 +25,8 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        // Vite production builds use <script type="module"> — no unsafe-eval needed
-        scriptSrc: ["'self'", "https://js.stripe.com"],
+        // Vite production builds require unsafe-inline (modulepreload) and unsafe-eval
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://js.stripe.com"],
         // Tailwind / shadcn use inline styles
         styleSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", "data:", "https:"],
