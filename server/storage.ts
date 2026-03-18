@@ -1128,26 +1128,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async addWorkerToAssignment(data: InsertAssignmentWorker): Promise<void> {
-    const assignment = await this.getAssignmentForCompany(data.companyId, data.assignmentId);
-    const employee = await this.getEmployeeForCompany(data.companyId, data.employeeId);
+    const [assignment, employee] = await Promise.all([
+      this.getAssignmentForCompany(data.companyId, data.assignmentId),
+      this.getEmployeeForCompany(data.companyId, data.employeeId),
+    ]);
 
     if (!assignment || !employee) {
       throw new Error("Cross-tenant worker assignment blocked");
     }
 
-    const existing = await db
-      .select()
-      .from(assignmentWorkers)
-      .where(
-        and(
-          eq(assignmentWorkers.companyId, data.companyId),
-          eq(assignmentWorkers.assignmentId, data.assignmentId),
-          eq(assignmentWorkers.employeeId, data.employeeId)
-        )
-      );
-    if (existing.length === 0) {
-      await db.insert(assignmentWorkers).values(data);
-    }
+    await db.insert(assignmentWorkers).values(data).onConflictDoNothing();
   }
 
   async removeWorkerFromAssignment(

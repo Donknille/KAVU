@@ -145,26 +145,21 @@ export function registerPlanningRoutes(
         return res.status(404).json({ message: "Assignment not found" });
       }
 
-      for (const assignment of assignmentsForCompany) {
-        if (!assignment) {
-          continue;
-        }
-
-        if (parsed.data.mode === "add") {
-          await storage.addWorkerToAssignment({
-            companyId: req.companyId,
-            assignmentId: assignment.id,
-            employeeId: parsed.data.employeeId,
-          });
-          continue;
-        }
-
-        await storage.removeWorkerFromAssignment(
-          req.companyId,
-          assignment.id,
-          parsed.data.employeeId,
-        );
-      }
+      await Promise.all(
+        assignmentsForCompany.filter(Boolean).map((assignment) =>
+          parsed.data.mode === "add"
+            ? storage.addWorkerToAssignment({
+                companyId: req.companyId,
+                assignmentId: assignment!.id,
+                employeeId: parsed.data.employeeId,
+              })
+            : storage.removeWorkerFromAssignment(
+                req.companyId,
+                assignment!.id,
+                parsed.data.employeeId,
+              ),
+        ),
+      );
 
       invalidateCompanyReadCaches(req.companyId);
       res.json({ ok: true });
