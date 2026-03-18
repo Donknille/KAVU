@@ -34,7 +34,6 @@ import {
   isInvitationExpired,
   normalizeInvitationEmail,
 } from "./companyInvitations.js";
-import { TRIAL_DAYS } from "./billing.js";
 import {
   buildEmployeeLoginCandidates,
   createLocalUserId,
@@ -336,14 +335,11 @@ export class DatabaseStorage implements IStorage {
         throw new UserTenantConflictError();
       }
 
-      const trialEndsAt = new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
       const [company] = await tx
         .insert(companies)
         .values({
           name: data.companyName,
           accessCode: await this.generateUniqueCompanyAccessCode(tx),
-          subscriptionStatus: "trialing",
-          trialEndsAt,
         })
         .returning();
 
