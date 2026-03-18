@@ -7,7 +7,6 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/StatusBadge";
 import {
-  AlertTriangle,
   Calendar,
   CheckCircle,
   ClipboardList,
@@ -31,15 +30,6 @@ const statCards = [
     helper: "laufend",
     icon: Clock,
     iconTone: "bg-[#68d5c8]/24 text-[#173d66]",
-  },
-  {
-    key: "problemCount",
-    testId: "text-problem-count",
-    label: "Abstimmung",
-    helper: "auffällig",
-    icon: AlertTriangle,
-    iconTone: "bg-amber-100 text-amber-700",
-    valueTone: "text-amber-700",
   },
   {
     key: "todayCompleted",
@@ -74,7 +64,7 @@ export default function AdminDashboard() {
   const stats = data?.stats;
   const todayAssignments = data?.todayAssignments || [];
   const unassignedJobs = data?.unassignedJobs || [];
-  const attentionAssignments = todayAssignments.filter((a: any) => a.status === "problem");
+  const attentionAssignments = todayAssignments.filter((a: any) => a.status === "en_route");
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
@@ -136,7 +126,7 @@ export default function AdminDashboard() {
                 <p className="brand-kicker text-right">{stat.label}</p>
               </div>
               <p
-                className={`mt-5 text-3xl font-semibold tracking-tight text-[#173d66] ${stat.key === "problemCount" ? "text-amber-700" : ""}`}
+                className="mt-5 text-3xl font-semibold tracking-tight text-[#173d66]"
                 data-testid={stat.testId}
               >
                 {stats?.[stat.key] || 0}
@@ -150,16 +140,16 @@ export default function AdminDashboard() {
       {attentionAssignments.length > 0 && (
         <section className="brand-panel rounded-[32px] p-5 md:p-6">
           <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
-              <AlertTriangle className="h-5 w-5" />
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
+              <Clock className="h-5 w-5" />
             </div>
             <div>
-              <p className="brand-kicker text-amber-700">Abstimmung erforderlich</p>
+              <p className="brand-kicker text-sky-700">Auf Anfahrt</p>
               <h2 className="mt-2 text-xl font-semibold text-[#173d66]">
-                Auffällige Einsätze für heute
+                Mitarbeiter noch unterwegs
               </h2>
               <p className="mt-1 text-sm text-[#173d66]/72">
-                Diese Einsätze sollten in der Disposition zuerst geprüft werden.
+                Diese Einsätze sind gestartet, Mitarbeiter sind noch nicht vor Ort.
               </p>
             </div>
           </div>

@@ -11,10 +11,8 @@ import {
   type InsertCompany,
   type InsertCompanyInvitation,
   type InsertEmployee,
-  type InsertIssueReport,
   type InsertJob,
   type InsertTimeEntry,
-  type IssueReport,
   type Job,
   type TimeEntry,
 } from "../shared/schema.js";
@@ -260,7 +258,7 @@ function buildPreviewData() {
       description: "Stoerung am Wechselrichter prüfen.",
       internalNote: "Kunde meldet sporadische Ausfaelle.",
       category: "service",
-      status: "problem",
+      status: "in_progress",
       startDate: toDateStr(new Date(monday.getTime() + 1 * 24 * 60 * 60 * 1000)),
       endDate: null,
       isArchived: false,
@@ -482,7 +480,7 @@ function buildPreviewData() {
       plannedEndTime: "12:00",
       sortOrder: 0,
       note: "Fehlerbild mit Kunde abstimmen.",
-      status: "problem",
+      status: "on_site",
       createdAt: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       updatedAt: now,
     },
@@ -622,20 +620,6 @@ function buildPreviewData() {
     },
   ];
 
-  const issueReports: IssueReport[] = [
-    {
-      id: createId(),
-      companyId: PREVIEW_COMPANY_ID,
-      jobId: jobs[2].id,
-      assignmentId: assignments[2].id,
-      employeeId: employees[3].id,
-      issueType: "technical_issue",
-      note: "Fehlermeldung am Wechselrichter bleibt nach Neustart bestehen.",
-      resolved: false,
-      createdAt: now,
-    },
-  ];
-
   return {
     companies: [previewCompany],
     companyInvitations: [] as CompanyInvitation[],
@@ -645,7 +629,6 @@ function buildPreviewData() {
     assignmentWorkers,
     timeEntries,
     breakEntries,
-    issueReports,
   };
 }
 
@@ -1285,9 +1268,6 @@ export class PreviewStorage {
     this.data.breakEntries = this.data.breakEntries.filter(
       (entry) => entry.companyId !== companyId || !removedTimeEntryIds.includes(entry.timeEntryId),
     );
-    this.data.issueReports = this.data.issueReports.filter(
-      (report) => report.assignmentId !== id || report.companyId !== companyId,
-    );
     return beforeLength !== this.data.assignments.length;
   }
 
@@ -1436,88 +1416,19 @@ export class PreviewStorage {
       .sort((left, right) => left.breakStart.getTime() - right.breakStart.getTime());
   }
 
-  async getIssueReport(id: string) {
-    return this.data.issueReports.find((report) => report.id === id);
-  }
-
-  async getIssueReportForCompany(companyId: string, id: string) {
-    return this.data.issueReports.find(
-      (report) => report.id === id && report.companyId === companyId,
-    );
-  }
-
-  async getIssueReportsByJob(companyId: string, jobId: string) {
-    return sortByCreatedDesc(
-      this.data.issueReports.filter(
-        (report) => report.companyId === companyId && report.jobId === jobId,
-      ),
-    );
-  }
-
-  async getIssueReportsByAssignment(companyId: string, assignmentId: string) {
-    return sortByCreatedDesc(
-      this.data.issueReports.filter(
-        (report) =>
-          report.companyId === companyId && report.assignmentId === assignmentId,
-      ),
-    );
-  }
-
-  async createIssueReport(data: InsertIssueReport) {
-    const job = await this.getJobForCompany(data.companyId, data.jobId);
-    const employee = await this.getEmployeeForCompany(data.companyId, data.employeeId);
-    const assignment = await this.getAssignmentForCompany(data.companyId, data.assignmentId);
-
-    if (!job || !employee || !assignment || assignment.jobId !== job.id) {
-      throw new Error("Cross-tenant issue report blocked");
-    }
-
-    const report: IssueReport = {
-      id: createId(),
-      companyId: data.companyId,
-      jobId: data.jobId,
-      assignmentId: data.assignmentId,
-      employeeId: data.employeeId,
-      issueType: data.issueType,
-      note: data.note ?? null,
-      resolved: data.resolved ?? false,
-      createdAt: new Date(),
-    };
-    this.data.issueReports.unshift(report);
-    return report;
-  }
-
-  async resolveIssueReport(companyId: string, id: string) {
-    const report = this.data.issueReports.find(
-      (item) => item.id === id && item.companyId === companyId,
-    );
-    if (!report) return undefined;
-    report.resolved = true;
-    return report;
-  }
-
   async getDashboardStats(companyId: string) {
     const today = toDateStr(new Date());
     const todayAssignments = this.data.assignments.filter(
       (assignment) =>
         assignment.companyId === companyId && assignment.assignmentDate === today,
     );
-    const problemAssignments = this.data.assignments.filter(
-      (assignment) =>
-        assignment.companyId === companyId && assignment.status === "problem",
-    );
     const activeJobs = this.data.jobs.filter(
       (job) => job.companyId === companyId && !job.isArchived,
-    );
-    const unresolvedIssues = this.data.issueReports.filter(
-      (report) => report.companyId === companyId && !report.resolved,
     );
 
     return {
       todayAssignmentCount: todayAssignments.length,
-      problemCount: problemAssignments.length,
       activeJobCount: activeJobs.length,
-      unresolvedIssueCount: unresolvedIssues.length,
       todayCompleted: todayAssignments.filter(
         (assignment) => assignment.status === "completed",
       ).length,

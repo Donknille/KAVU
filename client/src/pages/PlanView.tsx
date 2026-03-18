@@ -5,9 +5,11 @@ import {
   ArrowLeft,
   ArrowRight,
   BriefcaseBusiness,
+  CalendarDays,
   CalendarRange,
   ChevronsLeft,
   ChevronsRight,
+  LayoutList,
   Plus,
   Users,
   X,
@@ -25,6 +27,7 @@ import {
 import { type ViewSpan } from "@/features/planning/types";
 import { usePlanningBoard } from "@/features/planning/usePlanningBoard";
 import { VirtualStack } from "@/features/planning/virtual";
+import { PlanOverviewList } from "@/features/planning/PlanOverviewList";
 import { formatRange, parseDateString, toDateStr } from "@/features/planning/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -46,6 +49,18 @@ export default function PlanView() {
   const backlogPanelRef = useRef<ImperativePanelHandle | null>(null);
   const [backlogCollapsed, setBacklogCollapsed] = useState(false);
   const [isWideDesktop, setIsWideDesktop] = useState(false);
+  const [viewMode, setViewMode] = useState<"board" | "overview">(() =>
+    typeof window !== "undefined" && window.innerWidth < 768 ? "overview" : "board",
+  );
+  const [overviewDay, setOverviewDay] = useState(() => toDateStr(new Date()));
+
+  function shiftOverviewDay(delta: number) {
+    setOverviewDay((current) => {
+      const d = new Date(current);
+      d.setDate(d.getDate() + delta);
+      return toDateStr(d);
+    });
+  }
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -691,8 +706,36 @@ export default function PlanView() {
               </Button>
             ))}
           </div>
+
+          <Button
+            variant={viewMode === "overview" ? "default" : "outline"}
+            size="sm"
+            className="brand-outline-control h-8 gap-1.5 px-2.5"
+            onClick={() => setViewMode((m) => (m === "board" ? "overview" : "board"))}
+            title={viewMode === "board" ? "Tagesübersicht" : "Planungsboard"}
+          >
+            {viewMode === "board" ? (
+              <LayoutList className="h-4 w-4" />
+            ) : (
+              <CalendarDays className="h-4 w-4" />
+            )}
+            <span className="hidden sm:inline">
+              {viewMode === "board" ? "Übersicht" : "Board"}
+            </span>
+          </Button>
         </div>
       </div>
+
+      {viewMode === "overview" ? (
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <PlanOverviewList
+            blocks={planning.blocks}
+            day={overviewDay}
+            onPrevDay={() => shiftOverviewDay(-1)}
+            onNextDay={() => shiftOverviewDay(1)}
+          />
+        </div>
+      ) : null}
 
       <DndContext
         sensors={planning.sensors}
@@ -702,7 +745,7 @@ export default function PlanView() {
         onDragStart={planning.handleDragStart}
         onDragEnd={planning.handleDragEnd}
       >
-        <div className="flex min-h-0 flex-1 flex-col gap-2">
+        <div className={cn("flex min-h-0 flex-1 flex-col gap-2", viewMode === "overview" && "hidden")}>
           {showMobileDetailsFocus ? (
             mobileDetailsFocusCard
           ) : isWideDesktop ? (

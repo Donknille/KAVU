@@ -7,7 +7,6 @@ import {
   assignmentWorkers,
   timeEntries,
   breakEntries,
-  issueReports,
   type Company,
   type InsertCompany,
   type Employee,
@@ -22,8 +21,6 @@ import {
   type TimeEntry,
   type InsertTimeEntry,
   type BreakEntry,
-  type IssueReport,
-  type InsertIssueReport,
 } from "../shared/schema.js";
 import { db } from "./db.js";
 import { PREVIEW_MODE } from "./preview.js";
@@ -205,13 +202,6 @@ export interface IStorage {
   createBreakEntry(companyId: string, timeEntryId: string): Promise<BreakEntry>;
   endBreakEntry(companyId: string, timeEntryId: string): Promise<BreakEntry | undefined>;
   getBreakEntriesByTimeEntry(companyId: string, timeEntryId: string): Promise<BreakEntry[]>;
-
-  getIssueReport(id: string): Promise<IssueReport | undefined>;
-  getIssueReportForCompany(companyId: string, id: string): Promise<IssueReport | undefined>;
-  getIssueReportsByJob(companyId: string, jobId: string): Promise<IssueReport[]>;
-  getIssueReportsByAssignment(companyId: string, assignmentId: string): Promise<IssueReport[]>;
-  createIssueReport(data: InsertIssueReport): Promise<IssueReport>;
-  resolveIssueReport(companyId: string, id: string): Promise<IssueReport | undefined>;
 
   getDashboardStats(companyId: string): Promise<any>;
 }
@@ -1316,60 +1306,6 @@ export class DatabaseStorage implements IStorage {
       .orderBy(asc(breakEntries.breakStart));
   }
 
-  async getIssueReport(id: string): Promise<IssueReport | undefined> {
-    const [report] = await db
-      .select()
-      .from(issueReports)
-      .where(eq(issueReports.id, id));
-    return report;
-  }
-
-  async getIssueReportForCompany(companyId: string, id: string): Promise<IssueReport | undefined> {
-    const [report] = await db
-      .select()
-      .from(issueReports)
-      .where(and(eq(issueReports.id, id), eq(issueReports.companyId, companyId)));
-    return report;
-  }
-
-  async getIssueReportsByJob(companyId: string, jobId: string): Promise<IssueReport[]> {
-    return db
-      .select()
-      .from(issueReports)
-      .where(and(eq(issueReports.companyId, companyId), eq(issueReports.jobId, jobId)))
-      .orderBy(desc(issueReports.createdAt));
-  }
-
-  async getIssueReportsByAssignment(companyId: string, assignmentId: string): Promise<IssueReport[]> {
-    return db
-      .select()
-      .from(issueReports)
-      .where(and(eq(issueReports.companyId, companyId), eq(issueReports.assignmentId, assignmentId)))
-      .orderBy(desc(issueReports.createdAt));
-  }
-
-  async createIssueReport(data: InsertIssueReport): Promise<IssueReport> {
-    const job = await this.getJobForCompany(data.companyId, data.jobId);
-    const employee = await this.getEmployeeForCompany(data.companyId, data.employeeId);
-    const assignment = await this.getAssignmentForCompany(data.companyId, data.assignmentId);
-
-    if (!job || !employee || !assignment || assignment.jobId !== job.id) {
-      throw new Error("Cross-tenant issue report blocked");
-    }
-
-    const [report] = await db.insert(issueReports).values(data).returning();
-    return report;
-  }
-
-  async resolveIssueReport(companyId: string, id: string): Promise<IssueReport | undefined> {
-    const [report] = await db
-      .update(issueReports)
-      .set({ resolved: true })
-      .where(and(eq(issueReports.id, id), eq(issueReports.companyId, companyId)))
-      .returning();
-    return report;
-  }
-
   async getDashboardStats(companyId: string): Promise<any> {
     const now = new Date();
     const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -1384,16 +1320,6 @@ export class DatabaseStorage implements IStorage {
         )
       );
 
-    const problemAssignments = await db
-      .select()
-      .from(assignments)
-      .where(
-        and(
-          eq(assignments.companyId, companyId),
-          eq(assignments.status, "problem")
-        )
-      );
-
     const activeJobs = await db
       .select()
       .from(jobs)
@@ -1404,21 +1330,9 @@ export class DatabaseStorage implements IStorage {
         )
       );
 
-    const unresolvedIssues = await db
-      .select()
-      .from(issueReports)
-      .where(
-        and(
-          eq(issueReports.companyId, companyId),
-          eq(issueReports.resolved, false)
-        )
-      );
-
     return {
       todayAssignmentCount: todayAssignments.length,
-      problemCount: problemAssignments.length,
       activeJobCount: activeJobs.length,
-      unresolvedIssueCount: unresolvedIssues.length,
       todayCompleted: todayAssignments.filter((a) => a.status === "completed").length,
       todayInProgress: todayAssignments.filter(
         (a) => a.status === "en_route" || a.status === "on_site"

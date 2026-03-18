@@ -22,7 +22,6 @@ import {
   formatDate,
   getNavigationUrl,
   getPhoneUrl,
-  ISSUE_TYPE_LABELS,
   toDateStr,
 } from "@/lib/constants";
 import {
@@ -40,15 +39,13 @@ import {
 function getStatusSummary(status: string) {
   switch (status) {
     case "planned":
-      return "Der Einsatz ist geplant. Starten Sie die Zeiterfassung bei Arbeitsbeginn.";
+      return "Starte die Anfahrt wenn du losfährst.";
     case "en_route":
-      return "Bitte bestätigen Sie den Arbeitsbeginn für diesen Einsatz.";
+      return "Anfahrt läuft. Bestätige die Ankunft vor Ort.";
     case "on_site":
-      return "Die Arbeitszeit für diesen Einsatz läuft.";
+      return "Arbeitszeit läuft. Bestätige die Abfahrt wenn du fertig bist.";
     case "break":
       return "Der Einsatz ist derzeit pausiert.";
-    case "problem":
-      return "Der Einsatz ist unterbrochen. Bitte kurz mit dem Büro abstimmen.";
     case "completed":
       return "Dieser Einsatz ist abgeschlossen.";
     default:
@@ -333,34 +330,10 @@ export default function AssignmentDetail() {
             <div>
               <p className="font-medium">Offline</p>
               <p className="mt-1 text-sm">
-                Statusänderungen und Problem-Meldungen werden gespeichert und automatisch
+                Statusänderungen werden gespeichert und automatisch
                 synchronisiert, sobald wieder eine Verbindung besteht.
               </p>
             </div>
-          </div>
-        </Card>
-      )}
-
-      {effectiveDetail.issues && effectiveDetail.issues.length > 0 && (
-        <Card className="p-4">
-          <h3 className="mb-2 flex items-center gap-1.5 text-sm font-medium text-red-600 dark:text-red-400">
-            <AlertTriangle className="h-4 w-4" />
-            Probleme ({effectiveDetail.issues.length})
-          </h3>
-          <div className="space-y-2">
-            {effectiveDetail.issues.map((issue: any) => (
-              <div
-                key={issue.id}
-                className="rounded-md bg-red-50 p-2 text-sm dark:bg-red-900/10"
-              >
-                <p className="font-medium">
-                  {ISSUE_TYPE_LABELS[issue.issueType] || issue.issueType}
-                </p>
-                {issue.note && (
-                  <p className="mt-0.5 text-muted-foreground">{issue.note}</p>
-                )}
-              </div>
-            ))}
           </div>
         </Card>
       )}

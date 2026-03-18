@@ -12,7 +12,6 @@ import {
   formatDuration,
   formatDate,
   formatAddress,
-  ISSUE_TYPE_LABELS,
   JOB_CATEGORY_LABELS,
   getNavigationUrl,
 } from "@/lib/constants";
@@ -23,7 +22,6 @@ import {
   Phone,
   FileText,
   Clock,
-  AlertTriangle,
   CheckCircle,
   DollarSign,
   Navigation,
@@ -41,11 +39,6 @@ export default function JobDetail() {
 
   const { data: timeEntries } = useQuery<any[]>({
     queryKey: ["/api/time-entries/job", id],
-    enabled: !!id,
-  });
-
-  const { data: issues } = useQuery<any[]>({
-    queryKey: ["/api/issues/job", id],
     enabled: !!id,
   });
 
@@ -146,9 +139,6 @@ export default function JobDetail() {
           </TabsTrigger>
           <TabsTrigger value="times" className="flex-1" data-testid="tab-times">
             Zeiten
-          </TabsTrigger>
-          <TabsTrigger value="issues" className="flex-1" data-testid="tab-issues">
-            Probleme
           </TabsTrigger>
         </TabsList>
 
@@ -253,43 +243,6 @@ export default function JobDetail() {
           )}
         </TabsContent>
 
-        <TabsContent value="issues" className="mt-3">
-          {!issues || issues.length === 0 ? (
-            <Card className="p-6 text-center">
-              <AlertTriangle className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-              <p className="text-sm text-muted-foreground">Keine Probleme gemeldet</p>
-            </Card>
-          ) : (
-            <div className="space-y-2">
-              {issues.map((issue: any) => (
-                <Card
-                  key={issue.id}
-                  className={`p-3 ${
-                    !issue.resolved ? "ring-1 ring-red-300 dark:ring-red-700" : ""
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-2 mb-1">
-                    <span className="font-medium text-sm">
-                      {ISSUE_TYPE_LABELS[issue.issueType] || issue.issueType}
-                    </span>
-                    <span
-                      className={`text-xs ${
-                        issue.resolved
-                          ? "text-green-600"
-                          : "text-red-600 dark:text-red-400"
-                      }`}
-                    >
-                      {issue.resolved ? "Gelöst" : "Offen"}
-                    </span>
-                  </div>
-                  {issue.note && (
-                    <p className="text-sm text-muted-foreground">{issue.note}</p>
-                  )}
-                </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
       </Tabs>
     </div>
   );

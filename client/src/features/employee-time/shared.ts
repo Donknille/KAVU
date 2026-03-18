@@ -6,7 +6,6 @@ export type TrackerStatus =
   | "en_route"
   | "on_site"
   | "break"
-  | "problem"
   | "completed";
 
 export type TimeEntryLike = {
@@ -175,9 +174,6 @@ export function applyOptimisticTimeState(
         );
         break;
       }
-      case "report-problem":
-      case "resume":
-        break;
       default:
         break;
     }
@@ -194,15 +190,13 @@ export function getTrackerStatusLabel(status: TrackerStatus) {
     case "planned":
       return "Bereit";
     case "en_route":
-      return "Start offen";
+      return "Anfahrt läuft";
     case "on_site":
-      return "Arbeit";
+      return "Arbeit läuft";
     case "break":
       return "Pause";
-    case "problem":
-      return "Unterbrochen";
     case "completed":
-      return "Abgeschlossen";
+      return "Abgefahren";
     default:
       return "Zeiterfassung";
   }
@@ -216,12 +210,14 @@ export function getTrackerHelperText(
 ) {
   switch (status) {
     case "planned":
-      return "Die Zeiterfassung startet mit Arbeitsbeginn.";
+      return "Anfahrt starten wenn du losfährst.";
     case "en_route":
-      return "Bitte den Arbeitsbeginn einmal bestätigen.";
-    case "on_site":
       return timeEntry?.startedAt
-        ? `Arbeitszeit läuft seit ${formatTime(timeEntry.startedAt)}`
+        ? `Anfahrt gestartet um ${formatTime(timeEntry.startedAt)}`
+        : "Anfahrt läuft.";
+    case "on_site":
+      return timeEntry?.arrivedAt
+        ? `Arbeitszeit läuft seit ${formatTime(timeEntry.arrivedAt)}`
         : "Einsatz ist aktiv.";
     case "break": {
       const currentBreakDuration = getCurrentBreakDurationMs(breaks, now);
@@ -229,12 +225,10 @@ export function getTrackerHelperText(
         ? `Pause seit ${formatDuration(Math.round(currentBreakDuration / 60_000))}`
         : "Pause ist aktiv.";
     }
-    case "problem":
-      return "Bitte kurz mit dem Büro abstimmen und danach fortsetzen oder abschließen.";
     case "completed":
       return timeEntry?.endedAt
-        ? `Abgeschlossen um ${formatTime(timeEntry.endedAt)}`
-        : "Einsatz ist abgeschlossen.";
+        ? `Abgefahren um ${formatTime(timeEntry.endedAt)}`
+        : "Einsatz abgeschlossen.";
     default:
       return "Zeiterfassung";
   }
@@ -264,5 +258,5 @@ export function getTrackerFacts(
 }
 
 export function isLiveTrackingStatus(status: TrackerStatus) {
-  return status === "en_route" || status === "on_site" || status === "break" || status === "problem";
+  return status === "en_route" || status === "on_site" || status === "break";
 }

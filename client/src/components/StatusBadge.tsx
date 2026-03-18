@@ -22,9 +22,6 @@ export function StatusBadge({ status, type = "assignment", className = "" }: Sta
       className={`${colorClass} border-0 font-medium text-xs ${className}`}
       data-testid={`badge-status-${status}`}
     >
-      {status === "problem" && (
-        <span className="inline-block w-1.5 h-1.5 rounded-full bg-current mr-1 animate-pulse" />
-      )}
       {label}
     </Badge>
   );

@@ -5,7 +5,10 @@
       "Bash(npm run:*)",
       "Bash(npm audit:*)",
       "Bash(sort -t: -k2 -rn)",
-      "Bash(node scripts/fix-umlauts.mjs)"
+      "Bash(node scripts/fix-umlauts.mjs)",
+      "Read(//c/Users/sebgr/Coding//**)",
+      "Read(//c/Users/sebgr/Coding/**)",
+      "Bash(xargs grep:*)"
     ]
   }
 }

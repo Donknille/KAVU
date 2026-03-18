@@ -6,7 +6,6 @@ import {
   assignments,
   assignmentWorkers,
   timeEntries,
-  issueReports,
 } from "../shared/schema.js";
 import { eq, sql } from "drizzle-orm";
 import { PREVIEW_MODE } from "./preview.js";
@@ -148,7 +147,7 @@ export async function seedDatabase() {
       contactPhone: "+49 8151 67890",
       description: "Solarcarport mit 8 Modulen und Wallbox-Vorbereitung.",
       category: "montage" as const,
-      status: "problem" as const,
+      status: "in_progress" as const,
       startDate: getDate(1),
     },
     {
@@ -177,7 +176,7 @@ export async function seedDatabase() {
   const assignmentsData = [
     { jobIdx: 0, date: getDate(0), workers: [2, 3], start: "07:30", end: "16:00", status: "on_site" as const },
     { jobIdx: 0, date: getDate(1), workers: [2, 3], start: "07:30", end: "16:00", status: "planned" as const },
-    { jobIdx: 6, date: getDate(1), workers: [4, 5], start: "08:00", end: "15:00", status: "problem" as const },
+    { jobIdx: 6, date: getDate(1), workers: [4, 5], start: "08:00", end: "15:00", status: "on_site" as const },
     { jobIdx: 1, date: getDate(2), workers: [2, 4], start: "07:00", end: "16:00", status: "planned" as const },
     { jobIdx: 3, date: getDate(3), workers: [5, 6], start: "08:00", end: "17:00", status: "planned" as const },
     { jobIdx: 4, date: getDate(4), workers: [2, 3, 4], start: "07:00", end: "17:00", status: "planned" as const },
@@ -223,16 +222,6 @@ export async function seedDatabase() {
       }
     }
 
-    if (aData.status === "problem") {
-      await db.insert(issueReports).values({
-        companyId: company.id,
-        jobId: createdJobs[aData.jobIdx].id,
-        assignmentId: assignment.id,
-        employeeId: createdEmps[aData.workers[0]].id,
-        issueType: "material_missing",
-        note: "Montageschienen für Carport wurden falsch geliefert. Neue Bestellung läuft.",
-      });
-    }
   }
 
   console.log("Seed data created successfully.");

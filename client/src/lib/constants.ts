@@ -1,10 +1,9 @@
 export const ASSIGNMENT_STATUS_LABELS: Record<string, string> = {
   planned: "Geplant",
-  en_route: "Unterwegs",
+  en_route: "Anfahrt",
   on_site: "Vor Ort",
   break: "Pause",
-  completed: "Erledigt",
-  problem: "Problem",
+  completed: "Abgefahren",
 };
 
 export const JOB_STATUS_LABELS: Record<string, string> = {
@@ -14,13 +13,6 @@ export const JOB_STATUS_LABELS: Record<string, string> = {
   completed: "Erledigt",
   reviewed: "Geprüft",
   billable: "Abrechenbar",
-};
-
-export const ISSUE_TYPE_LABELS: Record<string, string> = {
-  material_missing: "Material fehlt",
-  customer_unavailable: "Kunde nicht erreichbar",
-  technical_issue: "Technisches Problem",
-  other: "Sonstiges",
 };
 
 export const JOB_CATEGORY_LABELS: Record<string, string> = {

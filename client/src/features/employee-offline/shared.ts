@@ -3,8 +3,7 @@ export type AssignmentStatus =
   | "en_route"
   | "on_site"
   | "break"
-  | "completed"
-  | "problem";
+  | "completed";
 
 export type AssignmentAction =
   | "start-work"
@@ -12,9 +11,7 @@ export type AssignmentAction =
   | "arrive"
   | "start-break"
   | "end-break"
-  | "complete"
-  | "report-problem"
-  | "resume";
+  | "complete";
 
 export type QueueItemState = "pending" | "conflict";
 
@@ -33,13 +30,11 @@ export interface QueuedAssignmentAction {
 
 const actionLabels: Record<AssignmentAction, string> = {
   "start-work": "Arbeit starten",
-  "start-travel": "Fahrt beginnen",
-  arrive: "Ankunft Baustelle",
+  "start-travel": "Anfahrt starten",
+  arrive: "Angekommen",
   "start-break": "Pause starten",
   "end-break": "Pause beenden",
-  complete: "Einsatz beenden",
-  "report-problem": "Problem melden",
-  resume: "Weiterarbeiten",
+  complete: "Abfahrt",
 };
 
 const transitionMap: Record<
@@ -70,16 +65,8 @@ const transitionMap: Record<
     nextStatus: "on_site",
   },
   complete: {
-    allowedFrom: ["on_site", "problem"],
+    allowedFrom: ["on_site", "break"],
     nextStatus: "completed",
-  },
-  "report-problem": {
-    allowedFrom: ["en_route", "on_site", "break"],
-    nextStatus: "problem",
-  },
-  resume: {
-    allowedFrom: ["problem"],
-    nextStatus: "on_site",
   },
 };
 

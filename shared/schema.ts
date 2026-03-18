@@ -33,13 +33,6 @@ export const assignmentStatusEnum = pgEnum("assignment_status", [
   "on_site",
   "break",
   "completed",
-  "problem",
-]);
-export const issueTypeEnum = pgEnum("issue_type", [
-  "material_missing",
-  "customer_unavailable",
-  "technical_issue",
-  "other",
 ]);
 export const jobCategoryEnum = pgEnum("job_category", [
   "pv",
@@ -242,27 +235,6 @@ export const breakEntries = pgTable("break_entries", {
   index("idx_break_entries_time_entry_id").on(table.timeEntryId),
 ]);
 
-export const issueReports = pgTable("issue_reports", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  companyId: varchar("company_id")
-    .notNull()
-    .references(() => companies.id),
-  jobId: varchar("job_id")
-    .notNull()
-    .references(() => jobs.id),
-  assignmentId: varchar("assignment_id")
-    .notNull()
-    .references(() => assignments.id),
-  employeeId: varchar("employee_id")
-    .notNull()
-    .references(() => employees.id),
-  issueType: issueTypeEnum("issue_type").notNull(),
-  note: text("note"),
-  resolved: boolean("resolved").notNull().default(false),
-  createdAt: timestamp("created_at").defaultNow(),
-}, (table) => [
-  index("idx_issue_reports_job_id").on(table.jobId),
-]);
 
 export const companiesRelations = relations(companies, ({ many }) => ({
   employees: many(employees),
@@ -307,7 +279,6 @@ export const jobsRelations = relations(jobs, ({ one, many }) => ({
     references: [companies.id],
   }),
   assignments: many(assignments),
-  issueReports: many(issueReports),
 }));
 
 export const assignmentsRelations = relations(assignments, ({ one, many }) => ({
@@ -321,7 +292,6 @@ export const assignmentsRelations = relations(assignments, ({ one, many }) => ({
   }),
   workers: many(assignmentWorkers),
   timeEntries: many(timeEntries),
-  issueReports: many(issueReports),
 }));
 
 export const assignmentWorkersRelations = relations(
@@ -369,20 +339,6 @@ export const breakEntriesRelations = relations(breakEntries, ({ one }) => ({
   }),
 }));
 
-export const issueReportsRelations = relations(issueReports, ({ one }) => ({
-  job: one(jobs, {
-    fields: [issueReports.jobId],
-    references: [jobs.id],
-  }),
-  assignment: one(assignments, {
-    fields: [issueReports.assignmentId],
-    references: [assignments.id],
-  }),
-  employee: one(employees, {
-    fields: [issueReports.employeeId],
-    references: [employees.id],
-  }),
-}));
 
 export const insertCompanySchema = createInsertSchema(companies).omit({
   id: true,
@@ -437,10 +393,6 @@ export const insertTimeEntrySchema = createInsertSchema(timeEntries).omit({
 export const insertBreakEntrySchema = createInsertSchema(breakEntries).omit({
   id: true,
 });
-export const insertIssueReportSchema = createInsertSchema(issueReports).omit({
-  id: true,
-  createdAt: true,
-});
 
 export type Company = typeof companies.$inferSelect;
 export type InsertCompany = z.infer<typeof insertCompanySchema>;
@@ -460,5 +412,3 @@ export type TimeEntry = typeof timeEntries.$inferSelect;
 export type InsertTimeEntry = z.infer<typeof insertTimeEntrySchema>;
 export type BreakEntry = typeof breakEntries.$inferSelect;
 export type InsertBreakEntry = z.infer<typeof insertBreakEntrySchema>;
-export type IssueReport = typeof issueReports.$inferSelect;
-export type InsertIssueReport = z.infer<typeof insertIssueReportSchema>;

@@ -67,12 +67,6 @@ function getAccentClasses(status: TrackerStatus) {
         subtleText: "text-amber-100/70",
         ring: "from-amber-400/30 to-amber-400/5",
       };
-    case "problem":
-      return {
-        text: "text-amber-200",
-        subtleText: "text-amber-100/70",
-        ring: "from-amber-400/30 to-amber-400/5",
-      };
     case "completed":
       return {
         text: "text-white",
@@ -93,19 +87,19 @@ function getActionLayout(status: TrackerStatus) {
     case "planned":
       return {
         leftDecorativeIcon: Clock3,
-        rightAction: { action: "start-work", label: "Start", icon: Play, tone: "accent" as const },
+        rightAction: { action: "start-travel", label: "Anfahrt starten", icon: Play, tone: "accent" as const },
         secondaryActions: [] as TimerAction[],
       };
     case "en_route":
       return {
         leftDecorativeIcon: Clock3,
-        rightAction: { action: "start-work", label: "Start", icon: Play, tone: "accent" as const },
+        rightAction: { action: "arrive", label: "Angekommen", icon: Play, tone: "accent" as const },
         secondaryActions: [] as TimerAction[],
       };
     case "on_site":
       return {
         leftAction: { action: "start-break", label: "Pause", icon: Pause, tone: "neutral" as const },
-        rightAction: { action: "complete", label: "Ende", icon: Square, tone: "accent" as const },
+        rightAction: { action: "complete", label: "Abfahrt", icon: Square, tone: "accent" as const },
         secondaryActions: [] as TimerAction[],
       };
     case "break":
@@ -113,12 +107,6 @@ function getActionLayout(status: TrackerStatus) {
         leftAction: { action: "end-break", label: "Weiter", icon: Play, tone: "accent" as const },
         rightAction: undefined,
         secondaryActions: [] as TimerAction[],
-      };
-    case "problem":
-      return {
-        leftAction: { action: "resume", label: "Weiter", icon: Play, tone: "accent" as const },
-        rightAction: { action: "complete", label: "Ende", icon: Square, tone: "neutral" as const },
-        secondaryActions: [],
       };
     case "completed":
     default:

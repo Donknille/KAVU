@@ -8,7 +8,6 @@ import { requireNotFrozen } from "../billing.js";
 import { isAuthenticated } from "../replit_integrations/auth/index.js";
 import {
   insertAssignmentSchema,
-  insertIssueReportSchema,
 } from "../../shared/schema.js";
 import { toDateStr } from "../../shared/dates.js";
 import { toPublicEmployee } from "./employees.js";
@@ -179,14 +178,12 @@ export function registerAssignmentRoutes(
       const breaksList = timeEntry
         ? await storage.getBreakEntriesByTimeEntry(req.companyId, timeEntry.id)
         : [];
-      const issues = await storage.getIssueReportsByAssignment(req.companyId, assignment.id);
       res.json({
         ...assignment,
         job,
         workers: workers.map((worker) => toPublicEmployee(worker)),
         timeEntry,
         breaks: breaksList,
-        issues,
       });
     }),
   );
@@ -511,7 +508,7 @@ export function registerAssignmentRoutes(
         requireWorker: true,
       });
       if (!assignment) return;
-      if (assignment.status !== "on_site" && assignment.status !== "problem") {
+      if (assignment.status !== "on_site" && assignment.status !== "break") {
         return res.status(400).json({ message: "Invalid status transition" });
       }
 
@@ -539,108 +536,6 @@ export function registerAssignmentRoutes(
       }
       invalidateCompanyReadCaches(req.companyId);
       res.json({ ok: true });
-    }),
-  );
-
-  app.post(
-    "/api/assignments/:id/report-problem",
-    isAuthenticated,
-    requireAuth,
-    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-      const assignment = await getAuthorizedAssignment(req, res, req.params.id, {
-        requireWorker: true,
-      });
-      if (!assignment) return;
-
-      const reportSchema = insertIssueReportSchema.pick({ issueType: true, note: true });
-      const parsed = reportSchema.safeParse(req.body);
-      if (!parsed.success) {
-        return res.status(400).json({ message: "Validation error", errors: parsed.error.flatten().fieldErrors });
-      }
-
-      await storage.updateAssignment(req.companyId, req.params.id, { status: "problem" });
-      const job = await storage.getJobForCompany(req.companyId, assignment.jobId);
-      if (job) {
-        await storage.updateJob(req.companyId, job.id, { status: "problem" });
-      }
-      const timeEntry = await storage.getTimeEntryForAssignment(
-        req.companyId,
-        req.params.id,
-        req.employee.id,
-      );
-      if (timeEntry) {
-        await storage.updateTimeEntry(req.companyId, timeEntry.id, { status: "problem" });
-      }
-      const report = await storage.createIssueReport({
-        companyId: req.companyId,
-        jobId: assignment.jobId,
-        assignmentId: req.params.id,
-        employeeId: req.employee.id,
-        issueType: parsed.data.issueType,
-        note: parsed.data.note,
-      });
-      invalidateCompanyReadCaches(req.companyId);
-      res.json(report);
-    }),
-  );
-
-  app.post(
-    "/api/assignments/:id/resume",
-    isAuthenticated,
-    requireAuth,
-    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-      const assignment = await getAuthorizedAssignment(req, res, req.params.id, {
-        requireWorker: true,
-      });
-      if (!assignment) return;
-      if (assignment.status !== "problem") {
-        return res.status(400).json({ message: "Invalid status transition" });
-      }
-
-      await storage.updateAssignment(req.companyId, req.params.id, { status: "on_site" });
-      const timeEntry = await storage.getTimeEntryForAssignment(
-        req.companyId,
-        req.params.id,
-        req.employee.id,
-      );
-      if (timeEntry) {
-        await storage.updateTimeEntry(req.companyId, timeEntry.id, { status: "on_site" });
-      }
-      invalidateCompanyReadCaches(req.companyId);
-      res.json({ ok: true });
-    }),
-  );
-
-  // ── Issues ────────────────────────────────────────────────────────────────
-
-  app.get(
-    "/api/issues/job/:jobId",
-    isAuthenticated,
-    requireAdmin,
-    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-      const job = await storage.getJobForCompany(req.companyId, req.params.jobId);
-      if (!job) return res.status(404).json({ message: "Not found" });
-      const list = await storage.getIssueReportsByJob(req.companyId, req.params.jobId);
-      res.json(list);
-    }),
-  );
-
-  app.patch(
-    "/api/issues/:id/resolve",
-    isAuthenticated,
-    requireAdmin,
-    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-      const existingReport = await storage.getIssueReportForCompany(req.companyId, req.params.id);
-      if (!existingReport) return res.status(404).json({ message: "Not found" });
-
-      if (existingReport.resolved) {
-        return res.json(existingReport);
-      }
-
-      const report = await storage.resolveIssueReport(req.companyId, req.params.id);
-      if (!report) return res.status(404).json({ message: "Not found" });
-      invalidateCompanyReadCaches(req.companyId);
-      res.json(report);
     }),
   );
 
