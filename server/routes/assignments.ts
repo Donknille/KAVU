@@ -15,6 +15,16 @@ import { toPublicEmployee } from "./employees.js";
 
 const assignmentDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
+const MAX_DATE_RANGE_DAYS = 90;
+
+const dateRangeSchema = z.object({
+  startDate: assignmentDateSchema,
+  endDate: assignmentDateSchema,
+}).refine(({ startDate, endDate }) => {
+  const ms = new Date(endDate).getTime() - new Date(startDate).getTime();
+  return ms >= 0 && ms <= MAX_DATE_RANGE_DAYS * 24 * 60 * 60 * 1000;
+}, { message: `Datumsbereich darf maximal ${MAX_DATE_RANGE_DAYS} Tage umfassen.` });
+
 function toPublicAssignment(assignment: any) {
   if (!assignment) {
     return assignment;
@@ -82,21 +92,32 @@ export function registerAssignmentRoutes(
     requireAdmin,
     asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const { date, startDate, endDate } = req.query;
+
       if (date) {
-        const list = await storage.getAssignmentsByDate(req.companyId, date as string);
-        return res.json(list.map((assignment) => toPublicAssignment(assignment)));
+        const dateCheck = assignmentDateSchema.safeParse(date);
+        if (!dateCheck.success) {
+          return res.status(400).json({ message: "Ungültiges Datumsformat. Erwartet: YYYY-MM-DD" });
+        }
+        const list = await storage.getAssignmentsByDate(req.companyId, dateCheck.data);
+        return res.json(list.map(toPublicAssignment));
       }
+
       if (startDate && endDate) {
+        const rangeCheck = dateRangeSchema.safeParse({ startDate, endDate });
+        if (!rangeCheck.success) {
+          return res.status(400).json({ message: rangeCheck.error.issues[0]?.message ?? "Ungültiger Datumsbereich." });
+        }
         const list = await storage.getAssignmentsByDateRange(
           req.companyId,
-          startDate as string,
-          endDate as string,
+          rangeCheck.data.startDate,
+          rangeCheck.data.endDate,
         );
-        return res.json(list.map((assignment) => toPublicAssignment(assignment)));
+        return res.json(list.map(toPublicAssignment));
       }
+
       const today = toDateStr(new Date());
       const list = await storage.getAssignmentsByDate(req.companyId, today);
-      res.json(list.map((assignment) => toPublicAssignment(assignment)));
+      res.json(list.map(toPublicAssignment));
     }),
   );
 
@@ -105,19 +126,37 @@ export function registerAssignmentRoutes(
     isAuthenticated,
     requireAuth,
     asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-      const date = req.query.date as string | undefined;
-      const startDate = req.query.startDate as string | undefined;
-      const endDate = req.query.endDate as string | undefined;
+      const { date, startDate, endDate } = req.query;
 
-      const list =
-        startDate && endDate
-          ? await storage.getAssignmentsByEmployee(req.companyId, req.employee.id, startDate, endDate)
-          : await storage.getAssignmentsByEmployee(
-              req.companyId,
-              req.employee.id,
-              date || toDateStr(new Date()),
-            );
-      res.json(list.map((assignment) => toPublicAssignment(assignment)));
+      if (startDate && endDate) {
+        const rangeCheck = dateRangeSchema.safeParse({ startDate, endDate });
+        if (!rangeCheck.success) {
+          return res.status(400).json({ message: rangeCheck.error.issues[0]?.message ?? "Ungültiger Datumsbereich." });
+        }
+        const list = await storage.getAssignmentsByEmployee(
+          req.companyId,
+          req.employee.id,
+          rangeCheck.data.startDate,
+          rangeCheck.data.endDate,
+        );
+        return res.json(list.map(toPublicAssignment));
+      }
+
+      if (date) {
+        const dateCheck = assignmentDateSchema.safeParse(date);
+        if (!dateCheck.success) {
+          return res.status(400).json({ message: "Ungültiges Datumsformat. Erwartet: YYYY-MM-DD" });
+        }
+        const list = await storage.getAssignmentsByEmployee(req.companyId, req.employee.id, dateCheck.data);
+        return res.json(list.map(toPublicAssignment));
+      }
+
+      const list = await storage.getAssignmentsByEmployee(
+        req.companyId,
+        req.employee.id,
+        toDateStr(new Date()),
+      );
+      res.json(list.map(toPublicAssignment));
     }),
   );
 
@@ -211,14 +250,13 @@ export function registerAssignmentRoutes(
       if (!parsed.success) {
         return res.status(400).json({ message: "Validation error", errors: parsed.error.flatten().fieldErrors });
       }
-      const { companyId: _companyId, ...safeData } = parsed.data as any;
-      if (safeData.jobId) {
-        const job = await storage.getJobForCompany(req.companyId, safeData.jobId);
+      if (parsed.data.jobId) {
+        const job = await storage.getJobForCompany(req.companyId, parsed.data.jobId);
         if (!job) {
           return res.status(404).json({ message: "Job not found" });
         }
       }
-      const assignment = await storage.updateAssignment(req.companyId, req.params.id, safeData);
+      const assignment = await storage.updateAssignment(req.companyId, req.params.id, parsed.data);
       if (!assignment) return res.status(404).json({ message: "Not found" });
       invalidateCompanyReadCaches(req.companyId);
       res.json(assignment);

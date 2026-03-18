@@ -207,7 +207,7 @@ function buildLocalSessionUser(userId: string, kind: "employee_access" | "passwo
     claims: { sub: userId },
     access_token: `${kind}-local-session`,
     refresh_token: undefined,
-    expires_at: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 365,
+    expires_at: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7,
     auth_method: kind,
   };
 }
@@ -367,7 +367,7 @@ export async function setupAuth(app: Express) {
           claims: { sub: claims.sub },
           access_token: "local-access-token",
           refresh_token: "local-refresh-token",
-          expires_at: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 365,
+          expires_at: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7,
         };
         req.isAuthenticated = () => true;
         req.logout = (cb?: () => void) => cb?.();

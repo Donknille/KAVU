@@ -1,4 +1,5 @@
 import type { Express, Response } from "express";
+import { z } from "zod";
 import { storage } from "../storage.js";
 import { asyncHandler } from "../asyncHandler.js";
 import type { AuthenticatedRequest } from "../types.js";
@@ -37,8 +38,11 @@ export function registerJobRoutes(
     isAuthenticated,
     requireAdmin,
     asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-      const q = (req.query.q as string) || "";
-      const list = await storage.searchJobs(req.companyId, q);
+      const qParsed = z.string().max(200).safeParse(req.query.q ?? "");
+      if (!qParsed.success) {
+        return res.status(400).json({ message: "Suchbegriff ist zu lang." });
+      }
+      const list = await storage.searchJobs(req.companyId, qParsed.data);
       res.json(list);
     }),
   );

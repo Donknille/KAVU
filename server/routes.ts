@@ -52,7 +52,7 @@ const setupSchema = z.object({
   phone: z.string().max(50).optional(),
 });
 
-function toPublicCompany(company: any, options: { includeAccessCode?: boolean } = {}) {
+export function toPublicCompany(company: any, options: { includeAccessCode?: boolean } = {}) {
   if (!company) {
     return company;
   }

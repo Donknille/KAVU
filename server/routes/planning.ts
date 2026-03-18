@@ -19,6 +19,7 @@ import { toPublicEmployee } from "./employees.js";
 import { getCompanyAssignments, toPublicAssignment } from "./assignments.js";
 
 const assignmentDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+const MAX_PLANNING_RANGE_DAYS = 90;
 
 const batchAssignWorkersSchema = z.object({
   assignmentIds: z.array(z.string().uuid()).min(1),
@@ -71,6 +72,10 @@ export function registerPlanningRoutes(
           startDate: assignmentDateSchema,
           endDate: assignmentDateSchema,
         })
+        .refine(({ startDate, endDate }) => {
+          const ms = new Date(endDate).getTime() - new Date(startDate).getTime();
+          return ms >= 0 && ms <= MAX_PLANNING_RANGE_DAYS * 24 * 60 * 60 * 1000;
+        }, { message: `Planungsbereich darf maximal ${MAX_PLANNING_RANGE_DAYS} Tage umfassen.` })
         .safeParse({
           startDate: req.query.startDate,
           endDate: req.query.endDate,
@@ -78,7 +83,7 @@ export function registerPlanningRoutes(
 
       if (!parsed.success) {
         return res.status(400).json({
-          message: "Validation error",
+          message: parsed.error.issues[0]?.message ?? "Validation error",
           errors: parsed.error.flatten().fieldErrors,
         });
       }

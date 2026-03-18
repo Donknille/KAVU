@@ -30,6 +30,12 @@ const provisionEmployeeAccessSchema = z.object({
   sendCredentialsToAdmin: z.boolean().default(false),
 });
 
+function toPublicCompany(company: any) {
+  if (!company) return company;
+  const { accessCode, stripeCustomerId, stripeSubscriptionId, ...rest } = company;
+  return rest;
+}
+
 export function toPublicEmployee(employee: any, options: { includeAccess?: boolean } = {}) {
   if (!employee) {
     return employee;
@@ -161,7 +167,7 @@ export function registerEmployeeRoutes(
       invalidateCompanyReadCaches(req.companyId);
       res.json({
         employee: toPublicEmployee(provisioned.employee, { includeAccess: true }),
-        company: provisioned.company,
+        company: toPublicCompany(provisioned.company),
         access: provisioned.access,
         delivery,
       });
@@ -182,6 +188,17 @@ export function registerEmployeeRoutes(
         .safeParse(req.body);
       if (!parsed.success) {
         return res.status(400).json({ message: "Validation error", errors: parsed.error.flatten().fieldErrors });
+      }
+
+      // Prevent downgrading the last admin
+      if (parsed.data.role === "employee" && existing.role === "admin") {
+        const allEmployees = await storage.getEmployeesByCompany(req.companyId);
+        const activeAdmins = allEmployees.filter((e) => e.role === "admin" && e.isActive && e.id !== existing.id);
+        if (activeAdmins.length === 0) {
+          return res.status(400).json({
+            message: "Der letzte Admin kann nicht auf 'Mitarbeiter' herabgestuft werden.",
+          });
+        }
       }
 
       let employee;
@@ -247,7 +264,7 @@ export function registerEmployeeRoutes(
       invalidateCompanyReadCaches(req.companyId);
       return res.json({
         employee: toPublicEmployee(provisioned.employee, { includeAccess: true }),
-        company: provisioned.company,
+        company: toPublicCompany(provisioned.company),
         access: provisioned.access,
         delivery,
       });
