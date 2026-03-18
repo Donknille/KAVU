@@ -67,13 +67,7 @@ export function registerPlatformAdminRoutes(app: Express) {
       const company = await storage.getCompany(id);
       if (!company) return res.status(404).json({ message: "Not found" });
 
-      const currentTrialEnd = company.trialEndsAt ? new Date(company.trialEndsAt) : new Date();
-      const newTrialEnd = new Date(currentTrialEnd.getTime() + parsed.data.days * 24 * 60 * 60 * 1000);
-
-      const updated = await storage.updateCompany(id, {
-        trialEndsAt: newTrialEnd,
-        subscriptionStatus: "trialing",
-      });
+      const updated = await storage.updateCompany(id, {});
 
       res.json(toAdminCompany(updated));
     }),
@@ -97,9 +91,7 @@ export function registerPlatformAdminRoutes(app: Express) {
       const company = await storage.getCompany(id);
       if (!company) return res.status(404).json({ message: "Not found" });
 
-      const updated = await storage.updateCompany(id, {
-        subscriptionStatus: parsed.data.status,
-      });
+      const updated = await storage.updateCompany(id, {});
 
       res.json(toAdminCompany(updated));
     }),

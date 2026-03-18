@@ -36,7 +36,6 @@ import {
   setCachedMeResponse,
 } from "./readCaches.js";
 import { isCompanyFrozen, trialDaysLeft } from "./billing.js";
-import { STRIPE_ENABLED } from "./runtimeConfig.js";
 import { toDateStr } from "../shared/dates.js";
 
 import { toPublicEmployee, registerEmployeeRoutes } from "./routes/employees.js";
@@ -152,12 +151,8 @@ export async function registerRoutes(
       const company = await storage.getCompany(employee.companyId);
       const billing = company
         ? {
-            subscriptionStatus: company.subscriptionStatus ?? "trialing",
-            trialEndsAt: company.trialEndsAt ?? null,
-            currentPeriodEnd: company.currentPeriodEnd ?? null,
-            trialDaysLeft: trialDaysLeft(company),
             isFrozen: isCompanyFrozen(company),
-            stripeEnabled: STRIPE_ENABLED,
+            trialDaysLeft: trialDaysLeft(company),
           }
         : null;
       const responsePayload = {

@@ -68,7 +68,7 @@ function toPublicCompany(company: any) {
     return company;
   }
 
-  const { accessCode, stripeCustomerId, stripeSubscriptionId, ...rest } = company;
+  const { accessCode, ...rest } = company;
   return rest;
 }
 

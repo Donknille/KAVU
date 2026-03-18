@@ -32,7 +32,7 @@ const provisionEmployeeAccessSchema = z.object({
 
 function toPublicCompany(company: any) {
   if (!company) return company;
-  const { accessCode, stripeCustomerId, stripeSubscriptionId, ...rest } = company;
+  const { accessCode, ...rest } = company;
   return rest;
 }
 
