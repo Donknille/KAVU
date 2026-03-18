@@ -42,13 +42,13 @@ function getStatusSummary(status: string) {
     case "planned":
       return "Der Einsatz ist geplant. Starten Sie die Zeiterfassung bei Arbeitsbeginn.";
     case "en_route":
-      return "Bitte bestaetigen Sie den Arbeitsbeginn fuer diesen Einsatz.";
+      return "Bitte bestätigen Sie den Arbeitsbeginn für diesen Einsatz.";
     case "on_site":
-      return "Die Arbeitszeit fuer diesen Einsatz laeuft.";
+      return "Die Arbeitszeit für diesen Einsatz läuft.";
     case "break":
       return "Der Einsatz ist derzeit pausiert.";
     case "problem":
-      return "Der Einsatz ist unterbrochen. Bitte kurz mit dem Buero abstimmen.";
+      return "Der Einsatz ist unterbrochen. Bitte kurz mit dem Büro abstimmen.";
     case "completed":
       return "Dieser Einsatz ist abgeschlossen.";
     default:
@@ -163,7 +163,7 @@ export default function AssignmentDetail() {
           data-testid="button-back"
         >
           <ArrowLeft className="h-4 w-4" />
-          Zurueck
+          Zurück
         </Button>
         <ConnectionStatusBadge isOnline={isOnline} compact className="brand-outline-chip" />
       </div>
@@ -217,7 +217,7 @@ export default function AssignmentDetail() {
           <p className="brand-kicker">Team</p>
           <h2 className="mt-2 font-semibold brand-ink">Heute auf diesem Einsatz</h2>
           <p className="text-sm brand-ink-soft">
-            Sehen Sie direkt, mit wem dieser Auftrag umgesetzt wird und was danach als Naechstes ansteht.
+            Sehen Sie direkt, mit wem dieser Auftrag umgesetzt wird und was danach als Nächstes ansteht.
           </p>
         </div>
 
@@ -234,7 +234,7 @@ export default function AssignmentDetail() {
                 Danach
               </p>
               <p className="mt-1 truncate text-sm font-semibold brand-ink">
-                {nextAssignment.job?.title || "Naechster Einsatz"}
+                {nextAssignment.job?.title || "Nächster Einsatz"}
               </p>
               <p className="truncate text-xs brand-ink-soft">
                 {formatPlannedWindow(nextAssignment)} | {getAssignmentTeamNames(nextAssignment, 2)}
@@ -257,7 +257,7 @@ export default function AssignmentDetail() {
           <p className="brand-kicker">Vor Ort</p>
           <h2 className="mt-2 font-semibold brand-ink">Kontakt und Navigation</h2>
           <p className="text-sm brand-ink-soft">
-            Ansprechpartner und Wegbeschreibung fuer diesen Einsatz.
+            Ansprechpartner und Wegbeschreibung für diesen Einsatz.
           </p>
         </div>
         {address || job?.contactPhone ? (
@@ -333,7 +333,7 @@ export default function AssignmentDetail() {
             <div>
               <p className="font-medium">Offline</p>
               <p className="mt-1 text-sm">
-                Statusaenderungen und Problem-Meldungen werden gespeichert und automatisch
+                Statusänderungen und Problem-Meldungen werden gespeichert und automatisch
                 synchronisiert, sobald wieder eine Verbindung besteht.
               </p>
             </div>

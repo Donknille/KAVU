@@ -225,10 +225,10 @@ export default function EmployeesList() {
         <div className="space-y-1">
           <p className="flex items-center gap-2 text-sm font-medium">
             <Shield className="h-4 w-4 text-primary" />
-            Zugang fuer Mitarbeitende
+            Zugang für Mitarbeitende
           </p>
           <p className="text-sm text-muted-foreground">
-            Mitarbeitende ohne persoenliche E-Mail-Adresse melden sich mit Betriebscode, Benutzername und Passwort an.
+            Mitarbeitende ohne persönliche E-Mail-Adresse melden sich mit Betriebscode, Benutzername und Passwort an.
           </p>
         </div>
         <div className="rounded-xl border bg-background px-4 py-3 text-right">
@@ -506,7 +506,7 @@ export default function EmployeesList() {
                 <div className="space-y-1">
                   <Label htmlFor="createAccess">Zugang direkt anlegen</Label>
                   <p className="text-sm text-muted-foreground">
-                    Fuer Mitarbeitende ohne persoenliche E-Mail-Adresse. Benutzername und temporaeres Passwort werden automatisch bereitgestellt.
+                    Fuer Mitarbeitende ohne persönliche E-Mail-Adresse. Benutzername und temporaeres Passwort werden automatisch bereitgestellt.
                   </p>
                 </div>
               </div>
@@ -537,7 +537,7 @@ export default function EmployeesList() {
                     <div className="space-y-1">
                       <Label htmlFor="sendCredentialsToAdmin">Zugangsdaten an meine E-Mail senden</Label>
                       <p className="text-sm text-muted-foreground">
-                        Verfuegbar, sobald der E-Mail-Versand eingerichtet ist.
+                        Verfügbar, sobald der E-Mail-Versand eingerichtet ist.
                       </p>
                     </div>
                   </div>
@@ -560,7 +560,7 @@ export default function EmployeesList() {
       <Dialog open={Boolean(issuedAccess)} onOpenChange={(open) => !open && setIssuedAccess(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Zugangsdaten fuer Mitarbeiter</DialogTitle>
+            <DialogTitle>Zugangsdaten für Mitarbeiter</DialogTitle>
           </DialogHeader>
           {issuedAccess?.access && (
             <div className="space-y-4">
@@ -570,7 +570,7 @@ export default function EmployeesList() {
                     {issuedAccess.employee.firstName} {issuedAccess.employee.lastName}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Diese Zugangsdaten werden aus Sicherheitsgruenden nur einmal vollstaendig angezeigt. Bitte sicher weitergeben oder ausdrucken.
+                    Diese Zugangsdaten werden aus Sicherheitsgruenden nur einmal vollständig angezeigt. Bitte sicher weitergeben oder ausdrucken.
                   </p>
                 </div>
                 <div className="grid gap-3 md:grid-cols-3">

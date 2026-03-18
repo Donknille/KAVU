@@ -12,7 +12,7 @@ export const JOB_STATUS_LABELS: Record<string, string> = {
   in_progress: "In Arbeit",
   problem: "Problem",
   completed: "Erledigt",
-  reviewed: "Geprueft",
+  reviewed: "Geprüft",
   billable: "Abrechenbar",
 };
 
@@ -25,7 +25,7 @@ export const ISSUE_TYPE_LABELS: Record<string, string> = {
 
 export const JOB_CATEGORY_LABELS: Record<string, string> = {
   pv: "PV / Solar",
-  heat_pump: "Waermepumpe",
+  heat_pump: "Wärmepumpe",
   shk: "SHK",
   montage: "Montage",
   service: "Service",

@@ -35,7 +35,7 @@ if (!connectionString) {
 export const pool = connectionString
   ? new Pool({
       connectionString,
-      // Kleine, begrenzte Pools vermeiden Ueberlastung im Supabase Session Pooler.
+      // Kleine, begrenzte Pools vermeiden Überlastung im Supabase Session Pooler.
       max: databasePoolMax,
       idleTimeoutMillis: databaseIdleTimeoutMs,
       connectionTimeoutMillis: databaseConnectTimeoutMs,

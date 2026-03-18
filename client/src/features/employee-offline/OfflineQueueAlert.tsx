@@ -37,8 +37,8 @@ export function OfflineQueueAlert({ assignmentId }: OfflineQueueAlertProps) {
         <AlertDescription className="space-y-3">
           <p>
             {visibleConflictCount === 1
-              ? "Eine gespeicherte Aenderung passt nicht mehr zum aktuellen Datenstand."
-              : `${visibleConflictCount} gespeicherte Aenderungen passen nicht mehr zum aktuellen Datenstand.`}
+              ? "Eine gespeicherte Änderung passt nicht mehr zum aktuellen Datenstand."
+              : `${visibleConflictCount} gespeicherte Änderungen passen nicht mehr zum aktuellen Datenstand.`}
           </p>
           {assignmentId && conflictItems.length > 0 && (
             <ul className="space-y-1 text-sm">
@@ -69,18 +69,18 @@ export function OfflineQueueAlert({ assignmentId }: OfflineQueueAlertProps) {
   return (
     <Alert>
       {isOnline ? <CheckCircle2 className="h-4 w-4" /> : <WifiOff className="h-4 w-4" />}
-      <AlertTitle>{isOnline ? "Abgleich ausstehend" : "Aenderung gespeichert"}</AlertTitle>
+      <AlertTitle>{isOnline ? "Abgleich ausstehend" : "Änderung gespeichert"}</AlertTitle>
       <AlertDescription className="space-y-3">
         <p>
           {isOnline
             ? isSyncing
-              ? "Gespeicherte Aenderungen werden derzeit mit dem System abgeglichen."
+              ? "Gespeicherte Änderungen werden derzeit mit dem System abgeglichen."
               : visiblePendingCount === 1
-                ? "Eine gespeicherte Aenderung wartet auf den Abgleich."
-                : `${visiblePendingCount} gespeicherte Aenderungen warten auf den Abgleich.`
+                ? "Eine gespeicherte Änderung wartet auf den Abgleich."
+                : `${visiblePendingCount} gespeicherte Änderungen warten auf den Abgleich.`
             : visiblePendingCount === 1
-              ? "Eine Aenderung wurde gespeichert und wird uebermittelt, sobald wieder eine Verbindung besteht."
-              : `${visiblePendingCount} Aenderungen wurden gespeichert und werden uebermittelt, sobald wieder eine Verbindung besteht.`}
+              ? "Eine Änderung wurde gespeichert und wird übermittelt, sobald wieder eine Verbindung besteht."
+              : `${visiblePendingCount} Änderungen wurden gespeichert und werden übermittelt, sobald wieder eine Verbindung besteht.`}
         </p>
         {assignmentId && pendingItems.length > 0 && (
           <ul className="space-y-1 text-sm">

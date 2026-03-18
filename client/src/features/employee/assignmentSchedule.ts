@@ -88,11 +88,11 @@ export function getFocusLabel(params: {
   }
 
   if (params.todayAssignmentsCount > 0) {
-    return "Als Naechstes heute";
+    return "Als Nächstes heute";
   }
 
   if (params.upcomingAssignmentsCount > 0) {
-    return "Naechster geplanter Einsatz";
+    return "Nächster geplanter Einsatz";
   }
 
   return "Heute im Blick";

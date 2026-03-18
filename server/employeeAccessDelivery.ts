@@ -45,7 +45,7 @@ function buildTextBody(input: SendEmployeeAccessInput) {
     `Benutzername: ${input.access.loginId}`,
     `Temporaeres Passwort: ${input.access.temporaryPassword}`,
     "",
-    "Bitte gib diese Daten vertraulich weiter. Beim ersten Login muss das Passwort geaendert werden.",
+    "Bitte gib diese Daten vertraulich weiter. Beim ersten Login muss das Passwort geändert werden.",
   ].join("\n");
 }
 
@@ -61,7 +61,7 @@ function buildHtmlBody(input: SendEmployeeAccessInput) {
         <tr><td style="padding:6px 12px 6px 0;"><strong>Benutzername</strong></td><td>${escapeHtml(input.access.loginId)}</td></tr>
         <tr><td style="padding:6px 12px 6px 0;"><strong>Temporaeres Passwort</strong></td><td>${escapeHtml(input.access.temporaryPassword)}</td></tr>
       </table>
-      <p>Bitte gib diese Daten vertraulich weiter. Beim ersten Login muss das Passwort geaendert werden.</p>
+      <p>Bitte gib diese Daten vertraulich weiter. Beim ersten Login muss das Passwort geändert werden.</p>
     </div>
   `.trim();
 }
@@ -75,7 +75,7 @@ async function sendViaResend(input: SendEmployeeAccessInput): Promise<EmployeeAc
     return {
       status: "failed",
       delivered: false,
-      message: "E-Mail-Versand ist nicht vollstaendig konfiguriert. Zugangsdaten bitte manuell weitergeben.",
+      message: "E-Mail-Versand ist nicht vollständig konfiguriert. Zugangsdaten bitte manuell weitergeben.",
     };
   }
 
@@ -118,7 +118,7 @@ export async function sendEmployeeAccessEmail(
     return {
       status: "manual",
       delivered: false,
-      message: "Keine Admin-E-Mail verfuegbar. Zugangsdaten bitte direkt weitergeben.",
+      message: "Keine Admin-E-Mail verfügbar. Zugangsdaten bitte direkt weitergeben.",
     };
   }
 
@@ -152,7 +152,7 @@ export async function sendEmployeeAccessEmail(
     return {
       status: "logged",
       delivered: true,
-      message: "E-Mail-Versand laeuft im Log-Modus. Zugangsdaten wurden im Server-Log ausgegeben.",
+      message: "E-Mail-Versand läuft im Log-Modus. Zugangsdaten wurden im Server-Log ausgegeben.",
     };
   }
 

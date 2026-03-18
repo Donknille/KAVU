@@ -58,7 +58,7 @@ export function getAssignmentTeamNames(
   const workers = getAssignmentWorkers(assignment);
 
   if (workers.length === 0) {
-    return "Die Zentrale ergaenzt die Teamzuordnung noch.";
+    return "Die Zentrale ergänzt die Teamzuordnung noch.";
   }
 
   const visibleNames = workers.slice(0, maxVisibleNames).map(formatWorkerShortName);

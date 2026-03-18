@@ -42,14 +42,14 @@ interface AppShellProps {
 
 const adminItems = [
   { title: "Einsatzplan", url: "/", icon: Calendar },
-  { title: "Auftraege", url: "/jobs", icon: Briefcase },
+  { title: "Aufträge", url: "/jobs", icon: Briefcase },
   { title: "Mitarbeiter", url: "/employees", icon: Users },
   { title: "Archiv", url: "/archive", icon: Archive },
 ];
 
 const employeeItems = [
   { title: "Heute", url: "/", icon: Sun },
-  { title: "Einsaetze", url: "/assignments", icon: ClipboardList },
+  { title: "Einsätze", url: "/assignments", icon: ClipboardList },
 ];
 
 function isItemActive(
@@ -232,7 +232,7 @@ export function AppShell({ children, role, employee }: AppShellProps) {
 
           {role === "employee" && !isOnline && (
             <div className="border-b bg-amber-50 px-3 py-2 text-sm text-amber-900">
-              Keine Verbindung. Aenderungen werden gespeichert und automatisch uebermittelt,
+              Keine Verbindung. Änderungen werden gespeichert und automatisch übermittelt,
               sobald wieder eine Verbindung besteht.
             </div>
           )}
@@ -240,8 +240,8 @@ export function AppShell({ children, role, employee }: AppShellProps) {
           {role === "employee" && isOnline && conflictCount > 0 && (
             <div className="border-b bg-red-50 px-3 py-2 text-sm text-red-900">
               {conflictCount === 1
-                ? "Eine gespeicherte Aenderung muss geprueft werden."
-                : `${conflictCount} gespeicherte Aenderungen muessen geprueft werden.`}
+                ? "Eine gespeicherte Änderung muss geprüft werden."
+                : `${conflictCount} gespeicherte Änderungen müssen geprüft werden.`}
             </div>
           )}
 

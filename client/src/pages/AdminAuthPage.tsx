@@ -48,7 +48,7 @@ export default function AdminAuthPage({ mode }: AdminAuthPageProps) {
       apiRequest("POST", "/api/auth/register", payload),
     redirectTo: returnTo,
     errorTitle: "Registrierung fehlgeschlagen",
-    fallbackErrorMessage: "Bitte pruefe deine Eingaben.",
+    fallbackErrorMessage: "Bitte prüfe deine Eingaben.",
   });
 
   const loginMutation = useRedirectingAuthMutation({
@@ -56,7 +56,7 @@ export default function AdminAuthPage({ mode }: AdminAuthPageProps) {
       apiRequest("POST", "/api/auth/login/password", payload),
     redirectTo: returnTo,
     errorTitle: "Login fehlgeschlagen",
-    fallbackErrorMessage: "Bitte pruefe E-Mail und Passwort.",
+    fallbackErrorMessage: "Bitte prüfe E-Mail und Passwort.",
   });
 
   const title =
@@ -69,8 +69,8 @@ export default function AdminAuthPage({ mode }: AdminAuthPageProps) {
         : "Betrieb registrieren";
   const subtitle =
     mode === "login"
-      ? "Fuer Inhaber, Buero und Disposition. Anmeldung mit E-Mail-Adresse und Passwort."
-      : "Registrieren Sie Ihr Inhaberkonto und richten Sie anschliessend den Betrieb ein.";
+      ? "Fuer Inhaber, Büro und Disposition. Anmeldung mit E-Mail-Adresse und Passwort."
+      : "Registrieren Sie Ihr Inhaberkonto und richten Sie anschließend den Betrieb ein.";
 
   const inviteBanner = inviteToken ? (
     invitation ? (
@@ -84,10 +84,10 @@ export default function AdminAuthPage({ mode }: AdminAuthPageProps) {
     ) : invitationError ? (
       <Card className="rounded-3xl border-destructive/20 bg-destructive/5 p-4">
         <p className="text-sm font-semibold text-destructive">
-          Der Einladungslink ist ungueltig oder abgelaufen.
+          Der Einladungslink ist ungültig oder abgelaufen.
         </p>
         <p className="mt-1 text-sm text-muted-foreground">
-          Sie koennen sich weiterhin anmelden oder einen eigenen Betrieb registrieren.
+          Sie können sich weiterhin anmelden oder einen eigenen Betrieb registrieren.
         </p>
       </Card>
     ) : null
@@ -99,11 +99,11 @@ export default function AdminAuthPage({ mode }: AdminAuthPageProps) {
       subtitle={subtitle}
       banner={inviteBanner}
       asideEyebrow="Admin-Zugang"
-      asideTitle="Zugang fuer Administration und Disposition"
-      asideDescription="Zentraler Zugang fuer Inhaber, Buero und Disposition mit klarem Anmeldeprozess."
+      asideTitle="Zugang für Administration und Disposition"
+      asideDescription="Zentraler Zugang für Inhaber, Büro und Disposition mit klarem Anmeldeprozess."
       asideItems={[
         "Anmeldung mit E-Mail-Adresse und Passwort",
-        "Sofortiger Zugriff auf Planung, Auftraege und Mitarbeitende",
+        "Sofortiger Zugriff auf Planung, Aufträge und Mitarbeitende",
         "Einladungen werden im Anmeldeprozess automatisch uebernommen",
       ]}
       footer={
@@ -291,7 +291,7 @@ export default function AdminAuthPage({ mode }: AdminAuthPageProps) {
             data-testid="button-login-password"
           >
             {loginMutation.isPending
-              ? "Anmeldung laeuft..."
+              ? "Anmeldung läuft..."
               : inviteToken
                 ? "Anmelden und Einladung fortsetzen"
                 : "Admin anmelden"}

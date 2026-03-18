@@ -616,7 +616,7 @@ export function ResizePreviewGhost({
         <div className="flex h-full items-start justify-between gap-2 px-2 py-1">
           <div className="min-w-0">
             <p className={cn("truncate font-semibold brand-ink", compact ? "text-[10px]" : "text-xs")}>
-              {preview.valid ? "Neuer Zeitraum" : "Nicht moeglich"}
+              {preview.valid ? "Neuer Zeitraum" : "Nicht möglich"}
             </p>
             {!compact && <p className="truncate text-[10px] brand-ink-soft">{preview.label}</p>}
           </div>
@@ -866,7 +866,7 @@ export function SelectedBlockPanel({
   if (!selectedBlock) {
     return (
       <Card className="brand-panel rounded-3xl p-5">
-        Bitte waehlen Sie einen Auftrag aus, um Details und Teamzuordnungen zu bearbeiten.
+        Bitte wählen Sie einen Auftrag aus, um Details und Teamzuordnungen zu bearbeiten.
       </Card>
     );
   }
@@ -921,7 +921,7 @@ export function SelectedBlockPanel({
               <div>
                 <p className="text-sm font-semibold brand-ink">Mitarbeitende zuordnen</p>
                 <p className="text-xs brand-ink-soft">
-                  Tagesgenaue Zuordnungen koennen hier gezielt vorgenommen werden.
+                  Tagesgenaue Zuordnungen können hier gezielt vorgenommen werden.
                 </p>
               </div>
               <Badge variant="outline" className="gap-1">
@@ -947,13 +947,13 @@ export function SelectedBlockPanel({
                     variant={assignMode === "specific-days" ? "secondary" : "ghost"}
                     onClick={() => setAssignMode("specific-days")}
                   >
-                    Ausgewaehlte Tage
+                    Ausgewählte Tage
                   </Button>
                 </div>
 
                 <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId}>
                   <SelectTrigger className="h-9">
-                    <SelectValue placeholder="Mitarbeiter waehlen" />
+                    <SelectValue placeholder="Mitarbeiter wählen" />
                   </SelectTrigger>
                   <SelectContent>
                     {assignableEmployees.map((employee) => {
@@ -1035,14 +1035,14 @@ export function SelectedBlockPanel({
                       disabled={!selectedEmployeeId || selectedAssignDays.length === 0 || !onAssignEmployee}
                     >
                       <Plus className="h-4 w-4" />
-                      Fuer ausgewaehlte Tage zuweisen
+                      Fuer ausgewählte Tage zuweisen
                     </Button>
                   </div>
                 )}
               </div>
             ) : (
               <div className="brand-outline-chip rounded-2xl border-dashed p-3 text-sm brand-ink-soft">
-                Alle aktiven Mitarbeitenden sind fuer diesen Auftrag bereits eingeteilt.
+                Alle aktiven Mitarbeitenden sind für diesen Auftrag bereits eingeteilt.
               </div>
             )}
           </div>
@@ -1053,14 +1053,14 @@ export function SelectedBlockPanel({
             <div>
               <p className="text-sm font-semibold brand-ink">Auftrag verschieben</p>
               <p className="text-xs brand-ink-soft">
-                Das Startdatum kann innerhalb des verfuegbaren Zeitraums angepasst werden.
+                Das Startdatum kann innerhalb des verfügbaren Zeitraums angepasst werden.
               </p>
             </div>
 
             <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_auto]">
               <Select value={selectedMoveDate} onValueChange={setSelectedMoveDate}>
                 <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Neues Startdatum waehlen" />
+                  <SelectValue placeholder="Neues Startdatum wählen" />
                 </SelectTrigger>
                 <SelectContent>
                   {availableStartDates.map((date) => (
@@ -1095,7 +1095,7 @@ export function SelectedBlockPanel({
             {selectedBlock.canAssignWorkers && (
               <Badge variant="outline" className="gap-1">
                 <UserRoundPlus className="h-3 w-3" />
-                Zuweisung moeglich
+                Zuweisung möglich
               </Badge>
             )}
           </div>
@@ -1158,12 +1158,12 @@ export function SelectedBlockPanel({
             <div>
               <p className="text-sm font-semibold brand-ink">Teilweise aus Tagen entfernen</p>
               <p className="text-xs brand-ink-soft">
-                Entfernt Mitarbeitende nur aus noch nicht gestarteten, ausgewaehlten Tagen.
+                Entfernt Mitarbeitende nur aus noch nicht gestarteten, ausgewählten Tagen.
               </p>
             </div>
             <Select value={selectedRemoveEmployeeId} onValueChange={setSelectedRemoveEmployeeId}>
               <SelectTrigger className="h-9">
-                <SelectValue placeholder="Mitarbeiter waehlen" />
+                <SelectValue placeholder="Mitarbeiter wählen" />
               </SelectTrigger>
               <SelectContent>
                 {removableCoverages.map((coverage) => (
@@ -1200,15 +1200,15 @@ export function SelectedBlockPanel({
               }
             >
               <Trash2 className="h-4 w-4" />
-              Aus ausgewaehlten Tagen entfernen
+              Aus ausgewählten Tagen entfernen
             </Button>
           </div>
         )}
 
         <div className="brand-soft-card rounded-2xl p-3 text-xs brand-ink-soft">
           {selectedBlock.hasProtectedHistory
-            ? "Bei laufenden Auftraegen bleiben vergangene oder bereits begonnene Tage unveraendert. Weitere Mitarbeitende koennen ab heute fuer offene Tage ergaenzt oder entfernt werden."
-            : "Mehrere Einsaetze pro Tag sind moeglich. Reihenfolge und Uhrzeiten sollten in der Disposition beachtet werden."}
+            ? "Bei laufenden Aufträgen bleiben vergangene oder bereits begonnene Tage unverändert. Weitere Mitarbeitende können ab heute für offene Tage ergänzt oder entfernt werden."
+            : "Mehrere Einsätze pro Tag sind möglich. Reihenfolge und Uhrzeiten sollten in der Disposition beachtet werden."}
         </div>
 
         {selectedBlock.canDelete && (
@@ -1243,7 +1243,7 @@ export function CreatePlanningJobDialog({
         <DialogHeader>
           <DialogTitle className="brand-ink">Auftrag im Backlog anlegen</DialogTitle>
           <DialogDescription className="brand-ink-soft">
-            Erfassen Sie die wesentlichen Auftragsdaten fuer die Disposition. Der Auftrag steht anschliessend direkt im Backlog bereit.
+            Erfassen Sie die wesentlichen Auftragsdaten für die Disposition. Der Auftrag steht anschließend direkt im Backlog bereit.
           </DialogDescription>
         </DialogHeader>
 
@@ -1272,7 +1272,7 @@ export function CreatePlanningJobDialog({
             <Label htmlFor="category">Kategorie</Label>
             <Select value={jobForm.category} onValueChange={(value) => onJobFormChange("category", value)}>
               <SelectTrigger>
-                <SelectValue placeholder="Kategorie waehlen" />
+                <SelectValue placeholder="Kategorie wählen" />
               </SelectTrigger>
               <SelectContent>
                 {Object.entries(JOB_CATEGORY_LABELS).map(([value, label]) => (

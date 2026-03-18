@@ -75,7 +75,7 @@ export default function SetupPage() {
         description:
           error instanceof Error
             ? error.message.replace(/^\d+:\s*/, "")
-            : "Bitte pruefe die E-Mail-Adresse deines Kontos oder bitte um einen neuen Link.",
+            : "Bitte prüfe die E-Mail-Adresse deines Kontos oder bitte um einen neuen Link.",
         variant: "destructive",
       });
     } finally {
@@ -113,7 +113,7 @@ export default function SetupPage() {
                     <Mail className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="font-semibold">Einladung fuer {invitation.companyName}</p>
+                    <p className="font-semibold">Einladung für {invitation.companyName}</p>
                     <p className="text-sm text-muted-foreground">
                       {invitation.firstName} {invitation.lastName} soll als {invitationRoleLabel} beitreten.
                     </p>
@@ -158,7 +158,7 @@ export default function SetupPage() {
             {inviteToken && invitationError && !ignoreInvite && (
               <Card className="space-y-3 border-destructive/20 bg-destructive/5 p-4">
                 <p className="font-semibold text-destructive">
-                  Die Einladung ist ungueltig oder abgelaufen.
+                  Die Einladung ist ungültig oder abgelaufen.
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Du kannst stattdessen einen eigenen Betrieb einrichten.

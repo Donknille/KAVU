@@ -102,7 +102,7 @@ export function AssignmentCard({
 
       {assignment.offlineSync?.conflictItems?.length > 0 && (
         <div className="mt-2 text-xs font-medium text-red-700">
-          Sync-Konflikt pruefen
+          Sync-Konflikt prüfen
         </div>
       )}
     </Card>

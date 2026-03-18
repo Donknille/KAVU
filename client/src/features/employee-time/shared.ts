@@ -218,10 +218,10 @@ export function getTrackerHelperText(
     case "planned":
       return "Die Zeiterfassung startet mit Arbeitsbeginn.";
     case "en_route":
-      return "Bitte den Arbeitsbeginn einmal bestaetigen.";
+      return "Bitte den Arbeitsbeginn einmal bestätigen.";
     case "on_site":
       return timeEntry?.startedAt
-        ? `Arbeitszeit laeuft seit ${formatTime(timeEntry.startedAt)}`
+        ? `Arbeitszeit läuft seit ${formatTime(timeEntry.startedAt)}`
         : "Einsatz ist aktiv.";
     case "break": {
       const currentBreakDuration = getCurrentBreakDurationMs(breaks, now);
@@ -230,7 +230,7 @@ export function getTrackerHelperText(
         : "Pause ist aktiv.";
     }
     case "problem":
-      return "Bitte kurz mit dem Buero abstimmen und danach fortsetzen oder abschliessen.";
+      return "Bitte kurz mit dem Büro abstimmen und danach fortsetzen oder abschließen.";
     case "completed":
       return timeEntry?.endedAt
         ? `Abgeschlossen um ${formatTime(timeEntry.endedAt)}`

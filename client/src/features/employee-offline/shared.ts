@@ -97,7 +97,7 @@ export function getNextStatusForAction(
 ) {
   const transition = getTransition(action);
   if (!transition.allowedFrom.includes(currentStatus)) {
-    throw new Error("Der Einsatzstatus hat sich geaendert. Bitte pruefe die Ansicht erneut.");
+    throw new Error("Der Einsatzstatus hat sich geändert. Bitte prüfe die Ansicht erneut.");
   }
 
   return transition.nextStatus;
@@ -168,7 +168,7 @@ export function getSyncErrorMessage(error: unknown) {
     return "Der Serverstatus passt nicht mehr zur vorgemerkten Aktion.";
   }
   if (status === 403 || status === 404) {
-    return "Der Einsatz ist nicht mehr im erwarteten Zustand verfuegbar.";
+    return "Der Einsatz ist nicht mehr im erwarteten Zustand verfügbar.";
   }
 
   return "Die Aktion konnte aktuell nicht synchronisiert werden.";

@@ -208,7 +208,7 @@ export function EmployeeOfflineQueueProvider({
   const queueAction = useCallback(
     async ({ assignmentId, assignmentTitle, currentStatus, action, body }: QueueActionInput) => {
       if (!enabled || !employeeId) {
-        throw new Error("Offline-Sync ist fuer diesen Benutzer nicht verfuegbar.");
+        throw new Error("Offline-Sync ist für diesen Benutzer nicht verfügbar.");
       }
 
       const queuedItem: QueuedAssignmentAction = {
@@ -227,10 +227,10 @@ export function EmployeeOfflineQueueProvider({
       persistQueue(nextQueue);
 
       toast({
-        title: isOnline ? "Aenderung gespeichert" : "Aenderung offline gespeichert",
+        title: isOnline ? "Änderung gespeichert" : "Änderung offline gespeichert",
         description: isOnline
           ? `${getQueueItemLabel(queuedItem)}. Der Abgleich wird jetzt gestartet.`
-          : `${getQueueItemLabel(queuedItem)}. Die Aenderung wird automatisch uebermittelt, sobald wieder eine Verbindung besteht.`,
+          : `${getQueueItemLabel(queuedItem)}. Die Änderung wird automatisch übermittelt, sobald wieder eine Verbindung besteht.`,
       });
 
       if (isOnline) {

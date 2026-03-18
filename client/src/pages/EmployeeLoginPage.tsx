@@ -22,20 +22,20 @@ export default function EmployeeLoginPage() {
       apiRequest("POST", "/api/auth/employee-login", payload),
     redirectTo: "/",
     errorTitle: "Mitarbeiter-Login fehlgeschlagen",
-    fallbackErrorMessage: "Bitte pruefe Betriebscode, Benutzername und Passwort.",
+    fallbackErrorMessage: "Bitte prüfe Betriebscode, Benutzername und Passwort.",
   });
 
   return (
     <AuthShell
       title="Mitarbeiter anmelden"
-      subtitle="Fuer Teams ohne persoenliche E-Mail-Adresse. Anmeldung mit Betriebscode, Benutzername und Passwort."
+      subtitle="Fuer Teams ohne persönliche E-Mail-Adresse. Anmeldung mit Betriebscode, Benutzername und Passwort."
       asideEyebrow="Mitarbeiterzugang"
-      asideTitle="Zugang fuer operative Mitarbeitende"
-      asideDescription="Der Anmeldeprozess ist fuer den taeglichen Einsatz auf mobilen Geraeten ausgelegt."
+      asideTitle="Zugang für operative Mitarbeitende"
+      asideDescription="Der Anmeldeprozess ist für den täglichen Einsatz auf mobilen Geräten ausgelegt."
       asideItems={[
-        "Geeignet fuer Teams ohne persoenliche E-Mail-Adresse",
-        "Passwortaenderung beim ersten Login",
-        "Optimiert fuer den mobilen Einsatz",
+        "Geeignet für Teams ohne persönliche E-Mail-Adresse",
+        "Passwortänderung beim ersten Login",
+        "Optimiert für den mobilen Einsatz",
       ]}
       footer={
         <div className="grid gap-2 sm:grid-cols-2">
@@ -121,7 +121,7 @@ export default function EmployeeLoginPage() {
           }
           data-testid="button-employee-login"
         >
-          {employeeLoginMutation.isPending ? "Anmeldung laeuft..." : "Als Mitarbeiter anmelden"}
+          {employeeLoginMutation.isPending ? "Anmeldung läuft..." : "Als Mitarbeiter anmelden"}
         </Button>
       </form>
     </AuthShell>

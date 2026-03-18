@@ -96,7 +96,7 @@ async function sendViaResend(input: SendCompanyInvitationInput): Promise<Invitat
     return {
       status: "failed",
       delivered: false,
-      message: "Resend ist nicht vollstaendig konfiguriert. Link bitte manuell teilen.",
+      message: "Resend ist nicht vollständig konfiguriert. Link bitte manuell teilen.",
     };
   }
 
@@ -162,7 +162,7 @@ export async function sendCompanyInvitationEmail(
     return {
       status: "logged",
       delivered: true,
-      message: "E-Mail-Versand laeuft im Log-Modus. Link wurde im Server-Log ausgegeben.",
+      message: "E-Mail-Versand läuft im Log-Modus. Link wurde im Server-Log ausgegeben.",
     };
   }
 

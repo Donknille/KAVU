@@ -29,7 +29,7 @@ export default function LandingPage() {
 
   const title = invitation
     ? `Einladung von ${invitation.companyName}`
-    : "Einsatzplanung und mobile Zeiterfassung fuer Handwerksbetriebe";
+    : "Einsatzplanung und mobile Zeiterfassung für Handwerksbetriebe";
   const subtitle = invitation
     ? `${invitation.firstName} ${invitation.lastName} soll als ${getInvitationRoleLabel(invitation.role)} beitreten.`
     : "Meisterplaner verbindet Disposition, Tagesplanung und mobilen Mitarbeitereinsatz in einer klaren Arbeitsoberflaeche.";
@@ -87,7 +87,7 @@ export default function LandingPage() {
             {inviteToken && invitationError && (
               <Card className="mx-auto mb-6 max-w-3xl rounded-[28px] border-destructive/20 bg-destructive/5 p-5 text-left">
                 <p className="text-sm font-semibold text-destructive">
-                  Der Einladungslink ist ungueltig oder abgelaufen.
+                  Der Einladungslink ist ungültig oder abgelaufen.
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Du kannst dich trotzdem anmelden oder einen eigenen Betrieb registrieren.
@@ -97,7 +97,7 @@ export default function LandingPage() {
 
             <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
               <section className="brand-panel rounded-[36px] p-6 md:p-8">
-                <p className="brand-kicker">Fuer Inhaber, Buero und Baustelle</p>
+                <p className="brand-kicker">Fuer Inhaber, Büro und Baustelle</p>
                 <h1
                   className="mt-4 max-w-3xl text-4xl font-semibold tracking-tight text-[#173d66] md:text-6xl"
                   data-testid="text-hero-title"
@@ -113,10 +113,10 @@ export default function LandingPage() {
                     Planung und Tagessteuerung in einer Ansicht
                   </span>
                   <span className="brand-highlight rounded-full px-4 py-2 text-sm font-medium">
-                    Mobile Zeiterfassung fuer Mitarbeitende
+                    Mobile Zeiterfassung für Mitarbeitende
                   </span>
                   <span className="brand-highlight rounded-full px-4 py-2 text-sm font-medium">
-                    Sichere Zugangsmodelle fuer Admin und Team
+                    Sichere Zugangsmodelle für Admin und Team
                   </span>
                 </div>
 
@@ -124,13 +124,13 @@ export default function LandingPage() {
                   <div className="brand-soft-card rounded-[24px] p-4">
                     <p className="brand-kicker">Disposition</p>
                     <p className="mt-2 text-sm leading-6 text-[#173d66]/72">
-                      Auftraege, Teams und freie Kapazitaeten im laufenden Tagesgeschaeft.
+                      Aufträge, Teams und freie Kapazitaeten im laufenden Tagesgeschaeft.
                     </p>
                   </div>
                   <div className="brand-soft-card rounded-[24px] p-4">
                     <p className="brand-kicker">Mitarbeiterzugang</p>
                     <p className="mt-2 text-sm leading-6 text-[#173d66]/72">
-                      Auch ohne persoenliche E-Mail direkt einsetzbar.
+                      Auch ohne persönliche E-Mail direkt einsetzbar.
                     </p>
                   </div>
                   <div className="brand-soft-card rounded-[24px] p-4">
@@ -149,7 +149,7 @@ export default function LandingPage() {
                   </div>
                   <h2 className="mt-4 text-2xl font-semibold text-[#173d66]">Betrieb verwalten</h2>
                   <p className="mt-2 text-sm leading-6 text-[#173d66]/72">
-                    Fuer Inhaber, Buero und Disposition. Anmeldung und Registrierung erfolgen in einem eigenen, klaren Bereich.
+                    Fuer Inhaber, Büro und Disposition. Anmeldung und Registrierung erfolgen in einem eigenen, klaren Bereich.
                   </p>
                   <div className="mt-6 grid gap-2 sm:grid-cols-2">
                     <Button asChild className="h-12 bg-[#173d66] text-base text-white hover:bg-[#123251]" data-testid="button-admin-login-primary">
@@ -179,7 +179,7 @@ export default function LandingPage() {
                   </div>
                   <h2 className="mt-4 text-2xl font-semibold text-[#173d66]">Mitarbeiter anmelden</h2>
                   <p className="mt-2 text-sm leading-6 text-[#173d66]/72">
-                    Fuer operative Teams ohne persoenliche E-Mail-Adresse. Anmeldung mit Betriebscode, Benutzername und Passwort.
+                    Fuer operative Teams ohne persönliche E-Mail-Adresse. Anmeldung mit Betriebscode, Benutzername und Passwort.
                   </p>
                   <div className="mt-6">
                     <Button
@@ -195,7 +195,7 @@ export default function LandingPage() {
                     </Button>
                   </div>
                   <p className="mt-4 text-xs text-[#173d66]/58">
-                    Zugangsdaten koennen intern sicher weitergegeben oder ausgedruckt werden.
+                    Zugangsdaten können intern sicher weitergegeben oder ausgedruckt werden.
                   </p>
                 </Card>
               </div>
@@ -221,7 +221,7 @@ export default function LandingPage() {
                 </div>
                 <h3 className="text-lg font-semibold text-[#173d66]">Wer ist heute wo?</h3>
                 <p className="mt-2 text-sm leading-6 text-[#173d66]/72">
-                  Auftraege, Teams und Einsatztage in einer klaren Dispositionsansicht.
+                  Aufträge, Teams und Einsatztage in einer klaren Dispositionsansicht.
                 </p>
               </Card>
 

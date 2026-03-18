@@ -69,7 +69,7 @@ export default function ChangePasswordPage({
     } catch (error) {
       toast({
         title: "Passwort konnte nicht aktualisiert werden",
-        description: getRequestErrorMessage(error, "Bitte pruefe dein aktuelles Passwort."),
+        description: getRequestErrorMessage(error, "Bitte prüfe dein aktuelles Passwort."),
         variant: "destructive",
       });
     } finally {
@@ -98,7 +98,7 @@ export default function ChangePasswordPage({
               {required
                 ? employee
                   ? `${employee.firstName} ${employee.lastName} arbeitet jetzt in ${company?.name ?? "deinem Betrieb"}.`
-                  : "Dein temporaerer Zugang braucht jetzt ein persoenliches Passwort."
+                  : "Dein temporaerer Zugang braucht jetzt ein persönliches Passwort."
                 : employee
                   ? `${employee.firstName} ${employee.lastName} kann das eigene Passwort hier jederzeit aktualisieren.`
                   : "Hier kannst du dein Mitarbeiter-Passwort jederzeit aktualisieren."}

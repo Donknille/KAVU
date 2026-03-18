@@ -167,7 +167,7 @@ export function buildTeamSections(entries: TeamOverviewEntry[], focusLabel: stri
     {
       id: "free-focus",
       title: `${focusLabel} frei`,
-      description: "An diesem Tag verfuegbar, aber an anderen Tagen bereits eingeplant.",
+      description: "An diesem Tag verfügbar, aber an anderen Tagen bereits eingeplant.",
       items: entries.filter((entry) => entry.section === "free-focus"),
     },
     {

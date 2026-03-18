@@ -228,11 +228,11 @@ export function registerAuthRoutes(app: Express): void {
       const user = await authStorage.getUserByEmail(parsed.data.email);
       if (!user?.passwordHash || !user.email) {
         verifyPassword(parsed.data.password, DUMMY_HASH); // constant-time: prevent username enumeration
-        return res.status(401).json({ message: "E-Mail oder Passwort ist ungueltig." });
+        return res.status(401).json({ message: "E-Mail oder Passwort ist ungültig." });
       }
 
       if (!verifyPassword(parsed.data.password, user.passwordHash)) {
-        return res.status(401).json({ message: "E-Mail oder Passwort ist ungueltig." });
+        return res.status(401).json({ message: "E-Mail oder Passwort ist ungültig." });
       }
 
       await establishLocalSession(req, {
@@ -277,7 +277,7 @@ export function registerAuthRoutes(app: Express): void {
           message === "Invalid password" ||
           message === "Employee access is inactive"
         ) {
-          return res.status(401).json({ message: "Betriebscode, Benutzername oder Passwort ist ungueltig." });
+          return res.status(401).json({ message: "Betriebscode, Benutzername oder Passwort ist ungültig." });
         }
       }
 
@@ -289,7 +289,7 @@ export function registerAuthRoutes(app: Express): void {
   app.post("/api/auth/change-password", isAuthenticated, async (req: any, res) => {
     try {
       if (req.user?.auth_method !== "employee_access") {
-        return res.status(400).json({ message: "Nur lokale Mitarbeiterkonten koennen hier ein Passwort setzen." });
+        return res.status(400).json({ message: "Nur lokale Mitarbeiterkonten können hier ein Passwort setzen." });
       }
 
       const userId = req.user?.claims?.sub;
@@ -314,7 +314,7 @@ export function registerAuthRoutes(app: Express): void {
       return res.json({ employee: toPublicEmployee(employee) });
     } catch (error) {
       if (error instanceof Error && error.message === "Current password is invalid") {
-        return res.status(400).json({ message: "Das aktuelle Passwort ist ungueltig." });
+        return res.status(400).json({ message: "Das aktuelle Passwort ist ungültig." });
       }
 
       console.error("Error changing employee password:", error);

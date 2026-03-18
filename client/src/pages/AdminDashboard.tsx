@@ -20,7 +20,7 @@ const statCards = [
     key: "todayAssignmentCount",
     testId: "text-today-count",
     label: "Heute",
-    helper: "Einsaetze",
+    helper: "Einsätze",
     icon: ClipboardList,
     iconTone: "bg-[#173d66]/8 text-[#173d66]",
   },
@@ -36,7 +36,7 @@ const statCards = [
     key: "problemCount",
     testId: "text-problem-count",
     label: "Abstimmung",
-    helper: "auffaellig",
+    helper: "auffällig",
     icon: AlertTriangle,
     iconTone: "bg-amber-100 text-amber-700",
     valueTone: "text-amber-700",
@@ -84,14 +84,14 @@ export default function AdminDashboard() {
             <BrandMark showWordmark subtitle="Zentrale" size={46} labelClassName="text-[1.85rem]" />
             <p className="brand-kicker mt-5">Tagessteuerung</p>
             <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[#173d66]" data-testid="text-dashboard-title">
-              Dashboard fuer Disposition und Betriebsueberblick
+              Dashboard für Disposition und Betriebsüberblick
             </h1>
             <p className="mt-3 text-sm leading-6 text-[#173d66]/72 md:text-base">
-              Heutige Einsaetze, offene Abstimmungen und nicht disponierte Auftraege liegen in einer gemeinsamen Arbeitsoberflaeche.
+              Heutige Einsätze, offene Abstimmungen und nicht disponierte Aufträge liegen in einer gemeinsamen Arbeitsoberflaeche.
             </p>
             <div className="mt-5 flex flex-wrap gap-2">
               <span className="brand-highlight rounded-full px-4 py-2 text-sm font-medium">
-                {stats?.todayAssignmentCount || 0} Einsaetze fuer heute
+                {stats?.todayAssignmentCount || 0} Einsätze für heute
               </span>
               <span className="brand-highlight rounded-full px-4 py-2 text-sm font-medium">
                 {unassignedJobs.length} noch nicht disponiert
@@ -118,7 +118,7 @@ export default function AdminDashboard() {
               data-testid="button-open-plan"
             >
               <Calendar className="mr-2 h-4 w-4" />
-              Planung oeffnen
+              Planung öffnen
             </Button>
           </div>
         </div>
@@ -156,10 +156,10 @@ export default function AdminDashboard() {
             <div>
               <p className="brand-kicker text-amber-700">Abstimmung erforderlich</p>
               <h2 className="mt-2 text-xl font-semibold text-[#173d66]">
-                Auffaellige Einsaetze fuer heute
+                Auffällige Einsätze für heute
               </h2>
               <p className="mt-1 text-sm text-[#173d66]/72">
-                Diese Einsaetze sollten in der Disposition zuerst geprueft werden.
+                Diese Einsätze sollten in der Disposition zuerst geprüft werden.
               </p>
             </div>
           </div>
@@ -180,9 +180,9 @@ export default function AdminDashboard() {
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="brand-kicker">Heute im Betrieb</p>
-              <h2 className="mt-2 text-xl font-semibold text-[#173d66]">Heutige Einsaetze</h2>
+              <h2 className="mt-2 text-xl font-semibold text-[#173d66]">Heutige Einsätze</h2>
               <p className="mt-1 text-sm text-[#173d66]/72">
-                Alle disponierten Einsaetze fuer den aktuellen Tag.
+                Alle disponierten Einsätze für den aktuellen Tag.
               </p>
             </div>
           </div>
@@ -190,7 +190,7 @@ export default function AdminDashboard() {
           {todayAssignments.length === 0 ? (
             <Card className="brand-soft-card mt-5 rounded-[26px] p-8 text-center">
               <ClipboardList className="mx-auto mb-3 h-10 w-10 text-[#173d66]/42" />
-              <p className="font-medium text-[#173d66]/76">Keine Einsaetze fuer heute geplant</p>
+              <p className="font-medium text-[#173d66]/76">Keine Einsätze für heute geplant</p>
               <Button
                 variant="outline"
                 className="mt-4 rounded-2xl border-[#173d66]/12 bg-white/80 text-[#173d66]"
@@ -228,7 +228,7 @@ export default function AdminDashboard() {
             <Card className="brand-soft-card mt-5 rounded-[26px] p-6 text-center">
               <p className="font-medium text-[#173d66]/76">Aktuell ist kein Auftrag offen.</p>
               <p className="mt-1 text-sm text-[#173d66]/64">
-                Neue oder verschobene Auftraege erscheinen hier automatisch.
+                Neue oder verschobene Aufträge erscheinen hier automatisch.
               </p>
             </Card>
           ) : (

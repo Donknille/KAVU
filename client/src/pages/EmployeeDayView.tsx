@@ -90,7 +90,7 @@ export default function EmployeeDayView() {
                 Heute im Blick
               </h1>
               <p className="mt-1 max-w-md text-sm brand-ink-soft">
-                Sehen Sie sofort, was jetzt ansteht, was danach folgt und mit wem der naechste Einsatz umgesetzt wird.
+                Sehen Sie sofort, was jetzt ansteht, was danach folgt und mit wem der nächste Einsatz umgesetzt wird.
               </p>
             </div>
             <ConnectionStatusBadge isOnline={isOnline} compact className="brand-outline-chip" />
@@ -106,7 +106,7 @@ export default function EmployeeDayView() {
               <p className="mt-1 text-2xl font-semibold brand-ink">{todayAssignments.length}</p>
             </div>
             <div className="brand-soft-card rounded-2xl p-3">
-              <p className="brand-kicker">Spaeter</p>
+              <p className="brand-kicker">Später</p>
               <p className="mt-1 text-2xl font-semibold brand-ink">{upcomingAssignments.length}</p>
             </div>
           </div>
@@ -158,7 +158,7 @@ export default function EmployeeDayView() {
                     <div className="mt-2 flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="truncate text-sm font-semibold text-white">
-                          {nextAssignment.job?.title || "Naechster Auftrag"}
+                          {nextAssignment.job?.title || "Nächster Auftrag"}
                         </p>
                         <p className="truncate text-xs text-slate-300">
                           {formatPlannedWindow(nextAssignment)} | {getAssignmentTeamNames(nextAssignment, 2)}
@@ -190,7 +190,7 @@ export default function EmployeeDayView() {
               </div>
             ) : (
               <div className="space-y-2">
-                <p className="text-sm font-medium">Fuer heute sind derzeit keine Einsaetze eingeplant.</p>
+                <p className="text-sm font-medium">Fuer heute sind derzeit keine Einsätze eingeplant.</p>
                 <p className="text-sm text-slate-300">
                   Neue Termine werden nach der Disposition hier angezeigt.
                 </p>
@@ -221,7 +221,7 @@ export default function EmployeeDayView() {
                   <p className="brand-kicker text-[#173d66]">Aktiver Einsatz</p>
                   {assignment.assignmentDate !== today && (
                     <p className="text-[11px] text-[#173d66]/64">
-                      Geplant fuer {formatDate(assignment.assignmentDate)}
+                      Geplant für {formatDate(assignment.assignmentDate)}
                     </p>
                   )}
                 </div>
@@ -236,19 +236,19 @@ export default function EmployeeDayView() {
         <div className="flex items-center gap-2">
           <ClipboardList className="h-4 w-4 text-[#173d66]" />
           <h2 className="font-semibold text-[#173d66]">
-            {activeAssignments.length > 0 ? "Danach heute" : "Als Naechstes heute"}
+            {activeAssignments.length > 0 ? "Danach heute" : "Als Nächstes heute"}
           </h2>
         </div>
 
         {todayAssignments.length === 0 ? (
           <Card className="brand-soft-card rounded-[26px] p-6 text-center">
             <p className="font-medium text-[#173d66]/76">
-              {totalAssignments === 0 ? "Keine Einsaetze fuer heute" : "Heute ist nichts Weiteres offen"}
+              {totalAssignments === 0 ? "Keine Einsätze für heute" : "Heute ist nichts Weiteres offen"}
             </p>
             <p className="mt-1 text-sm text-[#173d66]/64">
               {totalAssignments === 0
-                ? "Sobald ein Einsatz fuer heute disponiert ist, wird er hier angezeigt."
-                : "Weitere Einsaetze fuer den heutigen Tag werden hier fortlaufend ergaenzt."}
+                ? "Sobald ein Einsatz für heute disponiert ist, wird er hier angezeigt."
+                : "Weitere Einsätze für den heutigen Tag werden hier fortlaufend ergänzt."}
             </p>
           </Card>
         ) : (
@@ -268,14 +268,14 @@ export default function EmployeeDayView() {
       <section className="space-y-3">
         <div className="flex items-center gap-2">
           <CalendarDays className="h-4 w-4 text-[#173d66]" />
-          <h2 className="font-semibold text-[#173d66]">Spaeter geplant</h2>
+          <h2 className="font-semibold text-[#173d66]">Später geplant</h2>
         </div>
 
         {upcomingAssignments.length === 0 ? (
           <Card className="brand-soft-card rounded-[26px] p-6 text-center">
-            <p className="font-medium text-[#173d66]/76">Keine weiteren Einsaetze geplant</p>
+            <p className="font-medium text-[#173d66]/76">Keine weiteren Einsätze geplant</p>
             <p className="mt-1 text-sm text-[#173d66]/64">
-              Zukuenftige Einsaetze werden in dieser Uebersicht angezeigt.
+              Zukuenftige Einsätze werden in dieser Uebersicht angezeigt.
             </p>
           </Card>
         ) : (

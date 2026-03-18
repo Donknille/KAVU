@@ -51,7 +51,7 @@ const resizeBlockSchema = z
   })
   .refine(
     (value) => value.removeAssignmentIds.length > 0 || value.createAssignments.length > 0,
-    { message: "Mindestens eine Aenderung ist erforderlich." },
+    { message: "Mindestens eine Änderung ist erforderlich." },
   );
 
 const removeBlockSchema = z.object({
@@ -231,7 +231,7 @@ export function registerPlanningRoutes(
         );
         if (protectedAssignment) {
           return res.status(400).json({
-            message: "Nur geplante Einsaetze koennen entfernt werden",
+            message: "Nur geplante Einsätze können entfernt werden",
           });
         }
       }
@@ -307,7 +307,7 @@ export function registerPlanningRoutes(
       );
       if (protectedAssignment) {
         return res.status(400).json({
-          message: "Nur komplett geplante Auftraege koennen entfernt werden",
+          message: "Nur komplett geplante Aufträge können entfernt werden",
         });
       }
 

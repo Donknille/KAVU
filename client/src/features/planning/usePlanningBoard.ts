@@ -406,7 +406,7 @@ export function usePlanningBoard() {
     if (
       !ensureActionAllowed(
         block.canAssignWorkers,
-        "Bei laufenden Auftraegen koennen Mitarbeitende nur ab heute und nur auf offene Tage ergaenzt werden."
+        "Bei laufenden Aufträgen können Mitarbeitende nur ab heute und nur auf offene Tage ergänzt werden."
       )
     ) {
       return;
@@ -415,7 +415,7 @@ export function usePlanningBoard() {
     if (targetAssignments.length === 0) {
       toast({
         title: "Keine offenen Tage mehr",
-        description: "Fuer die gewaehlten Tage gibt es keine offenen oder laufenden Einsatzdaten mehr.",
+        description: "Fuer die gewählten Tage gibt es keine offenen oder laufenden Einsatzdaten mehr.",
         variant: "destructive",
       });
       return;
@@ -428,7 +428,7 @@ export function usePlanningBoard() {
     if (pendingAssignments.length === 0) {
       toast({
         title: "Bereits eingeteilt",
-        description: `${getEmployeeLabel(employee)} ist fuer die gewaehlten Tage bereits auf ${block.job.jobNumber} eingeplant.`,
+        description: `${getEmployeeLabel(employee)} ist für die gewählten Tage bereits auf ${block.job.jobNumber} eingeplant.`,
         variant: "destructive",
       });
       return;
@@ -466,7 +466,7 @@ export function usePlanningBoard() {
         title: "Mitarbeiter zugewiesen",
         description:
           firstAssignedDay && lastAssignedDay
-            ? `${getEmployeeLabel(employee)} arbeitet jetzt auf ${block.job.jobNumber} fuer ${formatRange(
+            ? `${getEmployeeLabel(employee)} arbeitet jetzt auf ${block.job.jobNumber} für ${formatRange(
                 firstAssignedDay,
                 lastAssignedDay
               )} mit.`
@@ -483,7 +483,7 @@ export function usePlanningBoard() {
     if (
       !ensureActionAllowed(
         block.canRemoveWorkers,
-        "Mitarbeitende koennen nur aus noch nicht gestarteten Tagen entfernt werden."
+        "Mitarbeitende können nur aus noch nicht gestarteten Tagen entfernt werden."
       )
     ) {
       return;
@@ -498,7 +498,7 @@ export function usePlanningBoard() {
     if (targetAssignments.length === 0) {
       toast({
         title: "Keine offenen Tage mehr",
-        description: "Fuer die gewaehlten Tage gibt es keine noch nicht gestarteten Einsatzdaten mehr, aus denen Mitarbeitende entfernt werden koennen.",
+        description: "Fuer die gewählten Tage gibt es keine noch nicht gestarteten Einsatzdaten mehr, aus denen Mitarbeitende entfernt werden können.",
         variant: "destructive",
       });
       return;
@@ -526,7 +526,7 @@ export function usePlanningBoard() {
         title: "Mitarbeiter entfernt",
         description:
           targetAssignments.length > 0
-            ? `Die Zuweisung wurde fuer ${formatRange(
+            ? `Die Zuweisung wurde für ${formatRange(
                 targetAssignments[0].assignmentDate,
                 targetAssignments[targetAssignments.length - 1].assignmentDate
               )} entfernt.`
@@ -552,7 +552,7 @@ export function usePlanningBoard() {
     if (targetIndex + block.span > visibleDays.length) {
       toast({
         title: "Zeitraum ausserhalb der Ansicht",
-        description: "Der Auftrag passt in dieser Wochenansicht nicht mehr vollstaendig hinein.",
+        description: "Der Auftrag passt in dieser Wochenansicht nicht mehr vollständig hinein.",
         variant: "destructive",
       });
       return;
@@ -566,7 +566,7 @@ export function usePlanningBoard() {
     if (getJobConflictDates(block.jobId, nextDays, block.assignmentIds).length > 0) {
       toast({
         title: "Auftrag kollidiert",
-        description: "Fuer den Auftrag liegen im Zielzeitraum bereits andere Tages-Einsaetze vor.",
+        description: "Fuer den Auftrag liegen im Zielzeitraum bereits andere Tages-Einsätze vor.",
         variant: "destructive",
       });
       return;
@@ -611,7 +611,7 @@ export function usePlanningBoard() {
       if (
         !ensureActionAllowed(
           block.canResizeStart,
-          "Der Start eines laufenden Auftrags bleibt fix. Nur noch komplett geplante Auftraege koennen am Anfang verschoben werden."
+          "Der Start eines laufenden Auftrags bleibt fix. Nur noch komplett geplante Aufträge können am Anfang verschoben werden."
         )
       ) {
         return;
@@ -619,7 +619,7 @@ export function usePlanningBoard() {
     } else if (
       !ensureActionAllowed(
         block.canResizeEnd,
-        "Laufende Auftraege koennen nur nach hinten auf offene Tage verlaengert werden."
+        "Laufende Aufträge können nur nach hinten auf offene Tage verlängert werden."
       )
     ) {
       return;
@@ -650,7 +650,7 @@ export function usePlanningBoard() {
 
     if (!block.canMove && removedDays.length > 0) {
       toast({
-        title: "Nur nach hinten verlaengern",
+        title: "Nur nach hinten verlängern",
         description: "Sobald der Auftrag gestartet ist, bleiben bisherige Tage fix.",
         variant: "destructive",
       });
@@ -660,7 +660,7 @@ export function usePlanningBoard() {
     if (getJobConflictDates(block.jobId, addedDays, block.assignmentIds).length > 0) {
       toast({
         title: "Auftrag kollidiert",
-        description: "Im erweiterten Zeitraum liegen fuer diesen Auftrag bereits andere Eintraege.",
+        description: "Im erweiterten Zeitraum liegen für diesen Auftrag bereits andere Einträge.",
         variant: "destructive",
       });
       return;
@@ -702,7 +702,7 @@ export function usePlanningBoard() {
       ]);
       toast({
         title: "Zeitraum aktualisiert",
-        description: `${block.job.jobNumber} laeuft jetzt von ${formatRange(
+        description: `${block.job.jobNumber} läuft jetzt von ${formatRange(
           nextDays[0],
           nextDays[nextDays.length - 1]
         )}.`,
@@ -714,7 +714,7 @@ export function usePlanningBoard() {
     if (
       !ensureActionAllowed(
         block.canDelete,
-        "Nur komplett geplante Auftraege koennen komplett aus der Planung entfernt werden."
+        "Nur komplett geplante Aufträge können komplett aus der Planung entfernt werden."
       )
     ) {
       return;
@@ -998,7 +998,7 @@ export function usePlanningBoard() {
       }
     } catch (error) {
       toast({
-        title: "Aenderung fehlgeschlagen",
+        title: "Änderung fehlgeschlagen",
         description: error instanceof Error ? error.message : "Die Planung konnte nicht aktualisiert werden.",
         variant: "destructive",
       });

@@ -183,9 +183,9 @@ export default function PlanView() {
           <div className="flex items-center justify-between gap-2">
             <div>
               <p className="brand-kicker">Backlog</p>
-              <p className="mt-1 text-sm font-semibold brand-ink">Ungeplante Auftraege</p>
+              <p className="mt-1 text-sm font-semibold brand-ink">Ungeplante Aufträge</p>
               <p className="text-xs brand-ink-soft">
-                {planning.backlogList.length} ungeplante Auftraege
+                {planning.backlogList.length} ungeplante Aufträge
               </p>
             </div>
             <div className="flex items-center gap-1.5">
@@ -225,7 +225,7 @@ export default function PlanView() {
               <div>
                 <p className="text-xs font-semibold brand-ink">Neuen Auftrag anlegen</p>
                 <p className="text-[10px] brand-ink-soft">
-                  Im Backlog erfassen und anschliessend disponieren
+                  Im Backlog erfassen und anschließend disponieren
                 </p>
               </div>
               <Plus className="h-4 w-4 brand-ink-muted" />
@@ -233,7 +233,7 @@ export default function PlanView() {
 
             {planning.backlogList.length === 0 ? (
               <div className="brand-soft-card rounded-2xl border-dashed p-6 text-center text-sm brand-ink-soft">
-                <p>Keine offenen Auftraege im Backlog.</p>
+                <p>Keine offenen Aufträge im Backlog.</p>
                 <Button
                   variant="outline"
                   className="brand-outline-control mt-4 gap-2"
@@ -416,9 +416,9 @@ export default function PlanView() {
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="brand-kicker">Team</p>
-              <p className="mt-1 text-sm font-semibold brand-ink">Verfuegbare Mitarbeitende</p>
+              <p className="mt-1 text-sm font-semibold brand-ink">Verfügbare Mitarbeitende</p>
               <p className="text-xs brand-ink-soft">
-                Direkt neben dem Kalender fuer schnelle Zuweisungen.
+                Direkt neben dem Kalender für schnelle Zuweisungen.
               </p>
             </div>
             <Badge variant="secondary" className="brand-highlight">
@@ -525,7 +525,7 @@ export default function PlanView() {
           <p className="brand-kicker">Auftrag</p>
           <p className="mt-1 text-sm font-semibold brand-ink">Details und Teamzuordnung</p>
           <p className="text-xs brand-ink-soft">
-            Aenderungen bleiben neben dem Kalender und nicht in einer separaten Seite.
+            Änderungen bleiben neben dem Kalender und nicht in einer separaten Seite.
           </p>
         </div>
         <ScrollArea className="min-h-0 flex-1">
@@ -572,7 +572,7 @@ export default function PlanView() {
       <div className="planning-divider flex items-center justify-between gap-3 border-b px-3 py-3">
         <div className="min-w-0">
           <p className="text-base font-semibold brand-ink">Auftragsdetails</p>
-          <p className="text-xs brand-ink-soft">Fokusansicht fuer kleine Breiten.</p>
+          <p className="text-xs brand-ink-soft">Fokusansicht für kleine Breiten.</p>
         </div>
         <Button
           type="button"

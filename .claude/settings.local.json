@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(npm run:*)",
+      "Bash(npm audit:*)",
+      "Bash(sort -t: -k2 -rn)",
+      "Bash(node scripts/fix-umlauts.mjs)"
+    ]
+  }
+}

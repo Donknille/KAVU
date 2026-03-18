@@ -247,7 +247,7 @@ export function EmployeeTimeTrackerCard({
           </p>
           {pendingItems.length > 0 ? (
             <span className="rounded-full border border-amber-300/20 bg-amber-400/10 px-2.5 py-1 text-[11px] font-medium text-amber-100">
-              Wird uebertragen
+              Wird übertragen
             </span>
           ) : null}
         </div>
