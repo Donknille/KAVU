@@ -19,6 +19,7 @@ import {
   Briefcase,
   Calendar,
   ClipboardList,
+  CreditCard,
   KeyRound,
   LogOut,
   Sun,
@@ -28,8 +29,10 @@ import { Link, useLocation } from "wouter";
 import { ConnectionStatusBadge } from "@/components/ConnectionStatusBadge";
 import { BrandMark } from "@/components/BrandMark";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { BillingBanner } from "@/components/BillingBanner";
 import { useEmployeeOfflineQueue } from "@/features/employee-offline/EmployeeOfflineQueueProvider";
 import { getPreviewEmployeeToken } from "@/lib/preview-session";
+import { useCurrentSession } from "@/features/session/useCurrentSession";
 
 interface AppShellProps {
   children: ReactNode;
@@ -67,7 +70,12 @@ function isItemActive(
 
 export function AppShell({ children, role, employee }: AppShellProps) {
   const [location] = useLocation();
-  const items = role === "admin" ? adminItems : employeeItems;
+  const { data: meData } = useCurrentSession();
+  const billingEnabled = meData?.billing?.stripeEnabled ?? false;
+  const billingItems = billingEnabled && role === "admin"
+    ? [{ title: "Abonnement", url: "/billing", icon: CreditCard }]
+    : [];
+  const items = role === "admin" ? [...adminItems, ...billingItems] : employeeItems;
   const previewToken = getPreviewEmployeeToken();
   const { isOnline, pendingCount, conflictCount } = useEmployeeOfflineQueue();
   const activeItem = items.find((item) => isItemActive(location, item.url, role)) ?? items[0];
@@ -219,6 +227,8 @@ export function AppShell({ children, role, employee }: AppShellProps) {
             <ThemeToggle compact />
             {role === "employee" && <ConnectionStatusBadge isOnline={isOnline} compact />}
           </header>
+
+          {role === "admin" && <BillingBanner />}
 
           {role === "employee" && !isOnline && (
             <div className="border-b bg-amber-50 px-3 py-2 text-sm text-amber-900">

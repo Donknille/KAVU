@@ -37,6 +37,7 @@ import {
   isInvitationExpired,
   normalizeInvitationEmail,
 } from "./companyInvitations.js";
+import { TRIAL_DAYS } from "./billing.js";
 import {
   buildEmployeeLoginCandidates,
   createLocalUserId,
@@ -109,6 +110,7 @@ export interface IStorage {
   getCompany(id: string): Promise<Company | undefined>;
   getCompanyByAccessCode(accessCode: string): Promise<Company | undefined>;
   getCompanyByUserId(userId: string): Promise<Company | undefined>;
+  getCompanyByStripeCustomerId(stripeCustomerId: string): Promise<Company | undefined>;
   createCompany(data: InsertCompany): Promise<Company>;
   createCompanyWithAdmin(
     data: CreateCompanyWithAdminData,
@@ -309,6 +311,14 @@ export class DatabaseStorage implements IStorage {
     return this.getCompany(employee.companyId);
   }
 
+  async getCompanyByStripeCustomerId(stripeCustomerId: string): Promise<Company | undefined> {
+    const [company] = await db
+      .select()
+      .from(companies)
+      .where(eq(companies.stripeCustomerId, stripeCustomerId));
+    return company;
+  }
+
   async createCompany(data: InsertCompany): Promise<Company> {
     const [company] = await db
       .insert(companies)
@@ -331,11 +341,14 @@ export class DatabaseStorage implements IStorage {
         throw new UserTenantConflictError();
       }
 
+      const trialEndsAt = new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
       const [company] = await tx
         .insert(companies)
         .values({
           name: data.companyName,
           accessCode: await this.generateUniqueCompanyAccessCode(tx),
+          subscriptionStatus: "trialing",
+          trialEndsAt,
         })
         .returning();
 

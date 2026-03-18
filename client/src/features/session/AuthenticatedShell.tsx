@@ -20,6 +20,7 @@ const JobDetail = lazy(() => import("@/pages/JobDetail"));
 const CreateJob = lazy(() => import("@/pages/CreateJob"));
 const EmployeesList = lazy(() => import("@/pages/EmployeesList"));
 const ArchiveSearch = lazy(() => import("@/pages/ArchiveSearch"));
+const BillingPage = lazy(() => import("@/pages/BillingPage"));
 
 function AdminRouter() {
   return (
@@ -33,6 +34,7 @@ function AdminRouter() {
         <Route path="/jobs/:id" component={JobDetail} />
         <Route path="/employees" component={EmployeesList} />
         <Route path="/archive" component={ArchiveSearch} />
+        <Route path="/billing" component={BillingPage} />
         <Route path="/assignment/:id" component={AssignmentDetail} />
         <Route component={NotFound} />
       </Switch>

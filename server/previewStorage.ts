@@ -104,6 +104,11 @@ function buildPreviewData() {
     accessCode: "MPLAN2026",
     logoUrl: null,
     phone: "+49 89 1234567",
+    stripeCustomerId: null,
+    stripeSubscriptionId: null,
+    subscriptionStatus: "trialing",
+    trialEndsAt: null,
+    currentPeriodEnd: null,
     createdAt: new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000),
     updatedAt: now,
   };
@@ -710,6 +715,10 @@ export class PreviewStorage {
     return this.getCompany(employee.companyId);
   }
 
+  async getCompanyByStripeCustomerId(_stripeCustomerId: string) {
+    return undefined;
+  }
+
   async createCompany(data: InsertCompany) {
     const company: Company = {
       id: createId(),
@@ -717,6 +726,11 @@ export class PreviewStorage {
       accessCode: data.accessCode ?? this.generateUniqueCompanyAccessCode(),
       logoUrl: data.logoUrl ?? null,
       phone: data.phone ?? null,
+      stripeCustomerId: null,
+      stripeSubscriptionId: null,
+      subscriptionStatus: "trialing",
+      trialEndsAt: null,
+      currentPeriodEnd: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

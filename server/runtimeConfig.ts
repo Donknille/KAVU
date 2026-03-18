@@ -83,6 +83,12 @@ export const OIDC_CLIENT_AUTH_METHOD =
 export const ENABLE_DEMO_SEED = isTruthy(process.env.ENABLE_DEMO_SEED);
 export const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
+// Stripe
+export const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY?.trim() || undefined;
+export const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET?.trim() || undefined;
+export const STRIPE_PRICE_ID = process.env.STRIPE_PRICE_ID?.trim() || undefined;
+export const STRIPE_ENABLED = !!STRIPE_SECRET_KEY;
+
 export function getRuntimeConfigIssues(): RuntimeConfigIssue[] {
   if (PREVIEW_MODE) {
     return [];

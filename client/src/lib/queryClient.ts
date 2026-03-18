@@ -1,8 +1,23 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { withPreviewHeaders } from "./preview-session";
 
+export class SubscriptionRequiredError extends Error {
+  readonly code = "SUBSCRIPTION_REQUIRED";
+  constructor(message: string) {
+    super(message);
+    this.name = "SubscriptionRequiredError";
+  }
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
+    if (res.status === 402) {
+      let body: any = {};
+      try { body = await res.json(); } catch { /* ignore */ }
+      if (body?.code === "SUBSCRIPTION_REQUIRED") {
+        throw new SubscriptionRequiredError(body.message ?? "Abonnement erforderlich.");
+      }
+    }
     const text = (await res.text()) || res.statusText;
     throw new Error(`${res.status}: ${text}`);
   }

@@ -50,12 +50,26 @@ export const jobCategoryEnum = pgEnum("job_category", [
   "other",
 ]);
 
+export const subscriptionStatusEnum = pgEnum("subscription_status", [
+  "trialing",
+  "active",
+  "past_due",
+  "canceled",
+  "paused",
+]);
+
 export const companies = pgTable("companies", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: varchar("name", { length: 255 }).notNull(),
   accessCode: varchar("access_code", { length: 16 }),
   logoUrl: varchar("logo_url"),
   phone: varchar("phone", { length: 50 }),
+  // Billing
+  stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
+  stripeSubscriptionId: varchar("stripe_subscription_id", { length: 255 }),
+  subscriptionStatus: subscriptionStatusEnum("subscription_status").default("trialing"),
+  trialEndsAt: timestamp("trial_ends_at"),
+  currentPeriodEnd: timestamp("current_period_end"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
@@ -372,6 +386,13 @@ export const insertCompanySchema = createInsertSchema(companies).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+});
+export const updateCompanyBillingSchema = z.object({
+  stripeCustomerId: z.string().optional(),
+  stripeSubscriptionId: z.string().nullable().optional(),
+  subscriptionStatus: z.enum(["trialing", "active", "past_due", "canceled", "paused"]).optional(),
+  trialEndsAt: z.date().nullable().optional(),
+  currentPeriodEnd: z.date().nullable().optional(),
 });
 export const insertEmployeeSchema = createInsertSchema(employees).omit({
   id: true,

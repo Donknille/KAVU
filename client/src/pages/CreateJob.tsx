@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { ArrowLeft, Plus } from "lucide-react";
 import { useLocation } from "wouter";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, queryClient, SubscriptionRequiredError } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { JOB_CATEGORY_LABELS } from "@/lib/constants";
 
@@ -54,12 +54,13 @@ export default function CreateJob() {
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
       toast({ title: "Auftrag erstellt" });
       navigate("/jobs");
-    } catch {
-      toast({
-        title: "Fehler",
-        description: "Auftrag konnte nicht erstellt werden",
-        variant: "destructive",
-      });
+    } catch (err) {
+      if (err instanceof SubscriptionRequiredError) {
+        toast({ title: "Abonnement erforderlich", description: err.message, variant: "destructive" });
+        navigate("/billing");
+      } else {
+        toast({ title: "Fehler", description: "Auftrag konnte nicht erstellt werden", variant: "destructive" });
+      }
     } finally {
       setIsLoading(false);
     }
