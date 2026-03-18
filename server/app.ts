@@ -22,24 +22,7 @@ declare module "http" {
 
 app.use(
   helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        // Vite production builds require unsafe-inline (modulepreload) and unsafe-eval
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://js.stripe.com"],
-        // Tailwind / shadcn use inline styles
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", "data:", "https:"],
-        // API calls to Stripe Checkout redirect (no inline Stripe Elements used)
-        connectSrc: ["'self'", "https://api.stripe.com"],
-        // Stripe Checkout opens in an iframe on some flows
-        frameSrc: ["https://js.stripe.com", "https://hooks.stripe.com"],
-        fontSrc: ["'self'"],
-        objectSrc: ["'none'"],
-        baseUri: ["'self'"],
-        formAction: ["'self'"],
-      },
-    },
+    contentSecurityPolicy: false,
   }),
 );
 
