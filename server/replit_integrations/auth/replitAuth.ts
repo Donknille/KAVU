@@ -582,7 +582,8 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
 
   const user = req.user as any;
 
-  if (!req.isAuthenticated() || !user?.expires_at) {
+  const isAuth = typeof req.isAuthenticated === "function" ? req.isAuthenticated() : false;
+  if (!isAuth || !user?.expires_at) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
