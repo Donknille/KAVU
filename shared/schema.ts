@@ -154,6 +154,7 @@ export const jobs = pgTable("jobs", {
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
   index("idx_jobs_company_id").on(table.companyId),
+  index("idx_jobs_company_archived").on(table.companyId, table.isArchived),
 ]);
 
 export const assignments = pgTable("assignments", {
@@ -177,6 +178,7 @@ export const assignments = pgTable("assignments", {
   index("idx_assignments_job_id").on(table.jobId),
   index("idx_assignments_assignment_date").on(table.assignmentDate),
   index("idx_assignments_date_sort_order").on(table.assignmentDate, table.sortOrder),
+  index("idx_assignments_company_date").on(table.companyId, table.assignmentDate),
 ]);
 
 export const assignmentWorkers = pgTable("assignment_workers", {

@@ -36,6 +36,16 @@ export default defineConfig({
     outDir: buildOutDir,
     emptyOutDir: true,
     manifest: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "vendor-react": ["react", "react-dom"],
+          "vendor-query": ["@tanstack/react-query"],
+          "vendor-dnd": ["@dnd-kit/core", "@dnd-kit/sortable", "@dnd-kit/utilities"],
+          "vendor-ui": ["lucide-react", "wouter", "date-fns"],
+        },
+      },
+    },
   },
   server: {
     fs: {
