@@ -700,6 +700,10 @@ export class PreviewStorage {
     throw new Error("Unable to generate a unique employee login");
   }
 
+  async getAllCompanies() {
+    return [...this.data.companies];
+  }
+
   async getCompany(id: string) {
     return this.data.companies.find((company) => company.id === id);
   }

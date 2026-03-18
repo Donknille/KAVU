@@ -44,6 +44,7 @@ import { registerJobRoutes } from "./routes/jobs.js";
 import { registerAssignmentRoutes, toPublicAssignment } from "./routes/assignments.js";
 import { registerPlanningRoutes } from "./routes/planning.js";
 import { registerBillingRoutes } from "./routes/billing.js";
+import { registerPlatformAdminRoutes } from "./routes/platformAdmin.js";
 
 const setupSchema = z.object({
   companyName: z.string().min(1).max(255),
@@ -429,6 +430,7 @@ export async function registerRoutes(
   registerAssignmentRoutes(app, requireAdmin, requireAuth);
   registerPlanningRoutes(app, requireAdmin);
   registerBillingRoutes(app, requireAdmin);
+  registerPlatformAdminRoutes(app);
 
   return httpServer;
 }

@@ -107,6 +107,7 @@ function getEmployeeSortKey(employee: Pick<Employee, "firstName" | "lastName">) 
 }
 
 export interface IStorage {
+  getAllCompanies(): Promise<Company[]>;
   getCompany(id: string): Promise<Company | undefined>;
   getCompanyByAccessCode(accessCode: string): Promise<Company | undefined>;
   getCompanyByUserId(userId: string): Promise<Company | undefined>;
@@ -282,6 +283,10 @@ export class DatabaseStorage implements IStorage {
     }
 
     throw new Error("Unable to generate a unique employee login");
+  }
+
+  async getAllCompanies(): Promise<Company[]> {
+    return db.select().from(companies).orderBy(companies.createdAt);
   }
 
   async getCompany(id: string): Promise<Company | undefined> {
