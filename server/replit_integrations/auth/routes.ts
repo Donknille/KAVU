@@ -4,6 +4,10 @@ import { authStorage } from "./storage.js";
 import { isAuthenticated } from "./replitAuth.js";
 import { invalidateLocalAuthIdentity } from "./replitAuth.js";
 import { hashPassword, verifyPassword } from "../../passwords.js";
+
+// Constant-time dummy hash to prevent username enumeration via timing attacks.
+// Called even when a user is not found, so response time stays consistent.
+const DUMMY_HASH = hashPassword("__timing_protection_dummy__");
 import {
   PREVIEW_AUTH_USER,
   PREVIEW_COMPANY_ID,
@@ -223,6 +227,7 @@ export function registerAuthRoutes(app: Express): void {
 
       const user = await authStorage.getUserByEmail(parsed.data.email);
       if (!user?.passwordHash || !user.email) {
+        verifyPassword(parsed.data.password, DUMMY_HASH); // constant-time: prevent username enumeration
         return res.status(401).json({ message: "E-Mail oder Passwort ist ungueltig." });
       }
 

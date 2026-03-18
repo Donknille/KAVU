@@ -68,7 +68,7 @@ app.use("/api/setup", authLimiter);
 
 app.use(
   express.json({
-    limit: "5mb",
+    limit: "512kb",
     verify: (req, _res, buf) => {
       req.rawBody = buf;
     },
@@ -82,11 +82,7 @@ app.get("/healthz", (_req, res) => {
 });
 
 app.get("/api/health", (_req, res) => {
-  res.status(200).json({
-    status: "ok",
-    previewMode: PREVIEW_MODE,
-    authProvider: AUTH_PROVIDER,
-  });
+  res.status(200).json({ status: "ok" });
 });
 
 app.get("/favicon.ico", (_req, res) => {
