@@ -113,6 +113,12 @@ export function getRuntimeConfigIssues(): RuntimeConfigIssue[] {
       message: "Session secret is required outside preview mode.",
       level: "error",
     });
+  } else if (process.env.SESSION_SECRET.length < 32) {
+    issues.push({
+      field: "SESSION_SECRET",
+      message: "Session secret must be at least 32 characters for adequate security.",
+      level: "error",
+    });
   }
 
   if (!APP_BASE_URL) {

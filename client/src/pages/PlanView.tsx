@@ -15,6 +15,16 @@ import {
   X,
 } from "lucide-react";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   BacklogJobCard,
   CreatePlanningJobDialog,
   DayColumnDropZone,
@@ -279,7 +289,16 @@ export default function PlanView() {
   );
 
   const calendarBoard = useMemo(
-    () => (
+    () => planning.isLoadingBoard ? (
+      <Card className="brand-panel flex h-full min-h-0 flex-col items-center justify-center overflow-hidden rounded-3xl">
+        <div className="animate-pulse space-y-3 p-8 w-full max-w-md">
+          <div className="h-4 bg-muted rounded w-1/3" />
+          <div className="h-24 bg-muted rounded" />
+          <div className="h-24 bg-muted rounded" />
+          <div className="h-24 bg-muted rounded" />
+        </div>
+      </Card>
+    ) : (
       <Card className="brand-panel flex h-full min-h-0 flex-col overflow-hidden rounded-3xl">
         <div className="planning-divider flex items-center justify-between gap-3 border-b px-3 py-2.5">
           <div className="min-w-0">
@@ -412,6 +431,7 @@ export default function PlanView() {
       planning.blocks,
       planning.boardBackgroundStyle,
       planning.boardGridStyle,
+      planning.isLoadingBoard,
       planning.laneCount,
       planning.resizePreview,
       planning.selectedBlock,
@@ -815,6 +835,29 @@ export default function PlanView() {
           void planning.submitCreateJob();
         }}
       />
+
+      <AlertDialog
+        open={planning.pendingRemoveBlock !== null}
+        onOpenChange={(open) => { if (!open) planning.cancelRemoveBlock(); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Auftrag aus Planung entfernen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Soll <strong>{planning.pendingRemoveBlock?.job.jobNumber}</strong> komplett aus der Planung entfernt werden? Der Auftrag wird zurück ins Backlog verschoben.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => { void planning.confirmRemoveBlock(); }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Entfernen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -22,7 +22,20 @@ declare module "http" {
 
 app.use(
   helmet({
-    contentSecurityPolicy: false,
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "blob:"],
+        connectSrc: ["'self'"],
+        fontSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        frameAncestors: ["'none'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+      },
+    },
   }),
 );
 
@@ -48,6 +61,19 @@ app.use("/api/auth/register", authLimiter);
 app.use("/api/auth/login/password", authLimiter);
 app.use("/api/auth/employee-login", authLimiter);
 app.use("/api/setup", authLimiter);
+app.use("/api/auth/change-password", authLimiter);
+
+// CSRF protection: mutating API requests must carry a JSON or custom content type.
+// Browsers cannot set Content-Type to application/json via plain form submissions or
+// navigations, so this blocks cross-origin forged requests without needing tokens.
+app.use("/api/", (req, res, next) => {
+  if (["GET", "HEAD", "OPTIONS"].includes(req.method)) return next();
+  const ct = req.headers["content-type"] ?? "";
+  if (ct.startsWith("application/json") || ct.startsWith("multipart/form-data")) {
+    return next();
+  }
+  return res.status(403).json({ message: "Ungültige Anfrage (fehlender Content-Type)." });
+});
 
 app.use(
   express.json({

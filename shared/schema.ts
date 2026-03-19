@@ -177,6 +177,7 @@ export const assignmentWorkers = pgTable("assignment_workers", {
   index("idx_assignment_workers_assignment_id").on(table.assignmentId),
   index("idx_assignment_workers_employee_id").on(table.employeeId),
   uniqueIndex("idx_assignment_workers_unique").on(table.assignmentId, table.employeeId),
+  index("idx_aw_company_assignment").on(table.companyId, table.assignmentId),
 ]);
 
 export const timeEntries = pgTable("time_entries", {
@@ -203,6 +204,7 @@ export const timeEntries = pgTable("time_entries", {
 }, (table) => [
   index("idx_time_entries_assignment_id").on(table.assignmentId),
   index("idx_time_entries_employee_id").on(table.employeeId),
+  index("idx_time_entries_company_assignment").on(table.companyId, table.assignmentId),
 ]);
 
 export const breakEntries = pgTable("break_entries", {

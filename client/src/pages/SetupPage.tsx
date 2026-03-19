@@ -10,6 +10,7 @@ import {
 } from "@/features/invitations/shared";
 import { useInvitationPreview } from "@/features/invitations/useInvitationPreview";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { QK } from "@/lib/queryKeys";
 import { useToast } from "@/hooks/use-toast";
 import { Building2, Mail, UserPlus } from "lucide-react";
 
@@ -48,7 +49,7 @@ export default function SetupPage() {
         lastName,
         phone,
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/me"] });
+      queryClient.invalidateQueries({ queryKey: [QK.ME] });
     } catch {
       toast({
         title: "Fehler",
@@ -68,7 +69,7 @@ export default function SetupPage() {
     setIsAcceptingInvite(true);
     try {
       await apiRequest("POST", `/api/invitations/${inviteToken}/accept`);
-      queryClient.invalidateQueries({ queryKey: ["/api/me"] });
+      queryClient.invalidateQueries({ queryKey: [QK.ME] });
     } catch (error) {
       toast({
         title: "Einladung konnte nicht angenommen werden",

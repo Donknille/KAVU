@@ -1,15 +1,26 @@
 import type { Express, Request, Response, NextFunction } from "express";
-import { z } from "zod";
+import { timingSafeEqual } from "crypto";
 import { storage } from "../storage.js";
 import { asyncHandler } from "../asyncHandler.js";
 import { PLATFORM_ADMIN_SECRET } from "../runtimeConfig.js";
 import { isCompanyFrozen, trialDaysLeft } from "../billing.js";
 
+function constantTimeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) {
+    // Compare b against itself to keep constant time, then return false
+    const buf = Buffer.from(b);
+    timingSafeEqual(buf, buf);
+    return false;
+  }
+  return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+}
+
 function requirePlatformAdmin(req: Request, res: Response, next: NextFunction) {
   if (!PLATFORM_ADMIN_SECRET) {
     return res.status(503).json({ message: "Platform admin ist nicht konfiguriert. PLATFORM_ADMIN_SECRET fehlt." });
   }
-  if (req.headers["x-admin-secret"] !== PLATFORM_ADMIN_SECRET) {
+  const provided = (req.headers["x-admin-secret"] as string) ?? "";
+  if (!constantTimeEqual(provided, PLATFORM_ADMIN_SECRET)) {
     return res.status(401).json({ message: "Unauthorized" });
   }
   next();
@@ -53,47 +64,4 @@ export function registerPlatformAdminRoutes(app: Express) {
     }),
   );
 
-  // POST /admin/companies/:id/extend-trial — extend trial by N days
-  app.post(
-    "/admin/companies/:id/extend-trial",
-    requirePlatformAdmin,
-    asyncHandler(async (req: Request, res: Response) => {
-      const id = req.params["id"] as string;
-      const parsed = z.object({ days: z.number().int().min(1).max(365) }).safeParse(req.body);
-      if (!parsed.success) {
-        return res.status(400).json({ message: "Validation error", errors: parsed.error.flatten().fieldErrors });
-      }
-
-      const company = await storage.getCompany(id);
-      if (!company) return res.status(404).json({ message: "Not found" });
-
-      const updated = await storage.updateCompany(id, {});
-
-      res.json(toAdminCompany(updated));
-    }),
-  );
-
-  // POST /admin/companies/:id/subscription — manually set subscription status
-  app.post(
-    "/admin/companies/:id/subscription",
-    requirePlatformAdmin,
-    asyncHandler(async (req: Request, res: Response) => {
-      const id = req.params["id"] as string;
-      const parsed = z
-        .object({
-          status: z.enum(["trialing", "active", "past_due", "canceled", "paused"]),
-        })
-        .safeParse(req.body);
-      if (!parsed.success) {
-        return res.status(400).json({ message: "Validation error", errors: parsed.error.flatten().fieldErrors });
-      }
-
-      const company = await storage.getCompany(id);
-      if (!company) return res.status(404).json({ message: "Not found" });
-
-      const updated = await storage.updateCompany(id, {});
-
-      res.json(toAdminCompany(updated));
-    }),
-  );
 }

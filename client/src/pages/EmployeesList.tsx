@@ -30,6 +30,7 @@ import {
 } from "@/features/invitations/useInvitationAdmin";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, apiRequestJson, queryClient } from "@/lib/queryClient";
+import { QK } from "@/lib/queryKeys";
 import {
   KeyRound,
   Mail,
@@ -93,12 +94,12 @@ const INITIAL_EMPLOYEE_FORM = {
 };
 
 async function invalidateEmployeeAdminQueries() {
-  await queryClient.invalidateQueries({ queryKey: ["/api/employees"] });
-  await queryClient.invalidateQueries({ queryKey: ["/api/me"] });
+  await queryClient.invalidateQueries({ queryKey: [QK.EMPLOYEES] });
+  await queryClient.invalidateQueries({ queryKey: [QK.ME] });
   await queryClient.invalidateQueries({
     predicate: (query) =>
       typeof query.queryKey[0] === "string" &&
-      query.queryKey[0].startsWith("/api/planning/board"),
+      query.queryKey[0].startsWith(QK.PLANNING_BOARD),
   });
 }
 
@@ -121,10 +122,10 @@ export default function EmployeesList() {
   const [inviteForm, setInviteForm] = useState<InvitationFormState>(EMPTY_INVITATION_FORM);
 
   const { data: employees, isLoading } = useQuery<EmployeeRecord[]>({
-    queryKey: ["/api/employees"],
+    queryKey: [QK.EMPLOYEES],
   });
   const { data: meData } = useQuery<CompanyContext>({
-    queryKey: ["/api/me"],
+    queryKey: [QK.ME],
   });
   const { pendingInvitations, isLoading: invitationsLoading } = useCompanyInvitations();
 

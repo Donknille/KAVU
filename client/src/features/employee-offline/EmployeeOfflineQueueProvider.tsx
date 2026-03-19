@@ -12,6 +12,7 @@ import { nanoid } from "nanoid";
 import { toast } from "@/hooks/use-toast";
 import { useNetworkStatus } from "@/hooks/use-network-status";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { QK } from "@/lib/queryKeys";
 import {
   applyOptimisticAssignmentState,
   getConflictQueueItemsForAssignment,
@@ -58,11 +59,11 @@ interface EmployeeOfflineQueueContextValue {
 const EmployeeOfflineQueueContext = createContext<EmployeeOfflineQueueContextValue | null>(null);
 
 function invalidateAssignmentQueries() {
-  queryClient.invalidateQueries({ queryKey: ["/api/assignments"] });
+  queryClient.invalidateQueries({ queryKey: [QK.ASSIGNMENTS] });
   queryClient.invalidateQueries({
     predicate: (query) => {
       const key = query.queryKey[0];
-      return typeof key === "string" && key.startsWith("/api/assignments/my");
+      return typeof key === "string" && key.startsWith(QK.ASSIGNMENTS + "/my");
     },
   });
 }

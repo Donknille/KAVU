@@ -32,6 +32,11 @@ if (!connectionString) {
   console.log("WARNUNG: DATABASE_URL fehlt in den Umgebungsvariablen!");
 }
 
+const databaseStatementTimeoutMs = parsePositiveInt(
+  process.env.DATABASE_STATEMENT_TIMEOUT_MS,
+  10000,
+);
+
 export const pool = connectionString
   ? new Pool({
       connectionString,
@@ -41,6 +46,7 @@ export const pool = connectionString
       connectionTimeoutMillis: databaseConnectTimeoutMs,
       maxUses: databaseMaxUses,
       allowExitOnIdle: isServerlessRuntime,
+      statement_timeout: databaseStatementTimeoutMs,
     })
   : (null as unknown as pg.Pool);
 

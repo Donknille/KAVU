@@ -17,6 +17,7 @@ import { OfflineQueueAlert } from "@/features/employee-offline/OfflineQueueAlert
 import { useEmployeeOfflineQueue } from "@/features/employee-offline/EmployeeOfflineQueueProvider";
 import { type AssignmentAction } from "@/features/employee-offline/shared";
 import { useToast } from "@/hooks/use-toast";
+import { QK } from "@/lib/queryKeys";
 import {
   formatAddress,
   formatDate,
@@ -69,7 +70,7 @@ export default function AssignmentDetail() {
   const endDate = toDateStr(addDays(new Date(), 13));
 
   const { data: detail, isLoading } = useQuery<any>({
-    queryKey: ["/api/assignments", id],
+    queryKey: [QK.ASSIGNMENTS, id],
   });
   const { data: assignmentList = [] } = useQuery<any[]>({
     queryKey: [`/api/assignments/my?startDate=${today}&endDate=${endDate}`],

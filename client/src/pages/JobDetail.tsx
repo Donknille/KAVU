@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { QK } from "@/lib/queryKeys";
 import {
   formatTime,
   formatDuration,
@@ -34,7 +35,7 @@ export default function JobDetail() {
   const { toast } = useToast();
 
   const { data: job, isLoading } = useQuery<any>({
-    queryKey: ["/api/jobs", id],
+    queryKey: [QK.JOBS, id],
   });
 
   const { data: timeEntries } = useQuery<any[]>({
@@ -47,8 +48,8 @@ export default function JobDetail() {
       return apiRequest("PATCH", `/api/jobs/${id}`, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/jobs", id] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: [QK.JOBS, id] });
+      queryClient.invalidateQueries({ queryKey: [QK.DASHBOARD] });
       toast({ title: "Auftrag aktualisiert" });
     },
   });

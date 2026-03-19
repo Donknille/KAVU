@@ -16,6 +16,7 @@ import { useLocation } from "wouter";
 import { apiRequest, queryClient, SubscriptionRequiredError } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { JOB_CATEGORY_LABELS } from "@/lib/constants";
+import { QK } from "@/lib/queryKeys";
 
 export default function CreateJob() {
   const [, navigate] = useLocation();
@@ -49,9 +50,9 @@ export default function CreateJob() {
         category: form.category || undefined,
         startDate: form.startDate || undefined,
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/jobs/unassigned"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: [QK.JOBS] });
+      queryClient.invalidateQueries({ queryKey: [QK.JOBS_UNASSIGNED] });
+      queryClient.invalidateQueries({ queryKey: [QK.DASHBOARD] });
       toast({ title: "Auftrag erstellt" });
       navigate("/jobs");
     } catch (err) {

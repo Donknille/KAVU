@@ -7,8 +7,9 @@ import type {
   ViewSpan,
 } from "@/features/planning/types";
 import { getEmployeeLabel, uniqueSortedDates } from "@/features/planning/utils";
+import { QK } from "@/lib/queryKeys";
 
-export const JOBS_QUERY_KEY = "/api/jobs";
+export const JOBS_QUERY_KEY = QK.JOBS;
 
 export const EMPTY_PLANNING_BOARD: PlanningBoardResponse = {
   employees: [],

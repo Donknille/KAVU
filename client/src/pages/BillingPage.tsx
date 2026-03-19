@@ -46,10 +46,23 @@ export default function BillingPage() {
   const billing = meData?.billing;
   const { toast } = useToast();
 
+  function safeRedirect(url: string) {
+    try {
+      const parsed = new URL(url, window.location.origin);
+      if (parsed.origin !== window.location.origin && !parsed.hostname.endsWith(".stripe.com")) {
+        console.error("Blocked redirect to untrusted origin:", parsed.origin);
+        return;
+      }
+      window.location.href = url;
+    } catch {
+      console.error("Blocked redirect to invalid URL:", url);
+    }
+  }
+
   const checkoutMutation = useMutation({
     mutationFn: createCheckoutSession,
     onSuccess: ({ url }) => {
-      if (url) window.location.href = url;
+      if (url) safeRedirect(url);
     },
     onError: (err: Error) => {
       toast({ title: "Fehler", description: err.message, variant: "destructive" });
@@ -59,7 +72,7 @@ export default function BillingPage() {
   const portalMutation = useMutation({
     mutationFn: createPortalSession,
     onSuccess: ({ url }) => {
-      if (url) window.location.href = url;
+      if (url) safeRedirect(url);
     },
     onError: (err: Error) => {
       toast({ title: "Fehler", description: err.message, variant: "destructive" });

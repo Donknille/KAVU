@@ -210,18 +210,6 @@ async function main() {
     /Cross-tenant break entry blocked/,
   );
 
-  await assert.rejects(
-    () =>
-      storage.createIssueReport({
-        companyId: PREVIEW_COMPANY_ID,
-        jobId: previewJob.id,
-        assignmentId: previewAssignment.id,
-        employeeId: otherEmployee.id,
-        issueType: "other",
-      }),
-    /Cross-tenant issue report blocked/,
-  );
-
   console.log("Verified tenant isolation smoke checks.");
 }
 

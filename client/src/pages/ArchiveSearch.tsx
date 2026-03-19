@@ -8,13 +8,14 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Search, Archive, Briefcase } from "lucide-react";
 import { useLocation } from "wouter";
 import { JOB_CATEGORY_LABELS, formatDate } from "@/lib/constants";
+import { QK } from "@/lib/queryKeys";
 
 export default function ArchiveSearch() {
   const [, navigate] = useLocation();
   const [search, setSearch] = useState("");
 
   const { data: jobs, isLoading } = useQuery<any[]>({
-    queryKey: ["/api/jobs?archived=true"],
+    queryKey: [QK.JOBS_ARCHIVED],
   });
 
   const filtered = jobs?.filter((j: any) => {

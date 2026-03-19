@@ -387,7 +387,7 @@ export const PlanningBlockCard = memo(function PlanningBlockCard({
     <div
       ref={setRefs}
       className={cn(
-        "group relative flex h-full min-w-0 overflow-hidden rounded-xl border bg-[var(--brand-soft-start)] shadow-[0_10px_24px_rgba(16,38,62,0.08)] transition",
+        "group relative flex h-full min-w-0 overflow-hidden rounded-xl border bg-[var(--brand-soft-start)] shadow-[0_10px_24px_rgba(16,38,62,0.08)] transition animate-in fade-in-0 duration-200",
         CATEGORY_BG[category] ?? CATEGORY_BG.other,
         block.canMove && "cursor-grab active:cursor-grabbing",
         selected && "ring-2 ring-[color:var(--brand-highlight-border)]",

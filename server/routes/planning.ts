@@ -188,11 +188,13 @@ export function registerPlanningRoutes(
         return res.status(404).json({ message: "Assignment not found" });
       }
 
-      for (const update of parsed.data.updates) {
-        await storage.updateAssignment(req.companyId, update.assignmentId, {
-          assignmentDate: update.assignmentDate,
-        });
-      }
+      await Promise.all(
+        parsed.data.updates.map((update) =>
+          storage.updateAssignment(req.companyId, update.assignmentId, {
+            assignmentDate: update.assignmentDate,
+          })
+        )
+      );
 
       invalidateCompanyReadCaches(req.companyId);
       res.json({ ok: true });
@@ -231,44 +233,46 @@ export function registerPlanningRoutes(
         }
       }
 
-      for (const createInput of parsed.data.createAssignments) {
-        const job = await storage.getJobForCompany(req.companyId, createInput.jobId);
-        if (!job) {
-          return res.status(404).json({ message: "Job not found" });
-        }
-        if (createInput.workerIds) {
-          for (const workerId of createInput.workerIds) {
-            const employee = await storage.getEmployeeForCompany(req.companyId, workerId);
-            if (!employee) {
-              return res.status(404).json({ message: "Employee not found" });
-            }
-          }
-        }
+      // Batch-validate all referenced jobs and employees in parallel
+      const uniqueJobIds = [...new Set(parsed.data.createAssignments.map((a) => a.jobId))];
+      const uniqueWorkerIds = [...new Set(parsed.data.createAssignments.flatMap((a) => a.workerIds ?? []))];
+
+      const [jobs, employees] = await Promise.all([
+        Promise.all(uniqueJobIds.map((id) => storage.getJobForCompany(req.companyId, id))),
+        Promise.all(uniqueWorkerIds.map((id) => storage.getEmployeeForCompany(req.companyId, id))),
+      ]);
+
+      if (jobs.some((j) => !j)) {
+        return res.status(404).json({ message: "Job not found" });
+      }
+      if (employees.some((e) => !e)) {
+        return res.status(404).json({ message: "Employee not found" });
       }
 
-      for (const assignmentId of parsed.data.removeAssignmentIds) {
-        await storage.deleteAssignment(req.companyId, assignmentId);
-      }
+      // Delete removed assignments in parallel
+      await Promise.all(
+        parsed.data.removeAssignmentIds.map((id) => storage.deleteAssignment(req.companyId, id))
+      );
 
-      const createdAssignments = [];
-
-      for (const createInput of parsed.data.createAssignments) {
-        const { workerIds, ...assignmentData } = createInput;
-        const assignment = await storage.createAssignment({
-          ...assignmentData,
-          companyId: req.companyId,
-        });
-
-        for (const workerId of workerIds ?? []) {
-          await storage.addWorkerToAssignment({
+      // Create new assignments + assign workers in parallel
+      const createdAssignments = await Promise.all(
+        parsed.data.createAssignments.map(async ({ workerIds, ...assignmentData }) => {
+          const assignment = await storage.createAssignment({
+            ...assignmentData,
             companyId: req.companyId,
-            assignmentId: assignment.id,
-            employeeId: workerId,
           });
-        }
-
-        createdAssignments.push(assignment);
-      }
+          await Promise.all(
+            (workerIds ?? []).map((workerId) =>
+              storage.addWorkerToAssignment({
+                companyId: req.companyId,
+                assignmentId: assignment.id,
+                employeeId: workerId,
+              })
+            )
+          );
+          return assignment;
+        })
+      );
 
       invalidateCompanyReadCaches(req.companyId);
       res.json({ ok: true, createdAssignments });
@@ -306,9 +310,9 @@ export function registerPlanningRoutes(
         });
       }
 
-      for (const assignmentId of parsed.data.assignmentIds) {
-        await storage.deleteAssignment(req.companyId, assignmentId);
-      }
+      await Promise.all(
+        parsed.data.assignmentIds.map((id) => storage.deleteAssignment(req.companyId, id))
+      );
 
       invalidateCompanyReadCaches(req.companyId);
       res.json({ ok: true });

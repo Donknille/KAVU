@@ -8,13 +8,14 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { JOB_CATEGORY_LABELS } from "@/lib/constants";
+import { QK } from "@/lib/queryKeys";
 
 export default function JobsList() {
   const [, navigate] = useLocation();
   const [search, setSearch] = useState("");
 
   const { data: jobs, isLoading } = useQuery<any[]>({
-    queryKey: ["/api/jobs"],
+    queryKey: [QK.JOBS],
   });
 
   const filtered = jobs?.filter((j: any) => {

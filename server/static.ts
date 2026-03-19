@@ -77,6 +77,8 @@ export function serveStatic(app: Express) {
           basename === "index.html"
         ) {
           res.setHeader("Cache-Control", "no-cache");
+        } else if (filePath.includes("/assets/") || filePath.includes("\\assets\\")) {
+          res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
         }
       },
     }),
@@ -90,7 +92,7 @@ export function serveStatic(app: Express) {
       return;
     }
 
-    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
     res.sendFile(fallbackPath);
   });
 

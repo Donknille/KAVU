@@ -1,4 +1,4 @@
-import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import {
   MouseSensor,
   TouchSensor,
@@ -87,8 +87,11 @@ export function usePlanningBoard() {
     [visibleDays],
   );
 
-  const { data: planningBoard = EMPTY_PLANNING_BOARD } = useQuery<PlanningBoardResponse>({
+  const { data: planningBoard = EMPTY_PLANNING_BOARD, isPending: isLoadingBoard } = useQuery<PlanningBoardResponse>({
     queryKey: [planningBoardUrl],
+    refetchInterval: 30_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
   });
 
   const { assignments, activeEmployees, backlogJobs, blocks, daySummaries } = planningBoard;
@@ -250,15 +253,24 @@ export function usePlanningBoard() {
     });
   }, [planningBoardUrl]);
 
-  async function runBusyAction(label: string, action: () => Promise<void>) {
-    if (busyLabel) {
-      return;
-    }
+  const BUSY_TIMEOUT_MS = 30_000;
 
+  async function runBusyAction(label: string, action: () => Promise<void>) {
+    if (busyLabel) return;
     setBusyLabel(label);
+    const timer = setTimeout(() => {
+      setBusyLabel(null);
+      toast({
+        title: "Zeitüberschreitung",
+        description: "Die Aktion hat zu lange gedauert. Bitte erneut versuchen.",
+        variant: "destructive",
+      });
+      void refreshPlanningBoard();
+    }, BUSY_TIMEOUT_MS);
     try {
       await action();
     } finally {
+      clearTimeout(timer);
       setBusyLabel(null);
     }
   }
@@ -710,7 +722,9 @@ export function usePlanningBoard() {
     });
   }
 
-  async function removeBlock(block: PlanningBlock) {
+  const [pendingRemoveBlock, setPendingRemoveBlock] = useState<PlanningBlock | null>(null);
+
+  function requestRemoveBlock(block: PlanningBlock) {
     if (
       !ensureActionAllowed(
         block.canDelete,
@@ -719,10 +733,13 @@ export function usePlanningBoard() {
     ) {
       return;
     }
+    setPendingRemoveBlock(block);
+  }
 
-    if (!window.confirm(`Soll ${block.job.jobNumber} komplett aus der Planung entfernt werden?`)) {
-      return;
-    }
+  async function confirmRemoveBlock() {
+    const block = pendingRemoveBlock;
+    setPendingRemoveBlock(null);
+    if (!block) return;
 
     await runBusyAction("Auftrag wird entfernt...", async () => {
       await apiRequest("POST", "/api/planning/remove-block", {
@@ -745,6 +762,10 @@ export function usePlanningBoard() {
         description: "Der Auftrag liegt wieder nur noch im Backlog.",
       });
     });
+  }
+
+  function cancelRemoveBlock() {
+    setPendingRemoveBlock(null);
   }
 
   const changeWindow = useCallback((direction: -1 | 1) => {
@@ -1002,6 +1023,7 @@ export function usePlanningBoard() {
         description: error instanceof Error ? error.message : "Die Planung konnte nicht aktualisiert werden.",
         variant: "destructive",
       });
+      void refreshPlanningBoard();
     }
   }, [
     activeDrag,
@@ -1010,6 +1032,7 @@ export function usePlanningBoard() {
     busyLabel,
     createBlockFromBacklog,
     moveBlock,
+    refreshPlanningBoard,
     resizeBlock,
     resolveDropDate,
     toast,
@@ -1057,9 +1080,9 @@ export function usePlanningBoard() {
 
   const removeSelectedBlock = useCallback(() => {
     if (selectedBlock) {
-      return removeBlock(selectedBlock);
+      requestRemoveBlock(selectedBlock);
     }
-  }, [removeBlock, selectedBlock]);
+  }, [selectedBlock]);
 
   return {
     activeDrag,
@@ -1071,6 +1094,7 @@ export function usePlanningBoard() {
     boardBackgroundStyle,
     boardGridStyle,
     busyLabel,
+    isLoadingBoard,
     collisionDetection,
     getEmployeeAvailability,
     handleDragCancel,
@@ -1100,6 +1124,9 @@ export function usePlanningBoard() {
     assignEmployeeToSelected,
     moveSelectedBlock,
     removeSelectedBlock,
+    pendingRemoveBlock,
+    confirmRemoveBlock,
+    cancelRemoveBlock,
     setBacklogSearch,
     setSelectedBlockId,
     setTeamFilter,

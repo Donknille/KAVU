@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, apiRequestJson, queryClient } from "@/lib/queryClient";
+import { QK } from "@/lib/queryKeys";
 import type {
   InvitationCreateResponse,
   InvitationMutationResponse,
@@ -42,12 +43,12 @@ function getErrorMessage(error: unknown) {
 }
 
 async function invalidateCompanyInvitations() {
-  await queryClient.invalidateQueries({ queryKey: ["/api/company-invitations"] });
+  await queryClient.invalidateQueries({ queryKey: [QK.COMPANY_INVITATIONS] });
 }
 
 export function useCompanyInvitations() {
   const query = useQuery<InvitationRecord[]>({
-    queryKey: ["/api/company-invitations"],
+    queryKey: [QK.COMPANY_INVITATIONS],
   });
 
   const invitations = query.data ?? [];
@@ -94,7 +95,7 @@ export function useInvitationActions(options: UseInvitationActionsOptions = {}) 
 
   const createInvitationMutation = useMutation({
     mutationFn: async (data: InvitationFormState) =>
-      apiRequestJson<InvitationCreateResponse>("POST", "/api/company-invitations", data),
+      apiRequestJson<InvitationCreateResponse>("POST", QK.COMPANY_INVITATIONS, data),
     onSuccess: async (result) => {
       await invalidateCompanyInvitations();
       options.onCreateSuccess?.();

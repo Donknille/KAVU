@@ -1,14 +1,15 @@
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
+import { QK } from "@/lib/queryKeys";
 
 export function getRequestErrorMessage(error: unknown, fallbackMessage: string) {
   return error instanceof Error ? error.message.replace(/^\d+:\s*/, "") : fallbackMessage;
 }
 
 export async function refreshAuthState() {
-  await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-  await queryClient.invalidateQueries({ queryKey: ["/api/me"] });
+  await queryClient.invalidateQueries({ queryKey: [QK.AUTH_USER] });
+  await queryClient.invalidateQueries({ queryKey: [QK.ME] });
 }
 
 type RedirectingAuthMutationOptions<TData, TVariables> = {

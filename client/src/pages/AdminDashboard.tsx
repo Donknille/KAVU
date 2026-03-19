@@ -13,6 +13,7 @@ import {
   Clock,
   Plus,
 } from "lucide-react";
+import { QK } from "@/lib/queryKeys";
 
 const statCards = [
   {
@@ -44,7 +45,7 @@ const statCards = [
 export default function AdminDashboard() {
   const [, navigate] = useLocation();
   const { data, isLoading } = useQuery<any>({
-    queryKey: ["/api/dashboard"],
+    queryKey: [QK.DASHBOARD],
   });
 
   if (isLoading) {
