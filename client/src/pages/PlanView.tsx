@@ -289,17 +289,17 @@ export default function PlanView() {
   );
 
   const calendarBoard = useMemo(
-    () => planning.isLoadingBoard ? (
-      <Card className="brand-panel flex h-full min-h-0 flex-col items-center justify-center overflow-hidden rounded-3xl">
-        <div className="animate-pulse space-y-3 p-8 w-full max-w-md">
-          <div className="h-4 bg-muted rounded w-1/3" />
-          <div className="h-24 bg-muted rounded" />
-          <div className="h-24 bg-muted rounded" />
-          <div className="h-24 bg-muted rounded" />
-        </div>
-      </Card>
-    ) : (
-      <Card className="brand-panel flex h-full min-h-0 flex-col overflow-hidden rounded-3xl">
+    () => (
+      <Card className="brand-panel relative flex h-full min-h-0 flex-col overflow-hidden rounded-3xl">
+        {planning.isLoadingBoard && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-card/80 backdrop-blur-sm">
+            <div className="animate-pulse space-y-3 w-full max-w-md p-8">
+              <div className="h-4 bg-muted rounded w-1/3" />
+              <div className="h-24 bg-muted rounded" />
+              <div className="h-24 bg-muted rounded" />
+            </div>
+          </div>
+        )}
         <div className="planning-divider flex items-center justify-between gap-3 border-b px-3 py-2.5">
           <div className="min-w-0">
             <p className="brand-kicker">Kalender</p>
