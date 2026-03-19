@@ -16,6 +16,7 @@
     "verify:staging": "node script/staging-preflight.ts",
     "verify:planning-dnd": "npm run check && npm run test:planning-dnd",
     "verify:critical-flows": "npm run check && npm run test:planning-dnd && npm run test:tenant-security && npm run test:preview-e2e",
+    "verify:production": "npm run check && npm run build && npm run test:planning-dnd && npm run test:tenant-security",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
