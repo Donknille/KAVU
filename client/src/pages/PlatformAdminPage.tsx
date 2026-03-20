@@ -20,6 +20,9 @@ type AdminCompany = {
   createdAt: string;
   frozen: boolean;
   trialDaysLeft: number | null;
+  accessCode?: string;
+  employeeCount?: number;
+  jobCount?: number;
   employees?: Array<{
     id: string;
     firstName: string;
@@ -165,8 +168,15 @@ export default function PlatformAdminPage() {
               <div className="flex items-start justify-between">
                 <div className="space-y-1">
                   <h3 className="font-semibold text-lg">{company.name}</h3>
+                  {company.accessCode && (
+                    <p className="text-sm font-mono bg-muted px-2 py-0.5 rounded inline-block">
+                      Code: {company.accessCode}
+                    </p>
+                  )}
                   <p className="text-sm text-muted-foreground">
-                    Erstellt: {formatDate(company.createdAt)} &middot; ID: {company.id.slice(0, 8)}...
+                    Erstellt: {formatDate(company.createdAt)}
+                    {company.employeeCount != null && <> &middot; {company.employeeCount} Mitarbeiter</>}
+                    {company.jobCount != null && <> &middot; {company.jobCount} Aufträge</>}
                   </p>
                 </div>
                 <div className="flex gap-2">

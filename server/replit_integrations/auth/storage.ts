@@ -20,6 +20,7 @@ export interface IAuthStorage {
     lastName?: string | null;
   }): Promise<User>;
   updateUserPassword(id: string, passwordHash: string): Promise<User | undefined>;
+  deleteUser(id: string): Promise<boolean>;
 }
 
 class AuthStorage implements IAuthStorage {
@@ -87,6 +88,10 @@ class AuthStorage implements IAuthStorage {
       .where(eq(users.id, id))
       .returning();
     return updatedUser;
+  }
+  async deleteUser(id: string): Promise<boolean> {
+    const [deleted] = await db.delete(users).where(eq(users.id, id)).returning();
+    return !!deleted;
   }
 }
 

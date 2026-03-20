@@ -45,6 +45,7 @@ import {
   verifyEmployeePassword,
 } from "./employeeAccess.js";
 import { authStorage } from "./replit_integrations/auth/storage.js";
+import { users } from "../shared/models/auth.js";
 
 type CreateJobData = Omit<InsertJob, "jobNumber">;
 export type CreateCompanyWithAdminData = {
@@ -363,6 +364,13 @@ export class DatabaseStorage implements IStorage {
 
   async deleteCompanyWithAllData(id: string): Promise<boolean> {
     return db.transaction(async (tx) => {
+      // Collect userIds before deleting employees
+      const emps = await tx
+        .select({ userId: employees.userId })
+        .from(employees)
+        .where(eq(employees.companyId, id));
+      const userIds = emps.map((e) => e.userId).filter(Boolean) as string[];
+
       // Delete in dependency order (leaves first)
       await tx.delete(breakEntries).where(eq(breakEntries.companyId, id));
       await tx.delete(timeEntries).where(eq(timeEntries.companyId, id));
@@ -372,6 +380,12 @@ export class DatabaseStorage implements IStorage {
       await tx.delete(companyInvitations).where(eq(companyInvitations.companyId, id));
       await tx.delete(employees).where(eq(employees.companyId, id));
       const [deleted] = await tx.delete(companies).where(eq(companies.id, id)).returning();
+
+      // Delete orphaned auth users
+      for (const uid of userIds) {
+        await tx.delete(users).where(eq(users.id, uid));
+      }
+
       return !!deleted;
     });
   }

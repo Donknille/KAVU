@@ -36,13 +36,27 @@ function toAdminCompany(company: any) {
 }
 
 export function registerPlatformAdminRoutes(app: Express) {
-  // GET /admin/companies — list all companies
+  // GET /admin/companies — list all companies with stats
   app.get(
     "/admin/companies",
     requirePlatformAdmin,
     asyncHandler(async (_req: Request, res: Response) => {
       const list = await storage.getAllCompanies();
-      res.json(list.map(toAdminCompany));
+      const enriched = await Promise.all(
+        list.map(async (c) => {
+          const [emps, jobList] = await Promise.all([
+            storage.getEmployeesByCompany(c.id),
+            storage.getJobsByCompany(c.id),
+          ]);
+          return {
+            ...toAdminCompany(c),
+            accessCode: c.accessCode,
+            employeeCount: emps.length,
+            jobCount: jobList.length,
+          };
+        }),
+      );
+      res.json(enriched);
     }),
   );
 

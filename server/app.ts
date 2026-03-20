@@ -66,6 +66,7 @@ app.use("/api/auth/login/password", authLimiter);
 app.use("/api/auth/employee-login", authLimiter);
 app.use("/api/setup", authLimiter);
 app.use("/api/auth/change-password", authLimiter);
+app.use("/admin/", authLimiter);
 
 // CSRF protection: mutating API requests must carry a JSON or custom content type.
 // Browsers cannot set Content-Type to application/json via plain form submissions or
