@@ -1,6 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { timingSafeEqual } from "crypto";
 import { storage } from "../storage.js";
+import { authStorage } from "../replit_integrations/auth/storage.js";
 import { asyncHandler } from "../asyncHandler.js";
 import { PLATFORM_ADMIN_SECRET } from "../runtimeConfig.js";
 import { isCompanyFrozen, trialDaysLeft } from "../billing.js";
@@ -75,6 +76,55 @@ export function registerPlatformAdminRoutes(app: Express) {
         ...toAdminCompany(company),
         employees: employees.map(({ passwordHash, userId, loginId, ...e }: any) => e),
       });
+    }),
+  );
+
+  // GET /admin/orphaned-users — list users not linked to any employee
+  app.get(
+    "/admin/orphaned-users",
+    requirePlatformAdmin,
+    asyncHandler(async (_req: Request, res: Response) => {
+      const allCompanies = await storage.getAllCompanies();
+      const allEmployeeUserIds = new Set<string>();
+      for (const c of allCompanies) {
+        const emps = await storage.getEmployeesByCompany(c.id);
+        for (const e of emps) {
+          if (e.userId) allEmployeeUserIds.add(e.userId);
+        }
+      }
+      // Get all users via direct DB query
+      const { db } = await import("../db.js");
+      const { users } = await import("../../shared/models/auth.js");
+      const allUsers = await db.select().from(users);
+      const orphaned = allUsers.filter((u) => !allEmployeeUserIds.has(u.id));
+      res.json(orphaned.map(({ passwordHash, ...u }) => u));
+    }),
+  );
+
+  // DELETE /admin/orphaned-users — delete all users not linked to any employee
+  app.delete(
+    "/admin/orphaned-users",
+    requirePlatformAdmin,
+    asyncHandler(async (_req: Request, res: Response) => {
+      const allCompanies = await storage.getAllCompanies();
+      const allEmployeeUserIds = new Set<string>();
+      for (const c of allCompanies) {
+        const emps = await storage.getEmployeesByCompany(c.id);
+        for (const e of emps) {
+          if (e.userId) allEmployeeUserIds.add(e.userId);
+        }
+      }
+      const { db } = await import("../db.js");
+      const { users } = await import("../../shared/models/auth.js");
+      const allUsers = await db.select().from(users);
+      const orphaned = allUsers.filter((u) => !allEmployeeUserIds.has(u.id));
+      let deleted = 0;
+      for (const u of orphaned) {
+        await authStorage.deleteUser(u.id);
+        deleted++;
+      }
+      console.info(`[platform-admin] Deleted ${deleted} orphaned users`);
+      res.json({ message: `${deleted} verwaiste User gelöscht.`, deleted });
     }),
   );
 

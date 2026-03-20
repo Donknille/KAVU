@@ -158,9 +158,24 @@ export default function PlatformAdminPage() {
           </Button>
         </div>
 
-        <p className="text-muted-foreground">
-          {companies.length} {companies.length === 1 ? "Betrieb" : "Betriebe"} registriert
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-muted-foreground">
+            {companies.length} {companies.length === 1 ? "Betrieb" : "Betriebe"} registriert
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={async () => {
+              const res = await fetch("/admin/orphaned-users", { method: "DELETE", headers: headers() });
+              if (res.ok) {
+                const data = await res.json();
+                alert(data.message);
+              }
+            }}
+          >
+            Verwaiste User bereinigen
+          </Button>
+        </div>
 
         {companies.map((company) => (
           <Card key={company.id}>
