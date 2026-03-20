@@ -741,6 +741,19 @@ export class PreviewStorage {
     return company;
   }
 
+  async deleteCompanyWithAllData(id: string) {
+    const before = this.data.companies.length;
+    this.data.breakEntries = this.data.breakEntries.filter((e) => e.companyId !== id);
+    this.data.timeEntries = this.data.timeEntries.filter((e) => e.companyId !== id);
+    this.data.assignmentWorkers = this.data.assignmentWorkers.filter((e) => e.companyId !== id);
+    this.data.assignments = this.data.assignments.filter((e) => e.companyId !== id);
+    this.data.jobs = this.data.jobs.filter((e) => e.companyId !== id);
+    this.data.companyInvitations = this.data.companyInvitations.filter((e) => e.companyId !== id);
+    this.data.employees = this.data.employees.filter((e) => e.companyId !== id);
+    this.data.companies = this.data.companies.filter((e) => e.id !== id);
+    return this.data.companies.length < before;
+  }
+
   async getEmployee(id: string) {
     return this.data.employees.find((employee) => employee.id === id);
   }

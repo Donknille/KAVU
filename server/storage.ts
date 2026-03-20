@@ -112,6 +112,7 @@ export interface IStorage {
     data: CreateCompanyWithAdminData,
   ): Promise<{ company: Company; employee: Employee }>;
   updateCompany(id: string, data: Partial<InsertCompany>): Promise<Company | undefined>;
+  deleteCompanyWithAllData(id: string): Promise<boolean>;
 
   getEmployee(id: string): Promise<Employee | undefined>;
   getEmployeeForCompany(companyId: string, id: string): Promise<Employee | undefined>;
@@ -358,6 +359,21 @@ export class DatabaseStorage implements IStorage {
       .where(eq(companies.id, id))
       .returning();
     return company;
+  }
+
+  async deleteCompanyWithAllData(id: string): Promise<boolean> {
+    return db.transaction(async (tx) => {
+      // Delete in dependency order (leaves first)
+      await tx.delete(breakEntries).where(eq(breakEntries.companyId, id));
+      await tx.delete(timeEntries).where(eq(timeEntries.companyId, id));
+      await tx.delete(assignmentWorkers).where(eq(assignmentWorkers.companyId, id));
+      await tx.delete(assignments).where(eq(assignments.companyId, id));
+      await tx.delete(jobs).where(eq(jobs.companyId, id));
+      await tx.delete(companyInvitations).where(eq(companyInvitations.companyId, id));
+      await tx.delete(employees).where(eq(employees.companyId, id));
+      const [deleted] = await tx.delete(companies).where(eq(companies.id, id)).returning();
+      return !!deleted;
+    });
   }
 
   async getEmployee(id: string): Promise<Employee | undefined> {

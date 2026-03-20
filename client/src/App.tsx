@@ -15,6 +15,7 @@ import NotFound from "@/pages/not-found";
 const LandingPage = lazy(() => import("@/pages/LandingPage"));
 const AdminAuthPage = lazy(() => import("@/pages/AdminAuthPage"));
 const EmployeeLoginPage = lazy(() => import("@/pages/EmployeeLoginPage"));
+const PlatformAdminPage = lazy(() => import("@/pages/PlatformAdminPage"));
 
 function PublicRouter() {
   return (
@@ -28,6 +29,7 @@ function PublicRouter() {
           {() => <AdminAuthPage mode="register" />}
         </Route>
         <Route path="/login/employee" component={EmployeeLoginPage} />
+        <Route path="/platform-admin" component={PlatformAdminPage} />
         <Route component={NotFound} />
       </Switch>
     </Suspense>
@@ -54,6 +56,15 @@ function App() {
 
   if (isLoading) {
     return <AuthBootstrapScreen />;
+  }
+
+  // Platform admin is accessible regardless of auth state
+  if (window.location.pathname === "/platform-admin") {
+    return (
+      <Suspense fallback={<PageFallback />}>
+        <PlatformAdminPage />
+      </Suspense>
+    );
   }
 
   if (!isAuthenticated) {

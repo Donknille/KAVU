@@ -64,4 +64,21 @@ export function registerPlatformAdminRoutes(app: Express) {
     }),
   );
 
+  // DELETE /admin/companies/:id — delete company and all associated data
+  app.delete(
+    "/admin/companies/:id",
+    requirePlatformAdmin,
+    asyncHandler(async (req: Request, res: Response) => {
+      const id = req.params["id"] as string;
+      const company = await storage.getCompany(id);
+      if (!company) return res.status(404).json({ message: "Not found" });
+
+      const deleted = await storage.deleteCompanyWithAllData(id);
+      if (!deleted) return res.status(500).json({ message: "Löschen fehlgeschlagen" });
+
+      console.info(`[platform-admin] Company deleted: ${company.name} (${id})`);
+      res.json({ message: `Betrieb "${company.name}" und alle zugehörigen Daten gelöscht.` });
+    }),
+  );
+
 }
