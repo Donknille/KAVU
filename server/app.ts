@@ -7,11 +7,15 @@ import { PREVIEW_MODE } from "./preview.js";
 import { registerRoutes } from "./routes.js";
 import { seedDatabase } from "./seed.js";
 import { serveStatic } from "./static.js";
-import { assertRuntimeConfig, AUTH_PROVIDER } from "./runtimeConfig.js";
+import { assertRuntimeConfig, AUTH_PROVIDER, TRUST_PROXY } from "./runtimeConfig.js";
 
 assertRuntimeConfig();
 
 const app = express();
+
+if (TRUST_PROXY) {
+  app.set("trust proxy", 1);
+}
 const httpServer = createServer(app);
 
 declare module "http" {

@@ -136,6 +136,7 @@ async function sendViaResend(input: SendCompanyInvitationInput): Promise<Invitat
 export async function sendCompanyInvitationEmail(
   input: SendCompanyInvitationInput,
 ): Promise<InvitationEmailDeliveryResult> {
+  console.info("[email-debug] INVITATION_EMAIL_PROVIDER =", INVITATION_EMAIL_PROVIDER, "| raw env =", process.env.INVITATION_EMAIL_PROVIDER);
   if (INVITATION_EMAIL_PROVIDER === "disabled") {
     return {
       status: "manual",
