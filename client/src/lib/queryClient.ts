@@ -30,7 +30,9 @@ export async function apiRequest(
 ): Promise<Response> {
   const res = await fetch(url, {
     method,
-    headers: withPreviewHeaders(data ? { "Content-Type": "application/json" } : undefined),
+    headers: withPreviewHeaders(
+      method !== "GET" ? { "Content-Type": "application/json" } : undefined,
+    ),
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
