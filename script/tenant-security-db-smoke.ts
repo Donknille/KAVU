@@ -188,14 +188,12 @@ async function cleanupTenantData(companyIds: string[], userIds: string[]) {
     companies,
     companyInvitations,
     employees,
-    issueReports,
     jobs,
     timeEntries,
   } = await import("../shared/schema.js");
   const { users } = await import("../shared/models/auth.js");
 
   if (companyIds.length > 0) {
-    await db.delete(issueReports).where(inArray(issueReports.companyId, companyIds));
     await db.delete(breakEntries).where(inArray(breakEntries.companyId, companyIds));
     await db.delete(timeEntries).where(inArray(timeEntries.companyId, companyIds));
     await db.delete(assignmentWorkers).where(inArray(assignmentWorkers.companyId, companyIds));

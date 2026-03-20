@@ -5,6 +5,7 @@ import {
   INVITATION_EMAIL_REPLY_TO,
   RESEND_API_KEY,
 } from "./runtimeConfig.js";
+import { sendViaSMTP } from "./smtpTransport.js";
 
 export type InvitationEmailDeliveryStatus = "sent" | "logged" | "manual" | "failed";
 
@@ -166,5 +167,32 @@ export async function sendCompanyInvitationEmail(
     };
   }
 
+  if (INVITATION_EMAIL_PROVIDER === "smtp") {
+    return sendViaSMTPInvitation(input);
+  }
+
   return sendViaResend(input);
+}
+
+async function sendViaSMTPInvitation(input: SendCompanyInvitationInput): Promise<InvitationEmailDeliveryResult> {
+  const result = await sendViaSMTP({
+    to: input.invitation.email,
+    subject: getSubject(input.company.name),
+    html: getHtmlBody(input),
+    text: getTextBody(input),
+  });
+
+  if (!result.success) {
+    return {
+      status: "failed",
+      delivered: false,
+      message: `Versand ueber SMTP fehlgeschlagen: ${result.error}`,
+    };
+  }
+
+  return {
+    status: "sent",
+    delivered: true,
+    message: `Einladung wurde per E-Mail an ${input.invitation.email} gesendet.`,
+  };
 }

@@ -5,6 +5,7 @@ import {
   INVITATION_EMAIL_REPLY_TO,
   RESEND_API_KEY,
 } from "./runtimeConfig.js";
+import { sendViaSMTP } from "./smtpTransport.js";
 import type { LocalEmployeeAccess } from "./storage.js";
 
 export type EmployeeAccessDeliveryStatus = "sent" | "logged" | "manual" | "failed" | "skipped";
@@ -156,5 +157,32 @@ export async function sendEmployeeAccessEmail(
     };
   }
 
+  if (INVITATION_EMAIL_PROVIDER === "smtp") {
+    return sendViaSMTPAccess(input);
+  }
+
   return sendViaResend(input);
+}
+
+async function sendViaSMTPAccess(input: SendEmployeeAccessInput): Promise<EmployeeAccessDeliveryResult> {
+  const result = await sendViaSMTP({
+    to: input.recipientEmail!,
+    subject: `${input.company.name}: Zugangsdaten fuer ${input.employee.firstName} ${input.employee.lastName}`,
+    html: buildHtmlBody(input),
+    text: buildTextBody(input),
+  });
+
+  if (!result.success) {
+    return {
+      status: "failed",
+      delivered: false,
+      message: `Versand ueber SMTP fehlgeschlagen: ${result.error}`,
+    };
+  }
+
+  return {
+    status: "sent",
+    delivered: true,
+    message: `Zugangsdaten wurden an ${input.recipientEmail} gesendet.`,
+  };
 }

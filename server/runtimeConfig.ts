@@ -1,7 +1,7 @@
 import { PREVIEW_MODE } from "./preview.js";
 
 export type AuthProvider = "preview" | "replit" | "oidc" | "local" | "app";
-export type InvitationEmailProvider = "disabled" | "log" | "resend";
+export type InvitationEmailProvider = "disabled" | "log" | "resend" | "smtp";
 export type RuntimeConfigIssue = {
   field: string;
   message: string;
@@ -44,7 +44,7 @@ function resolveSameSite() {
 
 function resolveInvitationEmailProvider(): InvitationEmailProvider {
   const configured = normalizeEnv(process.env.INVITATION_EMAIL_PROVIDER);
-  if (configured === "disabled" || configured === "log" || configured === "resend") {
+  if (configured === "disabled" || configured === "log" || configured === "resend" || configured === "smtp") {
     return configured;
   }
 
@@ -68,6 +68,12 @@ export const INVITATION_EMAIL_REPLY_TO =
   process.env.INVITATION_EMAIL_REPLY_TO?.trim() || undefined;
 export const RESEND_API_KEY = process.env.RESEND_API_KEY?.trim() || undefined;
 
+// SMTP
+export const SMTP_HOST = process.env.SMTP_HOST?.trim() || undefined;
+export const SMTP_PORT = parseInt(process.env.SMTP_PORT || "587", 10);
+export const SMTP_USER = process.env.SMTP_USER?.trim() || undefined;
+export const SMTP_PASS = process.env.SMTP_PASS?.trim() || undefined;
+
 export const OIDC_ISSUER_URL = process.env.OIDC_ISSUER_URL;
 export const OIDC_CLIENT_ID = process.env.OIDC_CLIENT_ID;
 export const OIDC_CLIENT_SECRET = process.env.OIDC_CLIENT_SECRET;
@@ -86,11 +92,6 @@ export const IS_PRODUCTION = process.env.NODE_ENV === "production";
 // Platform admin
 export const PLATFORM_ADMIN_SECRET = process.env.PLATFORM_ADMIN_SECRET?.trim() || undefined;
 
-// Stripe
-export const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY?.trim() || undefined;
-export const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET?.trim() || undefined;
-export const STRIPE_PRICE_ID = process.env.STRIPE_PRICE_ID?.trim() || undefined;
-export const STRIPE_ENABLED = !!STRIPE_SECRET_KEY;
 
 export function getRuntimeConfigIssues(): RuntimeConfigIssue[] {
   if (PREVIEW_MODE) {
@@ -176,6 +177,32 @@ export function getRuntimeConfigIssues(): RuntimeConfigIssue[] {
       issues.push({
         field: "RESEND_API_KEY",
         message: "Resend API key is required when INVITATION_EMAIL_PROVIDER=resend.",
+        level: "error",
+      });
+    }
+  }
+
+  if (INVITATION_EMAIL_PROVIDER === "smtp") {
+    if (!SMTP_HOST) {
+      issues.push({
+        field: "SMTP_HOST",
+        message: "SMTP host is required when INVITATION_EMAIL_PROVIDER=smtp.",
+        level: "error",
+      });
+    }
+
+    if (!SMTP_USER || !SMTP_PASS) {
+      issues.push({
+        field: "SMTP_USER / SMTP_PASS",
+        message: "SMTP credentials are required when INVITATION_EMAIL_PROVIDER=smtp.",
+        level: "error",
+      });
+    }
+
+    if (!INVITATION_EMAIL_FROM) {
+      issues.push({
+        field: "INVITATION_EMAIL_FROM",
+        message: "Sender address is required when INVITATION_EMAIL_PROVIDER=smtp.",
         level: "error",
       });
     }
