@@ -370,21 +370,22 @@ export default function PlanView() {
                 />
 
                 <div className="pointer-events-none absolute inset-0 grid" style={planning.boardGridStyle}>
-                  {planning.visibleDays.map((day, index) =>
-                    planning.resizePreview?.addedDays.includes(day) ? (
+                  {planning.visibleDays
+                    .map((day, index) => ({ day, column: index + 1 }))
+                    .filter(({ day }) => planning.resizePreview?.addedDays.includes(day))
+                    .map(({ day, column }) => (
                       <div
                         key={`preview-${day}`}
                         className={cn(
                           "rounded-none",
-                          planning.resizePreview.valid ? "planning-preview-valid" : "planning-preview-invalid",
+                          planning.resizePreview!.valid ? "planning-preview-valid" : "planning-preview-invalid",
                         )}
                         style={{
-                          gridColumn: `${index + 1}`,
+                          gridColumn: `${column}`,
                           gridRow: `1 / span ${planning.laneCount}`,
                         }}
                       />
-                    ) : null,
-                  )}
+                    ))}
                   {planning.visibleDays.map((day, index) => (
                     <DayColumnDropZone
                       key={day}
@@ -602,8 +603,8 @@ export default function PlanView() {
   const contextPanel = planning.selectedBlock ? selectedBlockPanel : teamContextPanel;
   const showMobileDetailsFocus = !!planning.selectedBlock && !isWideDesktop;
 
-  const mobileDetailsFocusCard = planning.selectedBlock ? (
-    <Card className="brand-panel flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl xl:hidden">
+  const mobileDetailsFocusCard = (
+    <Card className={cn("brand-panel flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl xl:hidden", !planning.selectedBlock && "hidden")}>
       <div className="planning-divider flex items-center justify-between gap-3 border-b px-3 py-3">
         <div className="min-w-0">
           <p className="text-base font-semibold brand-ink">Auftragsdetails</p>
@@ -643,7 +644,7 @@ export default function PlanView() {
         </div>
       </ScrollArea>
     </Card>
-  ) : null;
+  );
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3 p-3 lg:p-4">
@@ -813,7 +814,7 @@ export default function PlanView() {
             </ResizablePanelGroup>
           ) : (
             <>
-              {!backlogCollapsed && <div className="flex-none">{backlogExpandedPanel}</div>}
+              <div className={cn("flex-none", backlogCollapsed && "hidden")}>{backlogExpandedPanel}</div>
               <div className="min-h-0 flex-1">{calendarBoard}</div>
               <div className="flex-none max-h-[20rem]">{contextPanel}</div>
             </>

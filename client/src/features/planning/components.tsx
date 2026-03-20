@@ -642,7 +642,7 @@ export function ResizePreviewGhost({
 
 export function DragOverlayCard({ activeDrag }: { activeDrag: ActiveDrag | null }) {
   if (!activeDrag) {
-    return null;
+    return <div />;
   }
 
   if (activeDrag.type === "job") {
