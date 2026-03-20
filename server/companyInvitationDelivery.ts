@@ -6,6 +6,7 @@ import {
   RESEND_API_KEY,
 } from "./runtimeConfig.js";
 import { sendViaSMTP } from "./smtpTransport.js";
+import { escapeHtml, wrapEmailLayout, emailButton } from "./emailTemplates.js";
 
 export type InvitationEmailDeliveryStatus = "sent" | "logged" | "manual" | "failed";
 
@@ -21,15 +22,6 @@ type SendCompanyInvitationInput = {
   inviteUrl: string;
   invitedByName?: string | null;
 };
-
-function escapeHtml(value: string) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
 
 function getRoleLabel(role: "admin" | "employee") {
   return role === "admin" ? "Admin" : "Mitarbeiter";
@@ -47,10 +39,15 @@ function getTextBody(input: SendCompanyInvitationInput) {
   return [
     `Hallo ${input.invitation.firstName} ${input.invitation.lastName},`,
     "",
-    `${input.company.name} hat dich${inviter} als ${getRoleLabel(input.invitation.role)} zu Meisterplaner eingeladen.`,
+    `${input.company.name} hat dich${inviter} als ${getRoleLabel(input.invitation.role)} zu Meisterplaner eingeladen`,
+    "— der einfachen Einsatzplanung fuers Handwerk.",
     "",
     "Registriere dich ueber diesen Link:",
     input.inviteUrl,
+    "",
+    "Was ist Meisterplaner?",
+    "Meisterplaner hilft Handwerksbetrieben, Auftraege und",
+    "Mitarbeiter-Einsaetze einfach zu planen.",
     "",
     `Die Einladung ist gueltig bis ${input.invitation.expiresAt.toLocaleDateString("de-DE")}.`,
     "",
@@ -62,30 +59,51 @@ function getHtmlBody(input: SendCompanyInvitationInput) {
   const fullName = escapeHtml(`${input.invitation.firstName} ${input.invitation.lastName}`.trim());
   const companyName = escapeHtml(input.company.name);
   const inviter = input.invitedByName?.trim()
-    ? ` von ${escapeHtml(input.invitedByName.trim())}`
+    ? `${escapeHtml(input.invitedByName.trim())} von `
     : "";
-  const inviteUrl = escapeHtml(input.inviteUrl);
+  const inviteUrl = input.inviteUrl;
   const roleLabel = escapeHtml(getRoleLabel(input.invitation.role));
   const expiresAt = escapeHtml(input.invitation.expiresAt.toLocaleDateString("de-DE"));
 
-  return `
-    <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111827;">
-      <p>Hallo ${fullName},</p>
-      <p>${companyName} hat dich${inviter} als ${roleLabel} zu Meisterplaner eingeladen.</p>
-      <p>
-        <a
-          href="${inviteUrl}"
-          style="display:inline-block;padding:12px 18px;background:#111827;color:#ffffff;text-decoration:none;border-radius:8px;"
-        >
-          Einladung annehmen
-        </a>
-      </p>
-      <p>Oder kopiere diesen Link in deinen Browser:</p>
-      <p><a href="${inviteUrl}">${inviteUrl}</a></p>
-      <p>Die Einladung ist gueltig bis ${expiresAt}.</p>
-      <p>Wenn du diese Einladung nicht erwartet hast, kannst du diese E-Mail ignorieren.</p>
-    </div>
-  `.trim();
+  const body = `
+    <p style="font-size:16px;color:#111827;line-height:1.6;margin:0 0 16px;">
+      Hallo ${fullName},
+    </p>
+    <p style="font-size:15px;color:#374151;line-height:1.6;margin:0 0 20px;">
+      ${inviter}<strong>${companyName}</strong> hat dich als <strong>${roleLabel}</strong>
+      zu Meisterplaner eingeladen &mdash; der einfachen Einsatzplanung f&uuml;rs Handwerk.
+    </p>
+
+    ${emailButton("Einladung annehmen", inviteUrl)}
+
+    <p style="font-size:13px;color:#6B7280;line-height:1.5;margin:0 0 4px;">
+      Oder kopiere diesen Link in deinen Browser:
+    </p>
+    <p style="font-size:13px;color:#6B7280;word-break:break-all;margin:0 0 24px;">
+      <a href="${escapeHtml(inviteUrl)}" style="color:#2563EB;">${escapeHtml(inviteUrl)}</a>
+    </p>
+
+    <table role="presentation" cellpadding="0" cellspacing="0"
+           style="width:100%;border-top:1px solid #E5E7EB;margin:24px 0 0;padding:16px 0 0;">
+      <tr>
+        <td>
+          <p style="font-size:14px;font-weight:600;color:#111827;margin:0 0 4px;">
+            Was ist Meisterplaner?
+          </p>
+          <p style="font-size:14px;color:#6B7280;line-height:1.5;margin:0;">
+            Meisterplaner hilft Handwerksbetrieben, Auftr&auml;ge und
+            Mitarbeiter-Eins&auml;tze einfach zu planen &mdash; alles an einem Ort.
+          </p>
+        </td>
+      </tr>
+    </table>
+
+    <p style="font-size:13px;color:#9CA3AF;margin:20px 0 0;">
+      Die Einladung ist g&uuml;ltig bis ${expiresAt}. Wenn du diese Einladung
+      nicht erwartet hast, kannst du diese E-Mail ignorieren.
+    </p>`;
+
+  return wrapEmailLayout(body);
 }
 
 function truncateErrorMessage(value: string) {
@@ -136,7 +154,6 @@ async function sendViaResend(input: SendCompanyInvitationInput): Promise<Invitat
 export async function sendCompanyInvitationEmail(
   input: SendCompanyInvitationInput,
 ): Promise<InvitationEmailDeliveryResult> {
-  console.info("[email-debug] INVITATION_EMAIL_PROVIDER =", INVITATION_EMAIL_PROVIDER, "| raw env =", process.env.INVITATION_EMAIL_PROVIDER);
   if (INVITATION_EMAIL_PROVIDER === "disabled") {
     return {
       status: "manual",

@@ -4,8 +4,10 @@ import {
   INVITATION_EMAIL_PROVIDER,
   INVITATION_EMAIL_REPLY_TO,
   RESEND_API_KEY,
+  APP_BASE_URL,
 } from "./runtimeConfig.js";
 import { sendViaSMTP } from "./smtpTransport.js";
+import { escapeHtml, wrapEmailLayout, emailButton, emailInfoBox } from "./emailTemplates.js";
 import type { LocalEmployeeAccess } from "./storage.js";
 
 export type EmployeeAccessDeliveryStatus = "sent" | "logged" | "manual" | "failed" | "skipped";
@@ -24,47 +26,64 @@ type SendEmployeeAccessInput = {
   recipientName?: string | null;
 };
 
-function escapeHtml(value: string) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
+function getSubject(input: SendEmployeeAccessInput) {
+  return `${input.company.name}: Zugangsdaten fuer ${input.employee.firstName} ${input.employee.lastName}`;
 }
 
 function buildTextBody(input: SendEmployeeAccessInput) {
-  const recipient = input.recipientName?.trim() ? `${input.recipientName.trim()},` : "Hallo,";
+  const recipient = input.recipientName?.trim() ? `Hallo ${input.recipientName.trim()},` : "Hallo,";
+  const loginUrl = APP_BASE_URL ? `${APP_BASE_URL}/employee-login` : "";
 
   return [
     recipient,
     "",
-    `du hast fuer ${input.employee.firstName} ${input.employee.lastName} einen neuen Meisterplaner-Zugang erhalten.`,
+    `fuer ${input.employee.firstName} ${input.employee.lastName} wurde ein neuer Zugang`,
+    `bei ${input.company.name} eingerichtet.`,
     "",
-    `Betrieb: ${input.company.name}`,
-    `Betriebscode: ${input.access.companyAccessCode}`,
-    `Benutzername: ${input.access.loginId}`,
+    `Betriebscode:        ${input.access.companyAccessCode}`,
+    `Benutzername:        ${input.access.loginId}`,
     `Temporaeres Passwort: ${input.access.temporaryPassword}`,
     "",
-    "Bitte gib diese Daten vertraulich weiter. Beim ersten Login muss das Passwort geändert werden.",
-  ].join("\n");
+    loginUrl ? `Jetzt anmelden: ${loginUrl}` : "",
+    "",
+    "Beim ersten Login muss das Passwort geaendert werden.",
+    "Bitte gib diese Daten nur vertraulich weiter.",
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 function buildHtmlBody(input: SendEmployeeAccessInput) {
   const recipient = escapeHtml(input.recipientName?.trim() || "Hallo");
-  return `
-    <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111827;">
-      <p>${recipient},</p>
-      <p>du hast fuer <strong>${escapeHtml(`${input.employee.firstName} ${input.employee.lastName}`)}</strong> einen neuen Meisterplaner-Zugang erhalten.</p>
-      <table style="border-collapse:collapse;margin:16px 0;">
-        <tr><td style="padding:6px 12px 6px 0;"><strong>Betrieb</strong></td><td>${escapeHtml(input.company.name)}</td></tr>
-        <tr><td style="padding:6px 12px 6px 0;"><strong>Betriebscode</strong></td><td>${escapeHtml(input.access.companyAccessCode)}</td></tr>
-        <tr><td style="padding:6px 12px 6px 0;"><strong>Benutzername</strong></td><td>${escapeHtml(input.access.loginId)}</td></tr>
-        <tr><td style="padding:6px 12px 6px 0;"><strong>Temporaeres Passwort</strong></td><td>${escapeHtml(input.access.temporaryPassword)}</td></tr>
-      </table>
-      <p>Bitte gib diese Daten vertraulich weiter. Beim ersten Login muss das Passwort geändert werden.</p>
-    </div>
-  `.trim();
+  const employeeName = escapeHtml(`${input.employee.firstName} ${input.employee.lastName}`);
+  const companyName = escapeHtml(input.company.name);
+  const loginUrl = APP_BASE_URL ? `${APP_BASE_URL}/employee-login` : "#";
+
+  const body = `
+    <p style="font-size:16px;color:#111827;line-height:1.6;margin:0 0 16px;">
+      ${recipient},
+    </p>
+    <p style="font-size:15px;color:#374151;line-height:1.6;margin:0 0 20px;">
+      f&uuml;r <strong>${employeeName}</strong> wurde ein neuer Zugang
+      bei <strong>${companyName}</strong> eingerichtet.
+    </p>
+
+    ${emailInfoBox([
+      { label: "Betriebscode", value: input.access.companyAccessCode },
+      { label: "Benutzername", value: input.access.loginId },
+      { label: "Tempor\u00e4res Passwort", value: input.access.temporaryPassword },
+    ])}
+
+    ${emailButton("Jetzt anmelden", loginUrl)}
+
+    <p style="font-size:14px;color:#6B7280;line-height:1.5;margin:0 0 4px;">
+      Beim ersten Login muss das Passwort ge&auml;ndert werden.
+    </p>
+    <p style="font-size:14px;color:#6B7280;line-height:1.5;margin:0;">
+      Bitte gib diese Daten nur vertraulich weiter.
+    </p>`;
+
+  return wrapEmailLayout(body);
 }
 
 function truncateErrorMessage(value: string) {
@@ -90,7 +109,7 @@ async function sendViaResend(input: SendEmployeeAccessInput): Promise<EmployeeAc
       from: INVITATION_EMAIL_FROM,
       to: [input.recipientEmail],
       reply_to: INVITATION_EMAIL_REPLY_TO,
-      subject: `${input.company.name}: Zugangsdaten fuer ${input.employee.firstName} ${input.employee.lastName}`,
+      subject: getSubject(input),
       html: buildHtmlBody(input),
       text: buildTextBody(input),
     }),
@@ -167,7 +186,7 @@ export async function sendEmployeeAccessEmail(
 async function sendViaSMTPAccess(input: SendEmployeeAccessInput): Promise<EmployeeAccessDeliveryResult> {
   const result = await sendViaSMTP({
     to: input.recipientEmail!,
-    subject: `${input.company.name}: Zugangsdaten fuer ${input.employee.firstName} ${input.employee.lastName}`,
+    subject: getSubject(input),
     html: buildHtmlBody(input),
     text: buildTextBody(input),
   });

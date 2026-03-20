@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { z } from "zod";
 import { storage } from "./storage.js";
-import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth/index.js";
+import { setupAuth, registerAuthRoutes, isAuthenticated, authStorage } from "./replit_integrations/auth/index.js";
 import {
   isUserTenantConflict,
   USER_TENANT_CONFLICT_MESSAGE,
@@ -37,6 +37,7 @@ import {
 } from "./readCaches.js";
 import { isCompanyFrozen, trialDaysLeft } from "./billing.js";
 import { toDateStr } from "../shared/dates.js";
+import { sendWelcomeEmail } from "./welcomeEmailDelivery.js";
 
 import { toPublicEmployee, registerEmployeeRoutes } from "./routes/employees.js";
 import { registerJobRoutes } from "./routes/jobs.js";
@@ -204,6 +205,16 @@ export async function registerRoutes(
       });
 
       invalidateCompanyReadCaches(company.id);
+
+      // Fire-and-forget welcome email — don't block the setup response
+      authStorage.getUser(userId).then((user) => {
+        if (user?.email) {
+          sendWelcomeEmail({ company, admin: employee, adminEmail: user.email }).catch((err) =>
+            console.error("[welcome-email] failed:", err),
+          );
+        }
+      });
+
       return res.json({ employee: toPublicEmployee(employee), company });
     } catch (error) {
       if (userId && isUserTenantConflict(error)) {
