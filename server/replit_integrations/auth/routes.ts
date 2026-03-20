@@ -192,7 +192,7 @@ export function registerAuthRoutes(app: Express): void {
       }
 
       const existingUser = await authStorage.getUserByEmail(parsed.data.email);
-      console.info("[register-debug] email =", parsed.data.email, "| existingUser =", existingUser ? existingUser.id : "null");
+      console.info("[register-debug] email =", parsed.data.email, "| existingUser =", existingUser ? existingUser.id : "null", "| ts =", Date.now());
       if (existingUser) {
         return res.status(409).json({ message: "Diese E-Mail-Adresse ist bereits registriert." });
       }
