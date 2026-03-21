@@ -17,9 +17,8 @@ export function toDateStr(value: Date) {
   ).padStart(2, "0")}`;
 }
 
-function isWeekend(value: Date) {
-  const day = value.getDay();
-  return day === 0 || day === 6;
+function isSunday(value: Date) {
+  return value.getDay() === 0;
 }
 
 export function toStartOfWeek(value: Date) {
@@ -40,8 +39,8 @@ export function addCalendarDays(dateStr: string, amount: number) {
 export function getVisibleDays(weekStart: string, viewSpan: ViewSpan) {
   const days: string[] = [];
   const cursor = parseDateString(weekStart);
-  while (days.length < viewSpan * 5) {
-    if (!isWeekend(cursor)) {
+  while (days.length < viewSpan * 6) {
+    if (!isSunday(cursor)) {
       days.push(toDateStr(cursor));
     }
     cursor.setDate(cursor.getDate() + 1);

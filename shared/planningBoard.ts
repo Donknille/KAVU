@@ -104,9 +104,8 @@ export function toDateStr(value: Date) {
   ).padStart(2, "0")}`;
 }
 
-function isWeekend(value: Date) {
-  const day = value.getDay();
-  return day === 0 || day === 6;
+function isSunday(value: Date) {
+  return value.getDay() === 0;
 }
 
 export function getPlanningDaysInRange(startDate: string, endDate: string) {
@@ -115,7 +114,7 @@ export function getPlanningDaysInRange(startDate: string, endDate: string) {
   const end = parseDateString(endDate);
 
   while (cursor <= end) {
-    if (!isWeekend(cursor)) {
+    if (!isSunday(cursor)) {
       days.push(toDateStr(cursor));
     }
     cursor.setDate(cursor.getDate() + 1);
