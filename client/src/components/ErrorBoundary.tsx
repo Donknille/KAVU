@@ -30,14 +30,25 @@ export class ErrorBoundary extends Component<Props, State> {
             <p className="text-muted-foreground text-sm">
               {this.state.error?.message || "Ein unerwarteter Fehler ist aufgetreten."}
             </p>
-            <Button
-              onClick={() => {
-                this.setState({ hasError: false, error: null });
-                window.location.reload();
-              }}
-            >
-              Seite neu laden
-            </Button>
+            <div className="flex gap-3 justify-center">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  this.setState({ hasError: false, error: null });
+                  window.location.href = "/";
+                }}
+              >
+                Zur Startseite
+              </Button>
+              <Button
+                onClick={() => {
+                  this.setState({ hasError: false, error: null });
+                  window.location.reload();
+                }}
+              >
+                Seite neu laden
+              </Button>
+            </div>
           </div>
         </div>
       );
