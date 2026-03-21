@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
+import { cn } from "@/lib/utils";
 import {
   Sidebar,
   SidebarContent,
@@ -247,7 +248,10 @@ export function AppShell({ children, role, employee }: AppShellProps) {
             </div>
           )}
 
-          <main className="app-shell-scroll min-h-0 flex-1 overflow-y-auto">
+          <main className={cn(
+            "app-shell-scroll min-h-0 flex-1 overflow-y-auto",
+            role === "employee" && !isEmployeeAssignmentRoute && "pb-14 md:pb-0",
+          )}>
             {children}
           </main>
 
