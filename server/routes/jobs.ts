@@ -6,7 +6,9 @@ import type { AuthenticatedRequest } from "../types.js";
 import { invalidateCompanyReadCaches } from "../readCaches.js";
 import { requireNotFrozen } from "../billing.js";
 import { isAuthenticated } from "../replit_integrations/auth/index.js";
-import { insertJobSchema } from "../../shared/schema.js";
+import { insertJobSchema, assignments, assignmentWorkers, employees } from "../../shared/schema.js";
+import { db } from "../db.js";
+import { eq, and, inArray } from "drizzle-orm";
 
 export function registerJobRoutes(
   app: Express,
@@ -54,7 +56,42 @@ export function registerJobRoutes(
     asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
       const job = await storage.getJobForCompany(req.companyId, req.params.id);
       if (!job) return res.status(404).json({ message: "Not found" });
-      res.json(job);
+
+      // Fetch unique team members assigned to this job
+      const jobAssignments = await db
+        .select({ id: assignments.id })
+        .from(assignments)
+        .where(and(eq(assignments.companyId, req.companyId), eq(assignments.jobId, job.id)));
+
+      const assignmentIds = jobAssignments.map((a) => a.id);
+      let teamMembers: Array<{ id: string; firstName: string; lastName: string; color: string | null }> = [];
+
+      if (assignmentIds.length > 0) {
+        const workerRows = await db
+          .select({
+            id: employees.id,
+            firstName: employees.firstName,
+            lastName: employees.lastName,
+            color: employees.color,
+          })
+          .from(assignmentWorkers)
+          .innerJoin(employees, eq(assignmentWorkers.employeeId, employees.id))
+          .where(
+            and(
+              eq(assignmentWorkers.companyId, req.companyId),
+              inArray(assignmentWorkers.assignmentId, assignmentIds),
+            ),
+          );
+
+        const seen = new Set<string>();
+        teamMembers = workerRows.filter((w) => {
+          if (seen.has(w.id)) return false;
+          seen.add(w.id);
+          return true;
+        });
+      }
+
+      res.json({ ...job, teamMembers });
     }),
   );
 

@@ -4,6 +4,7 @@ import { authStorage } from "./storage.js";
 import { isAuthenticated } from "./replitAuth.js";
 import { invalidateLocalAuthIdentity } from "./replitAuth.js";
 import { hashPassword, verifyPassword } from "../../passwords.js";
+import { invalidateCompanyReadCaches } from "../../readCaches.js";
 
 // Constant-time dummy hash to prevent username enumeration via timing attacks.
 // Called even when a user is not found, so response time stays consistent.
@@ -312,6 +313,7 @@ export function registerAuthRoutes(app: Express): void {
         newPassword: parsed.data.newPassword,
       });
       invalidateLocalAuthIdentity(userId, "employee_access");
+      invalidateCompanyReadCaches(employee.companyId);
       return res.json({ employee: toPublicEmployee(employee) });
     } catch (error) {
       if (error instanceof Error && error.message === "Current password is invalid") {

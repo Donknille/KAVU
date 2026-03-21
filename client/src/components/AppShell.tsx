@@ -126,6 +126,7 @@ export function AppShell({ children, role, employee }: AppShellProps) {
               <SidebarTrigger
                 className="hidden h-8 w-8 md:inline-flex group-data-[collapsible=icon]:ml-0"
                 data-testid="button-sidebar-toggle-desktop"
+                aria-label="Seitenleiste ein-/ausblenden"
               />
             </div>
           </SidebarHeader>
@@ -207,6 +208,7 @@ export function AppShell({ children, role, employee }: AppShellProps) {
                   window.location.href = "/api/logout";
                 }}
                 data-testid="button-logout"
+                aria-label="Abmelden"
               >
                 <LogOut className="h-3.5 w-3.5" />
               </Button>
@@ -217,7 +219,7 @@ export function AppShell({ children, role, employee }: AppShellProps) {
 
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <header className="flex items-center gap-3 border-b px-3 py-2 md:hidden">
-            <SidebarTrigger data-testid="button-sidebar-toggle" />
+            <SidebarTrigger data-testid="button-sidebar-toggle" aria-label="Menü öffnen" />
             <div className="min-w-0 flex-1">
               <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                 {role === "admin" ? "Zentrale" : "Mitarbeiteransicht"}

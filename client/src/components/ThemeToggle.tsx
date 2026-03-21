@@ -45,6 +45,7 @@ export function ThemeToggle({ className, compact = false }: ThemeToggleProps) {
             className,
           )}
           data-testid="button-theme-toggle"
+          aria-label="Farbschema wechseln"
         >
           <CurrentIcon className="h-4 w-4" />
           {!compact && <span>{currentOption.label}</span>}

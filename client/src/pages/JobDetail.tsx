@@ -20,6 +20,7 @@ import {
   ArrowLeft,
   MapPin,
   User,
+  Users,
   Phone,
   FileText,
   Clock,
@@ -193,6 +194,31 @@ export default function JobDetail() {
               </div>
             )}
           </Card>
+
+          {job.teamMembers && job.teamMembers.length > 0 && (
+            <Card className="p-4">
+              <h3 className="font-medium text-sm mb-2 text-muted-foreground flex items-center gap-1.5">
+                <Users className="w-4 h-4" />
+                Team ({job.teamMembers.length})
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {job.teamMembers.map((member: any) => (
+                  <div
+                    key={member.id}
+                    className="flex items-center gap-2 bg-muted rounded-full px-3 py-1"
+                  >
+                    <div
+                      className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
+                      style={{ backgroundColor: member.color || "#6b7280" }}
+                    >
+                      {member.firstName?.charAt(0)}{member.lastName?.charAt(0)}
+                    </div>
+                    <span className="text-sm">{member.firstName} {member.lastName}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
 
           {job.internalNote && (
             <Card className="p-4">
