@@ -88,7 +88,7 @@ export function AppShell({ children, role, employee }: AppShellProps) {
       : activeItem?.title;
 
   const style = {
-    "--sidebar-width": "13rem",
+    "--sidebar-width": "14rem",
     "--sidebar-width-icon": "3.25rem",
   };
 
@@ -113,16 +113,8 @@ export function AppShell({ children, role, employee }: AppShellProps) {
                       Vorschau
                     </span>
                   )}
-                  {role === "employee" && (
-                    <ConnectionStatusBadge
-                      isOnline={isOnline}
-                      compact
-                      className="hidden lg:inline-flex"
-                    />
-                  )}
                 </div>
               </div>
-              <ThemeToggle compact className="group-data-[collapsible=icon]:hidden" />
               <SidebarTrigger
                 className="hidden h-8 w-8 md:inline-flex group-data-[collapsible=icon]:ml-0"
                 data-testid="button-sidebar-toggle-desktop"
@@ -182,7 +174,7 @@ export function AppShell({ children, role, employee }: AppShellProps) {
                     <ConnectionStatusBadge
                       isOnline={isOnline}
                       compact
-                      className="hidden md:inline-flex lg:hidden"
+                      className="hidden md:inline-flex"
                     />
                   )}
                 </div>
@@ -200,6 +192,7 @@ export function AppShell({ children, role, employee }: AppShellProps) {
                   </Link>
                 </Button>
               )}
+              <ThemeToggle compact className="group-data-[collapsible=icon]:hidden" />
               <Button
                 variant="ghost"
                 size="icon"
