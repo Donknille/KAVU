@@ -194,16 +194,12 @@ export function getPlanningBoardLayout({
   const columnMinWidth = isMobile ? (viewSpan === 2 ? 104 : 76) : viewSpan === 2 ? 58 : 36;
   const laneHeight = isMobile ? (viewSpan === 2 ? 88 : 64) : viewSpan === 2 ? 48 : 34;
   const boardMinHeight = isMobile
-    ? viewSpan === 2
-      ? "clamp(18rem, 40vh, 24rem)"
-      : "clamp(14rem, 30vh, 18rem)"
-    : viewSpan === 2
-      ? "clamp(13.5rem, 28vh, 17rem)"
-      : "clamp(11rem, 22vh, 14rem)";
+    ? viewSpan === 2 ? "18rem" : "14rem"
+    : viewSpan === 2 ? "13.5rem" : "11rem";
 
   const boardGridStyle: CSSProperties = {
     gridTemplateColumns: `repeat(${visibleDayCount}, minmax(${columnMinWidth}px, 1fr))`,
-    gridTemplateRows: `repeat(${laneCount}, minmax(${laneHeight}px, 1fr))`,
+    gridTemplateRows: `repeat(${laneCount}, ${laneHeight}px)`,
     minHeight: boardMinHeight,
   };
 

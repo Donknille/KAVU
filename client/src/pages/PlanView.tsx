@@ -322,7 +322,7 @@ export default function PlanView() {
             </Badge>
           </div>
         </div>
-        <div className="min-h-0 overflow-x-auto">
+        <div className="min-h-0 overflow-auto flex-1">
           <div className="w-full">
             <div
               className="planning-divider grid gap-px border-b bg-[var(--brand-icon-shell-bg)]"
