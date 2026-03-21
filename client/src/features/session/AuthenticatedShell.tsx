@@ -13,6 +13,7 @@ const ChangePasswordPage = lazy(() => import("@/pages/ChangePasswordPage"));
 const SetupPage = lazy(() => import("@/pages/SetupPage"));
 const AdminDashboard = lazy(() => import("@/pages/AdminDashboard"));
 const EmployeeDayView = lazy(() => import("@/pages/EmployeeDayView"));
+const EmployeeSchedulePage = lazy(() => import("@/pages/EmployeeSchedulePage"));
 const AssignmentDetail = lazy(() => import("@/pages/AssignmentDetail"));
 const PlanView = lazy(() => import("@/pages/PlanView"));
 const JobsList = lazy(() => import("@/pages/JobsList"));
@@ -53,7 +54,7 @@ function EmployeeRouter({ employee, company }: EmployeeRouterProps) {
       <Switch>
         <Route path="/" component={EmployeeDayView} />
         <Route path="/assignment/:id" component={AssignmentDetail} />
-        <Route path="/assignments" component={EmployeeDayView} />
+        <Route path="/assignments" component={EmployeeSchedulePage} />
         <Route path="/account/password">
           {() => <ChangePasswordPage employee={employee} company={company} required={false} />}
         </Route>

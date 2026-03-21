@@ -265,36 +265,19 @@ export default function EmployeeDayView() {
         )}
       </section>
 
-      <section className="space-y-3">
-        <div className="flex items-center gap-2">
-          <CalendarDays className="h-4 w-4 text-[#173d66]" />
-          <h2 className="font-semibold text-[#173d66]">Später geplant</h2>
+      {upcomingAssignments.length > 0 && (
+        <div className="text-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1.5 text-xs text-muted-foreground"
+            onClick={() => navigate("/assignments")}
+          >
+            <CalendarDays className="h-3.5 w-3.5" />
+            {upcomingAssignments.length} weitere Einsätze anzeigen
+          </Button>
         </div>
-
-        {upcomingAssignments.length === 0 ? (
-          <Card className="brand-soft-card rounded-[26px] p-6 text-center">
-            <p className="font-medium text-[#173d66]/76">Keine weiteren Einsätze geplant</p>
-            <p className="mt-1 text-sm text-[#173d66]/64">
-              Zukuenftige Einsätze werden in dieser Uebersicht angezeigt.
-            </p>
-          </Card>
-        ) : (
-          <div className="space-y-3">
-            {upcomingAssignments.map((assignment) => (
-              <div key={assignment.id} className="space-y-1">
-                <p className="px-1 text-xs font-medium uppercase tracking-[0.14em] text-[#173d66]/58">
-                  {formatDate(assignment.assignmentDate)}
-                </p>
-                <AssignmentCard
-                  assignment={assignment}
-                  emphasizeTeam
-                  onClick={() => navigate(`/assignment/${assignment.id}`)}
-                />
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+      )}
     </div>
   );
 }

@@ -18,6 +18,7 @@ import {
   Archive,
   Briefcase,
   Calendar,
+  CalendarDays,
 
   CreditCard,
   KeyRound,
@@ -49,6 +50,7 @@ const adminItems = [
 
 const employeeItems = [
   { title: "Heute", url: "/", icon: Sun },
+  { title: "Einsätze", url: "/assignments", icon: CalendarDays },
 ];
 
 function isItemActive(
