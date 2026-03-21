@@ -33,6 +33,7 @@ import { BillingBanner } from "@/components/BillingBanner";
 import { useEmployeeOfflineQueue } from "@/features/employee-offline/EmployeeOfflineQueueProvider";
 import { getPreviewEmployeeToken } from "@/lib/preview-session";
 import { useCurrentSession } from "@/features/session/useCurrentSession";
+import { CookieSettingsButton } from "@/components/CookieConsent";
 
 interface AppShellProps {
   children: ReactNode;
@@ -154,6 +155,7 @@ export function AppShell({ children, role, employee }: AppShellProps) {
           </SidebarContent>
 
           <SidebarFooter className="border-t p-3">
+            <CookieSettingsButton className="mb-2 flex items-center text-[10px] text-muted-foreground hover:text-foreground transition-colors group-data-[collapsible=icon]:hidden" />
             <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-xs font-bold">
                 {employee?.firstName?.charAt(0)}

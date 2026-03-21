@@ -5,6 +5,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PageFallback } from "@/components/PageFallback";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { CookieConsent } from "@/components/CookieConsent";
 import { AuthenticatedShell } from "@/features/session/AuthenticatedShell";
 import { useAuth } from "@/hooks/use-auth";
 import { applyPreviewIdentityFromUrl } from "@/lib/preview-session";
@@ -80,6 +81,7 @@ export default function AppWrapper() {
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <Toaster />
+          <CookieConsent />
           <App />
         </TooltipProvider>
       </QueryClientProvider>

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { BrandMark } from "@/components/BrandMark";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { CookieSettingsButton } from "@/components/CookieConsent";
 import {
   getInviteToken,
   getInvitationRoleLabel,
@@ -250,7 +251,8 @@ export default function LandingPage() {
       </main>
 
       <footer className="border-t border-[#173d66]/10 px-4 py-6 text-center text-sm text-[#173d66]/58">
-        &copy; {new Date().getFullYear()} Meisterplaner
+        <p>&copy; {new Date().getFullYear()} Meisterplaner</p>
+        <CookieSettingsButton className="mt-2 inline-flex items-center text-xs text-[#173d66]/50 hover:text-[#173d66]/80 transition-colors" />
       </footer>
     </div>
   );
