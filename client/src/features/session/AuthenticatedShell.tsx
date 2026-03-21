@@ -126,16 +126,15 @@ export function AuthenticatedShell() {
     );
   }
 
-  if (meData.requiresPasswordChange) {
-    return (
-      <Suspense fallback={<PageFallback />}>
-        <ChangePasswordPage employee={meData.employee} company={meData.company} required />
-      </Suspense>
-    );
-  }
-
   const employee = meData.employee;
   if (!employee?.role) {
+    if (meData.requiresPasswordChange) {
+      return (
+        <Suspense fallback={<PageFallback />}>
+          <ChangePasswordPage employee={meData.employee} company={meData.company} required />
+        </Suspense>
+      );
+    }
     return (
       <SessionStatePanel
         title="Rolle konnte nicht bestimmt werden"
@@ -150,7 +149,11 @@ export function AuthenticatedShell() {
   return (
     <EmployeeOfflineQueueProvider employeeId={employee.id} enabled={role === "employee"}>
       <AppShell role={role} employee={employee}>
-        {role === "admin" ? (
+        {meData.requiresPasswordChange ? (
+          <Suspense fallback={<PageFallback />}>
+            <ChangePasswordPage employee={meData.employee} company={meData.company} required />
+          </Suspense>
+        ) : role === "admin" ? (
           <AdminRouter />
         ) : (
           <EmployeeRouter employee={meData.employee} company={meData.company} />
