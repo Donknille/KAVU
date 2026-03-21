@@ -18,7 +18,7 @@ import {
   Archive,
   Briefcase,
   Calendar,
-  ClipboardList,
+
   CreditCard,
   KeyRound,
   LogOut,
@@ -49,7 +49,6 @@ const adminItems = [
 
 const employeeItems = [
   { title: "Heute", url: "/", icon: Sun },
-  { title: "Einsätze", url: "/assignments", icon: ClipboardList },
 ];
 
 function isItemActive(
