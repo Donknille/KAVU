@@ -146,9 +146,9 @@ export function AppShell({ children, role, employee }: AppShellProps) {
             </SidebarGroup>
           </SidebarContent>
 
-          <SidebarFooter className="border-t p-3">
+          <SidebarFooter className="border-t p-3 space-y-2">
             <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-xs font-bold">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold">
                 {employee?.firstName?.charAt(0)}
                 {employee?.lastName?.charAt(0)}
               </div>
@@ -156,39 +156,39 @@ export function AppShell({ children, role, employee }: AppShellProps) {
                 <p className="truncate text-xs font-medium">
                   {employee?.firstName} {employee?.lastName}
                 </p>
-                <div className="flex items-center gap-1.5">
-                  <p className="text-[10px] text-muted-foreground">
-                    {role === "admin" ? "Admin" : "Mitarbeiter"}
-                  </p>
-                  {role === "employee" && conflictCount > 0 && (
-                    <span className="rounded-full border border-red-200 bg-red-50 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-red-700">
-                      {conflictCount} Konflikt
-                    </span>
-                  )}
-                  {role === "employee" && conflictCount === 0 && pendingCount > 0 && (
-                    <span className="rounded-full border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-amber-700">
-                      {pendingCount} Ausstehend
-                    </span>
-                  )}
-                  {role === "employee" && (
-                    <ConnectionStatusBadge
-                      isOnline={isOnline}
-                      compact
-                      className="hidden md:inline-flex"
-                    />
-                  )}
-                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  {role === "admin" ? "Admin" : "Mitarbeiter"}
+                </p>
               </div>
+            </div>
+            <div className="flex items-center gap-1.5 group-data-[collapsible=icon]:justify-center">
+              {role === "employee" && conflictCount > 0 && (
+                <span className="rounded-full border border-red-200 bg-red-50 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-red-700 group-data-[collapsible=icon]:hidden">
+                  {conflictCount} Konflikt
+                </span>
+              )}
+              {role === "employee" && conflictCount === 0 && pendingCount > 0 && (
+                <span className="rounded-full border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-amber-700 group-data-[collapsible=icon]:hidden">
+                  {pendingCount} Ausstehend
+                </span>
+              )}
+              {role === "employee" && (
+                <ConnectionStatusBadge
+                  isOnline={isOnline}
+                  compact
+                  className="group-data-[collapsible=icon]:hidden"
+                />
+              )}
+              <div className="flex-1" />
               {role === "employee" && (
                 <Button
                   asChild
                   variant={isEmployeePasswordRoute ? "secondary" : "ghost"}
-                  size="sm"
-                  className="h-7 gap-1.5 px-2 text-xs group-data-[collapsible=icon]:h-7 group-data-[collapsible=icon]:w-7 group-data-[collapsible=icon]:px-0"
+                  size="icon"
+                  className="h-7 w-7 shrink-0"
                 >
-                  <Link href="/account/password" data-testid="button-open-change-password">
-                    <KeyRound className="h-3.5 w-3.5 shrink-0" />
-                    <span className="group-data-[collapsible=icon]:hidden">Passwort</span>
+                  <Link href="/account/password" data-testid="button-open-change-password" aria-label="Passwort ändern">
+                    <KeyRound className="h-3.5 w-3.5" />
                   </Link>
                 </Button>
               )}
