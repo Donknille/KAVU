@@ -49,13 +49,14 @@ export default function BillingPage() {
   function safeRedirect(url: string) {
     try {
       const parsed = new URL(url, window.location.origin);
-      if (parsed.origin !== window.location.origin && !parsed.hostname.endsWith(".stripe.com")) {
-        console.error("Blocked redirect to untrusted origin:", parsed.origin);
+      const ALLOWED_STRIPE_HOSTS = ["checkout.stripe.com", "billing.stripe.com"];
+      if (parsed.origin !== window.location.origin && !ALLOWED_STRIPE_HOSTS.includes(parsed.hostname)) {
+        console.error("Blocked redirect to untrusted origin");
         return;
       }
       window.location.href = url;
     } catch {
-      console.error("Blocked redirect to invalid URL:", url);
+      console.error("Blocked redirect to invalid URL");
     }
   }
 

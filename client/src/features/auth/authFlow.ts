@@ -12,6 +12,16 @@ export async function refreshAuthState() {
   await queryClient.invalidateQueries({ queryKey: [QK.ME] });
 }
 
+function isSafeRedirect(url: string): boolean {
+  if (url.startsWith("/") && !url.startsWith("//")) return true;
+  try {
+    const parsed = new URL(url, window.location.origin);
+    return parsed.origin === window.location.origin;
+  } catch {
+    return false;
+  }
+}
+
 type RedirectingAuthMutationOptions<TData, TVariables> = {
   mutationFn: (payload: TVariables) => Promise<TData>;
   redirectTo: string;
@@ -31,7 +41,7 @@ export function useRedirectingAuthMutation<TData = unknown, TVariables = void>({
     mutationFn,
     onSuccess: async () => {
       await refreshAuthState();
-      window.location.href = redirectTo;
+      window.location.href = isSafeRedirect(redirectTo) ? redirectTo : "/";
     },
     onError: (error) => {
       toast({

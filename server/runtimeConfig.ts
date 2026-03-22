@@ -39,7 +39,7 @@ function resolveSameSite() {
     return configured;
   }
 
-  return "lax";
+  return process.env.NODE_ENV === "production" ? "strict" : "lax";
 }
 
 function resolveInvitationEmailProvider(): InvitationEmailProvider {

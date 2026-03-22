@@ -19,7 +19,8 @@ async function throwIfResNotOk(res: Response) {
       }
     }
     const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    const message = res.status >= 500 ? "Ein interner Fehler ist aufgetreten" : `${res.status}: ${text}`;
+    throw new Error(message);
   }
 }
 

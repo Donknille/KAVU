@@ -171,7 +171,7 @@ export async function sendCompanyInvitationEmail(
           companyName: input.company.name,
           invitationId: input.invitation.id,
           recipient: input.invitation.email,
-          inviteUrl: input.inviteUrl,
+          inviteUrl: process.env.NODE_ENV !== "production" ? input.inviteUrl : "[redacted]",
         },
         null,
         2,

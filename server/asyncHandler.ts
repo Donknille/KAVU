@@ -6,7 +6,7 @@ export function asyncHandler(
 ): RequestHandler {
   return (req: Request, res: Response, next: NextFunction) => {
     fn(req as AuthenticatedRequest, res, next).catch((error: unknown) => {
-      console.error("Unhandled route error:", error);
+      console.error("Unhandled route error:", error instanceof Error ? error.message : String(error));
       if (!res.headersSent) {
         res.status(500).json({ message: "Internal error" });
       }

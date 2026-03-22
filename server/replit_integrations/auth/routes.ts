@@ -132,7 +132,7 @@ export function registerAuthRoutes(app: Express): void {
     app.get("/api/preview/as-admin", (_req, res) => {
       res.setHeader(
         "Set-Cookie",
-        `${PREVIEW_EMPLOYEE_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`,
+        `${PREVIEW_EMPLOYEE_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax; HttpOnly`,
       );
       res.redirect(withPreviewEmployeeParam("/", PREVIEW_ADMIN_TOKEN));
     });
@@ -167,7 +167,7 @@ export function registerAuthRoutes(app: Express): void {
 
         res.setHeader(
           "Set-Cookie",
-          `${PREVIEW_EMPLOYEE_COOKIE}=${encodeURIComponent(employee.id)}; Path=/; SameSite=Lax`,
+          `${PREVIEW_EMPLOYEE_COOKIE}=${encodeURIComponent(employee.id)}; Path=/; SameSite=Lax; HttpOnly`,
         );
         res.redirect(
           withPreviewEmployeeParam(
@@ -193,7 +193,6 @@ export function registerAuthRoutes(app: Express): void {
       }
 
       const existingUser = await authStorage.getUserByEmail(parsed.data.email);
-      console.info("[register-debug] email =", parsed.data.email, "| existingUser =", existingUser ? existingUser.id : "null", "| ts =", Date.now());
       if (existingUser) {
         return res.status(409).json({ message: "Diese E-Mail-Adresse ist bereits registriert." });
       }
