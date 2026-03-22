@@ -1,7 +1,11 @@
+import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -44,6 +48,9 @@ export default function JobDetail() {
     enabled: !!id,
   });
 
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState<Record<string, string>>({});
+
   const updateMutation = useMutation({
     mutationFn: async (data: any) => {
       return apiRequest("PATCH", `/api/jobs/${id}`, data);
@@ -51,9 +58,31 @@ export default function JobDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QK.JOBS, id] });
       queryClient.invalidateQueries({ queryKey: [QK.DASHBOARD] });
+      queryClient.invalidateQueries({ queryKey: [QK.JOBS] });
       toast({ title: "Auftrag aktualisiert" });
+      setIsEditing(false);
     },
   });
+
+  function startEditing() {
+    if (!job) return;
+    setEditForm({
+      title: job.title ?? "",
+      customerName: job.customerName ?? "",
+      description: job.description ?? "",
+      internalNote: job.internalNote ?? "",
+      addressStreet: job.addressStreet ?? "",
+      addressZip: job.addressZip ?? "",
+      addressCity: job.addressCity ?? "",
+      contactName: job.contactName ?? "",
+      contactPhone: job.contactPhone ?? "",
+    });
+    setIsEditing(true);
+  }
+
+  function saveEdits() {
+    updateMutation.mutate(editForm);
+  }
 
   if (isLoading) {
     return (
@@ -113,6 +142,15 @@ export default function JobDetail() {
             <Calendar className="w-3 h-3 mr-1" />
             Im Einsatzplan
           </Button>
+          <Button
+            variant={isEditing ? "secondary" : "outline"}
+            size="sm"
+            className="text-xs h-7"
+            onClick={isEditing ? () => setIsEditing(false) : startEditing}
+          >
+            <FileText className="w-3 h-3 mr-1" />
+            {isEditing ? "Abbrechen" : "Bearbeiten"}
+          </Button>
         </div>
       </div>
 
@@ -156,55 +194,106 @@ export default function JobDetail() {
         </TabsList>
 
         <TabsContent value="details" className="space-y-3 mt-3">
-          <Card className="p-4 space-y-3">
-            {address && (
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-start gap-2">
-                  <MapPin className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
-                  <span className="text-sm">{address}</span>
+          {isEditing ? (
+            <Card className="p-4 space-y-4">
+              <div>
+                <Label>Auftragsbezeichnung</Label>
+                <Input value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} />
+              </div>
+              <div>
+                <Label>Kundenname</Label>
+                <Input value={editForm.customerName} onChange={(e) => setEditForm({ ...editForm, customerName: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <Label>Straße</Label>
+                  <Input value={editForm.addressStreet} onChange={(e) => setEditForm({ ...editForm, addressStreet: e.target.value })} />
                 </div>
-                <a
-                  href={getNavigationUrl(address)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Button variant="secondary" size="sm" className="gap-1 shrink-0">
-                    <Navigation className="w-3.5 h-3.5" />
-                    Nav
-                  </Button>
-                </a>
+                <div>
+                  <Label>PLZ</Label>
+                  <Input value={editForm.addressZip} onChange={(e) => setEditForm({ ...editForm, addressZip: e.target.value })} />
+                </div>
+                <div>
+                  <Label>Stadt</Label>
+                  <Input value={editForm.addressCity} onChange={(e) => setEditForm({ ...editForm, addressCity: e.target.value })} />
+                </div>
               </div>
-            )}
-            {job.contactName && (
-              <div className="flex items-center gap-2">
-                <User className="w-4 h-4 text-muted-foreground shrink-0" />
-                <span className="text-sm">{job.contactName}</span>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label>Ansprechpartner</Label>
+                  <Input value={editForm.contactName} onChange={(e) => setEditForm({ ...editForm, contactName: e.target.value })} />
+                </div>
+                <div>
+                  <Label>Telefon</Label>
+                  <Input value={editForm.contactPhone} onChange={(e) => setEditForm({ ...editForm, contactPhone: e.target.value })} />
+                </div>
               </div>
-            )}
-            {job.contactPhone && (
-              <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-muted-foreground shrink-0" />
-                <a href={`tel:${job.contactPhone}`} className="text-sm text-primary underline">
-                  {job.contactPhone}
-                </a>
+              <div>
+                <Label>Beschreibung</Label>
+                <Textarea value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} />
               </div>
-            )}
-            {job.description && (
-              <div className="flex items-start gap-2">
-                <FileText className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
-                <span className="text-sm">{job.description}</span>
+              <div>
+                <Label>Interne Notiz</Label>
+                <Textarea value={editForm.internalNote} onChange={(e) => setEditForm({ ...editForm, internalNote: e.target.value })} />
               </div>
-            )}
-            {job.startDate && (
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-muted-foreground shrink-0" />
-                <span className="text-sm">
-                  {formatDate(job.startDate)}
-                  {job.endDate && ` - ${formatDate(job.endDate)}`}
-                </span>
+              <div className="flex gap-2">
+                <Button onClick={saveEdits} disabled={updateMutation.isPending}>
+                  {updateMutation.isPending ? "Wird gespeichert..." : "Speichern"}
+                </Button>
+                <Button variant="outline" onClick={() => setIsEditing(false)}>Abbrechen</Button>
               </div>
-            )}
-          </Card>
+            </Card>
+          ) : (
+            <Card className="p-4 space-y-3">
+              {address && (
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start gap-2">
+                    <MapPin className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
+                    <span className="text-sm">{address}</span>
+                  </div>
+                  <a
+                    href={getNavigationUrl(address)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Button variant="secondary" size="sm" className="gap-1 shrink-0">
+                      <Navigation className="w-3.5 h-3.5" />
+                      Nav
+                    </Button>
+                  </a>
+                </div>
+              )}
+              {job.contactName && (
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <span className="text-sm">{job.contactName}</span>
+                </div>
+              )}
+              {job.contactPhone && (
+                <div className="flex items-center gap-2">
+                  <Phone className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <a href={`tel:${job.contactPhone}`} className="text-sm text-primary underline">
+                    {job.contactPhone}
+                  </a>
+                </div>
+              )}
+              {job.description && (
+                <div className="flex items-start gap-2">
+                  <FileText className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
+                  <span className="text-sm">{job.description}</span>
+                </div>
+              )}
+              {job.startDate && (
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <span className="text-sm">
+                    {formatDate(job.startDate)}
+                    {job.endDate && ` - ${formatDate(job.endDate)}`}
+                  </span>
+                </div>
+              )}
+            </Card>
+          )}
 
           {job.teamMembers && job.teamMembers.length > 0 && (
             <Card className="p-4">

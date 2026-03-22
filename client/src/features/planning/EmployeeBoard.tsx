@@ -142,7 +142,8 @@ export const EmployeeBoard = memo(function EmployeeBoard({
   onJobClick,
   isDragActive,
 }: EmployeeBoardProps) {
-  const gridCols = `8rem repeat(${visibleDays.length}, minmax(3.5rem, 1fr))`;
+  const colWidth = visibleDays.length > 14 ? "4.5rem" : "6rem";
+  const gridCols = `8rem repeat(${visibleDays.length}, ${colWidth})`;
 
   // Collect all jobs for legend
   const allJobs: PlanJob[] = [];

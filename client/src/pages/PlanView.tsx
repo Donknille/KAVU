@@ -39,7 +39,7 @@ import { usePlanningBoard } from "@/features/planning/usePlanningBoard";
 import { VirtualStack } from "@/features/planning/virtual";
 import { EmployeeBoard } from "@/features/planning/EmployeeBoard";
 import { PlanOverviewList } from "@/features/planning/PlanOverviewList";
-import { formatRange, parseDateString, toDateStr } from "@/features/planning/utils";
+import { formatCompactDate, formatRange, parseDateString, toDateStr } from "@/features/planning/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/BrandMark";
@@ -919,6 +919,42 @@ export default function PlanView() {
           void planning.submitCreateJob();
         }}
       />
+
+      <AlertDialog
+        open={planning.pendingEmployeeDrop !== null}
+        onOpenChange={(open) => { if (!open) planning.setPendingEmployeeDrop(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Wie viele Tage einplanen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              <strong>{planning.pendingEmployeeDrop?.job.jobNumber}</strong> ab {planning.pendingEmployeeDrop?.startDate ? formatCompactDate(planning.pendingEmployeeDrop.startDate) : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex flex-wrap gap-2 py-2">
+            {[1, 2, 3, 5, 10].map((days) => (
+              <Button
+                key={days}
+                variant="outline"
+                size="sm"
+                className="h-9 min-w-[4rem]"
+                onClick={() => {
+                  const drop = planning.pendingEmployeeDrop;
+                  if (drop) {
+                    planning.setPendingEmployeeDrop(null);
+                    void planning.createMultiDayBlock(drop.job, drop.startDate, days, drop.employeeId);
+                  }
+                }}
+              >
+                {days === 1 ? "1 Tag" : days === 5 ? "1 Woche" : days === 10 ? "2 Wochen" : `${days} Tage`}
+              </Button>
+            ))}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog
         open={planning.pendingRemoveBlock !== null}

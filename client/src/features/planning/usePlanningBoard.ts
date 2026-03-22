@@ -52,6 +52,7 @@ import {
   addCalendarDays,
   formatCompactDate,
   formatRange,
+  parseDateString,
   getAssignmentsForWorkerAdd,
   getAssignmentsForWorkerRemove,
   getEmployeeLabel,
@@ -74,6 +75,11 @@ export function usePlanningBoard() {
   const [jobForm, setJobForm] = useState<JobForm>(EMPTY_JOB_FORM);
   const [busyLabel, setBusyLabel] = useState<string | null>(null);
   const [placingJob, setPlacingJob] = useState<PlanJob | null>(null);
+  const [pendingEmployeeDrop, setPendingEmployeeDrop] = useState<{
+    job: PlanJob;
+    employeeId: string;
+    startDate: string;
+  } | null>(null);
   const [backlogSearch, setBacklogSearch] = useState("");
   const [teamSearch, setTeamSearch] = useState("");
   const [teamFilter, setTeamFilter] = useState<TeamFilterMode>("all");
@@ -408,6 +414,54 @@ export function usePlanningBoard() {
       toast({
         title: "Auftrag eingeplant",
         description: `${job.jobNumber} liegt jetzt am ${formatCompactDate(targetDate)} im Kalender.`,
+      });
+    });
+  }
+
+  async function createMultiDayBlock(job: PlanJob, startDate: string, dayCount: number, employeeId?: string) {
+    // Generate business days (skip Sundays) from startDate
+    const days: string[] = [];
+    const cursor = parseDateString(startDate);
+    while (days.length < dayCount) {
+      if (cursor.getDay() !== 0) { // Skip Sundays
+        const d = toDateStr(cursor);
+        if (!getJobConflictDates(job.id, [d]).length) {
+          days.push(d);
+        }
+      }
+      cursor.setDate(cursor.getDate() + 1);
+    }
+
+    if (days.length === 0) return;
+
+    await runBusyAction("Auftrag wird eingeplant...", async () => {
+      const created: PlanAssignment[] = [];
+      for (const day of days) {
+        const assignment = await apiRequestJson<PlanAssignment>("POST", "/api/assignments", {
+          jobId: job.id,
+          assignmentDate: day,
+        });
+        created.push(assignment);
+      }
+
+      if (employeeId && created.length > 0) {
+        await apiRequest("POST", "/api/planning/assign-workers", {
+          assignmentIds: created.map((a) => a.id),
+          employeeId,
+          mode: "add",
+        });
+      }
+
+      const emp = employeeId ? activeEmployees.find((e) => e.id === employeeId) : undefined;
+      updateAssignmentsCache((current) => [
+        ...current,
+        ...created.map((a) => ({ ...a, job, workers: emp ? [emp] : [] })),
+      ]);
+      updateBacklogCache((current) => current.filter((e) => e.id !== job.id));
+
+      toast({
+        title: "Auftrag eingeplant",
+        description: `${job.jobNumber} für ${days.length} Tag${days.length > 1 ? "e" : ""} eingeplant.`,
       });
     });
   }
@@ -989,32 +1043,12 @@ export function usePlanningBoard() {
     try {
       const overDate = resolveDropDate(event, currentDrag);
 
-      // Drop job onto employee-cell: create block + assign employee
+      // Drop job onto employee-cell: open multi-day dialog
       if (currentDrag.type === "job" && overData?.dropType === "employee-cell") {
-        const { date, employeeId } = overData;
-        await runBusyAction("Auftrag wird eingeplant...", async () => {
-          // 1. Create assignment
-          const createdAssignment = await apiRequestJson<PlanAssignment>("POST", "/api/assignments", {
-            jobId: currentDrag.job.id,
-            assignmentDate: date,
-          });
-          // 2. Assign employee to the new assignment
-          await apiRequest("POST", "/api/planning/assign-workers", {
-            assignmentIds: [createdAssignment.id],
-            employeeId,
-            mode: "add",
-          });
-          // 3. Update caches
-          const emp = activeEmployees.find((e) => e.id === employeeId);
-          updateAssignmentsCache((current) => [
-            ...current,
-            { ...createdAssignment, job: currentDrag.job, workers: emp ? [emp] : [] },
-          ]);
-          updateBacklogCache((current) => current.filter((entry) => entry.id !== currentDrag.job.id));
-          toast({
-            title: "Mitarbeiter eingeplant",
-            description: `${emp?.firstName ?? ""} arbeitet jetzt am ${formatCompactDate(date)} an ${currentDrag.job.jobNumber}.`,
-          });
+        setPendingEmployeeDrop({
+          job: currentDrag.job,
+          employeeId: overData.employeeId,
+          startDate: overData.date,
         });
         return;
       }
@@ -1190,6 +1224,9 @@ export function usePlanningBoard() {
     setShowCreateJobDialog: setCreateJobDialogOpen,
     submitCreateJob: createBacklogJob,
     employeeRows,
+    pendingEmployeeDrop,
+    setPendingEmployeeDrop,
+    createMultiDayBlock,
     placingJob,
     setPlacingJob,
     placeJobOnDate,

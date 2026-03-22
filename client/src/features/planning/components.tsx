@@ -2,6 +2,7 @@ import { memo, useEffect, useState } from "react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import {
+  FileText,
   GripVertical,
   LockKeyhole,
   MapPin,
@@ -1217,6 +1218,13 @@ export function SelectedBlockPanel({
             ? "Bei laufenden Aufträgen bleiben vergangene oder bereits begonnene Tage unverändert. Weitere Mitarbeitende können ab heute für offene Tage ergänzt oder entfernt werden."
             : "Mehrere Einsätze pro Tag sind möglich. Reihenfolge und Uhrzeiten sollten in der Disposition beachtet werden."}
         </div>
+
+        <a href={`/jobs/${selectedBlock.jobId}`} className="block">
+          <Button variant="outline" className="w-full gap-2" type="button">
+            <FileText className="h-4 w-4" />
+            Auftragsdetails bearbeiten
+          </Button>
+        </a>
 
         {selectedBlock.canDelete && (
           <Button variant="destructive" className="w-full gap-2" onClick={onRemoveBlock}>
