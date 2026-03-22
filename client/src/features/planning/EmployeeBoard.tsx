@@ -79,6 +79,8 @@ function DroppableCell({
     >
       {cell?.jobs.map((job, idx) => {
         const color = getJobColor(job.id);
+        const status = cell.statuses[idx] ?? "planned";
+        const statusColor = status === "planned" ? "#9ca3af" : status === "completed" ? "#22c55e" : "#3b82f6";
         return (
           <div
             key={`${job.id}-${idx}`}
@@ -88,9 +90,16 @@ function DroppableCell({
               color,
               borderLeft: `3px solid ${color}`,
             }}
-            title={`${job.jobNumber} | ${job.title}`}
+            title={`${job.jobNumber} | ${job.title}\n${job.customerName ?? ""}\nStatus: ${status}`}
           >
+            <span
+              className="inline-block h-1.5 w-1.5 rounded-full mr-0.5 align-middle"
+              style={{ backgroundColor: statusColor }}
+            />
             {job.jobNumber}
+            <span className="ml-0.5 opacity-50">
+              {job.title.length > 10 ? `${job.title.slice(0, 10)}…` : job.title}
+            </span>
           </div>
         );
       })}

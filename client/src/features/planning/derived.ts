@@ -225,6 +225,7 @@ export function getPlanningBoardLayout({
 export type EmployeeDayCell = {
   jobs: PlanJob[];
   blockIds: string[];
+  statuses: string[];
   isFree: boolean;
 };
 
@@ -272,6 +273,7 @@ export function buildEmployeeRows(
           {
             jobs: dayBlocks.map((b) => b.job),
             blockIds: dayBlocks.map((b) => b.id),
+            statuses: dayBlocks.map((b) => b.status),
             isFree,
           },
         ];

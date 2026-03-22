@@ -61,7 +61,7 @@ export default function PlanView() {
   const [backlogCollapsed, setBacklogCollapsed] = useState(false);
   const [isWideDesktop, setIsWideDesktop] = useState(false);
   const [viewMode, setViewMode] = useState<"board" | "employee" | "overview">(() =>
-    typeof window !== "undefined" && window.innerWidth < 768 ? "overview" : "board",
+    typeof window !== "undefined" && window.innerWidth < 768 ? "overview" : "employee",
   );
   const [overviewDay, setOverviewDay] = useState(() => toDateStr(new Date()));
 
@@ -842,6 +842,11 @@ export default function PlanView() {
                 />
               </Card>
             </div>
+            {planning.selectedBlock && (
+              <div className="hidden w-[22rem] shrink-0 xl:block">
+                {selectedBlockPanel}
+              </div>
+            )}
           </div>
         )}
         <div className={cn("flex min-h-0 flex-1 flex-col gap-2", viewMode !== "board" && "hidden")}>
