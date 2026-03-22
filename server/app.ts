@@ -1,4 +1,5 @@
 import express, { type NextFunction, type Request, type Response } from "express";
+import compression from "compression";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { createServer } from "http";
@@ -12,6 +13,7 @@ import { assertRuntimeConfig, AUTH_PROVIDER, TRUST_PROXY } from "./runtimeConfig
 assertRuntimeConfig();
 
 const app = express();
+app.use(compression());
 
 if (TRUST_PROXY) {
   app.set("trust proxy", 1);

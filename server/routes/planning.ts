@@ -10,7 +10,7 @@ import {
 } from "../readCaches.js";
 import { requireNotFrozen } from "../billing.js";
 import { isAuthenticated } from "../replit_integrations/auth/index.js";
-import { insertAssignmentSchema } from "../../shared/schema.js";
+import { insertAssignmentSchema, type Assignment } from "../../shared/schema.js";
 import {
   createPlanningBoardReadModel,
   getPlanningDaysInRange,
@@ -146,7 +146,7 @@ export function registerPlanningRoutes(
       }
 
       await Promise.all(
-        assignmentsForCompany.filter(Boolean).map((assignment) =>
+        assignmentsForCompany.filter((a): a is Assignment => !!a).map((assignment) =>
           parsed.data.mode === "add"
             ? storage.addWorkerToAssignment({
                 companyId: req.companyId,

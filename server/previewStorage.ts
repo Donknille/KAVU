@@ -1155,6 +1155,12 @@ export class PreviewStorage {
     );
   }
 
+  async getAssignmentsForCompanyByIds(companyId: string, ids: string[]) {
+    return ids.map((id) =>
+      this.data.assignments.find((a) => a.id === id && a.companyId === companyId),
+    );
+  }
+
   async getAssignmentsByDate(companyId: string, date: string) {
     const assignments = this.data.assignments.filter(
       (assignment) =>

@@ -174,6 +174,7 @@ export interface IStorage {
 
   getAssignment(id: string): Promise<Assignment | undefined>;
   getAssignmentForCompany(companyId: string, id: string): Promise<Assignment | undefined>;
+  getAssignmentsForCompanyByIds(companyId: string, ids: string[]): Promise<(Assignment | undefined)[]>;
   getAssignmentsByDate(companyId: string, date: string): Promise<any[]>;
   getAssignmentsByDateRange(companyId: string, startDate: string, endDate: string): Promise<any[]>;
   getAssignmentsByEmployee(companyId: string, employeeId: string, date?: string, endDate?: string): Promise<any[]>;
@@ -955,6 +956,16 @@ export class DatabaseStorage implements IStorage {
       .from(assignments)
       .where(and(eq(assignments.id, id), eq(assignments.companyId, companyId)));
     return assignment;
+  }
+
+  async getAssignmentsForCompanyByIds(companyId: string, ids: string[]): Promise<(Assignment | undefined)[]> {
+    if (ids.length === 0) return [];
+    const rows = await db
+      .select()
+      .from(assignments)
+      .where(and(eq(assignments.companyId, companyId), inArray(assignments.id, ids)));
+    const byId = new Map(rows.map((r) => [r.id, r]));
+    return ids.map((id) => byId.get(id));
   }
 
   async getAssignmentsByDate(companyId: string, date: string): Promise<any[]> {

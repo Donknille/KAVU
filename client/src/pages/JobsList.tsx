@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Plus, Search, Briefcase } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { JOB_CATEGORY_LABELS, JOB_STATUS_LABELS } from "@/lib/constants";
 import { QK } from "@/lib/queryKeys";
@@ -27,12 +27,12 @@ export default function JobsList() {
     queryKey: [QK.JOBS],
   });
 
-  const filtered = jobs?.filter((j: any) => {
+  const filtered = useMemo(() => jobs?.filter((j: any) => {
     const matchesSearch = !search || [j.title, j.customerName, j.addressCity, j.jobNumber]
       .some((field) => field?.toLowerCase().includes(search.toLowerCase()));
     const matchesStatus = statusFilter === "all" || j.status === statusFilter;
     return matchesSearch && matchesStatus;
-  });
+  }), [jobs, search, statusFilter]);
 
   return (
     <div className="p-4 space-y-4 max-w-3xl mx-auto">

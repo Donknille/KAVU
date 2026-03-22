@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -26,12 +26,12 @@ export default function ArchiveSearch() {
     queryKey: [QK.JOBS_ARCHIVED],
   });
 
-  const filtered = jobs?.filter((j: any) => {
+  const filtered = useMemo(() => jobs?.filter((j: any) => {
     const matchesSearch = !search || [j.title, j.customerName, j.addressCity, j.jobNumber]
       .some((field) => field?.toLowerCase().includes(search.toLowerCase()));
     const matchesStatus = statusFilter === "all" || j.status === statusFilter;
     return matchesSearch && matchesStatus;
-  });
+  }), [jobs, search, statusFilter]);
 
   return (
     <div className="p-4 space-y-4 max-w-3xl mx-auto">

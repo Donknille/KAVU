@@ -77,7 +77,7 @@ async function getAuthorizedAssignment(
 
 async function getCompanyAssignments(companyId: string, assignmentIds: string[]) {
   const uniqueIds = [...new Set(assignmentIds)];
-  return Promise.all(uniqueIds.map((assignmentId) => storage.getAssignmentForCompany(companyId, assignmentId)));
+  return storage.getAssignmentsForCompanyByIds(companyId, uniqueIds);
 }
 
 export function registerAssignmentRoutes(
