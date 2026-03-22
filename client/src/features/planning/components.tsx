@@ -63,9 +63,11 @@ import {
 export const BacklogJobCard = memo(function BacklogJobCard({
   job,
   compact,
+  onClickPlace,
 }: {
   job: PlanJob;
   compact: boolean;
+  onClickPlace?: (job: PlanJob) => void;
 }) {
   const {
     attributes,
@@ -86,11 +88,13 @@ export const BacklogJobCard = memo(function BacklogJobCard({
     <button
       ref={setNodeRef}
       type="button"
+      onClick={onClickPlace ? () => onClickPlace(job) : undefined}
       className={cn(
         "brand-soft-card w-full rounded-xl text-left transition",
         compact ? "min-h-[5rem] p-2" : "min-h-[6.75rem] p-2.5",
         "hover:border-[color:var(--brand-highlight-border)] hover:shadow-[0_16px_30px_rgba(16,38,62,0.1)]",
-        isDragging && "opacity-60"
+        isDragging && "opacity-60",
+        onClickPlace && "cursor-pointer",
       )}
       style={{
         transform: CSS.Translate.toString(transform),

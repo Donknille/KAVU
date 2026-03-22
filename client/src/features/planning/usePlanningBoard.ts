@@ -72,6 +72,7 @@ export function usePlanningBoard() {
   const [showCreateJobDialog, setShowCreateJobDialog] = useState(false);
   const [jobForm, setJobForm] = useState<JobForm>(EMPTY_JOB_FORM);
   const [busyLabel, setBusyLabel] = useState<string | null>(null);
+  const [placingJob, setPlacingJob] = useState<PlanJob | null>(null);
   const [backlogSearch, setBacklogSearch] = useState("");
   const [teamSearch, setTeamSearch] = useState("");
   const [teamFilter, setTeamFilter] = useState<TeamFilterMode>("all");
@@ -1084,6 +1085,22 @@ export function usePlanningBoard() {
     }
   }, [selectedBlock]);
 
+  const placeJobOnDate = useCallback(async (targetDate: string) => {
+    if (!placingJob) return;
+    const job = placingJob;
+    setPlacingJob(null);
+    await runBusyAction("Platziere Auftrag...", () => createBlockFromBacklog(job, targetDate));
+  }, [placingJob, createBlockFromBacklog]);
+
+  useEffect(() => {
+    if (!placingJob) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setPlacingJob(null);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [placingJob]);
+
   return {
     activeDrag,
     activeEmployees,
@@ -1094,6 +1111,7 @@ export function usePlanningBoard() {
     boardBackgroundStyle,
     boardGridStyle,
     busyLabel,
+    dragOverDate,
     isLoadingBoard,
     collisionDetection,
     getEmployeeAvailability,
@@ -1135,5 +1153,8 @@ export function usePlanningBoard() {
     updateJobForm,
     setShowCreateJobDialog: setCreateJobDialogOpen,
     submitCreateJob: createBacklogJob,
+    placingJob,
+    setPlacingJob,
+    placeJobOnDate,
   };
 }

@@ -192,7 +192,7 @@ export function getPlanningBoardLayout({
   laneCount: number;
 }) {
   const columnMinWidth = isMobile ? (viewSpan === 2 ? 104 : 76) : viewSpan === 2 ? 58 : 36;
-  const laneHeight = isMobile ? (viewSpan === 2 ? 88 : 64) : viewSpan === 2 ? 48 : 34;
+  const laneHeight = isMobile ? (viewSpan === 2 ? 88 : 64) : viewSpan === 2 ? 56 : 40;
   const boardMinHeight = isMobile
     ? viewSpan === 2 ? "18rem" : "14rem"
     : viewSpan === 2 ? "13.5rem" : "11rem";

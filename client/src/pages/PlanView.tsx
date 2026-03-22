@@ -273,7 +273,7 @@ export default function PlanView() {
                 items={planning.backlogList}
                 itemHeight={108}
                 className="min-h-0 flex-1 overflow-y-auto pr-1"
-                renderItem={(job) => <BacklogJobCard key={job.id} job={job} compact={false} />}
+                renderItem={(job) => <BacklogJobCard key={job.id} job={job} compact={false} onClickPlace={planning.setPlacingJob} />}
               />
             )}
           </div>
@@ -322,6 +322,21 @@ export default function PlanView() {
             </Badge>
           </div>
         </div>
+        {planning.placingJob && (
+          <div className="flex items-center justify-between gap-2 border-b bg-[#68d5c8]/10 px-3 py-2">
+            <p className="text-sm font-medium text-[#173d66]">
+              Klicke auf einen Tag um <span className="font-bold">{planning.placingJob.title}</span> zu platzieren
+            </p>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={() => planning.setPlacingJob(null)}
+            >
+              Abbrechen
+            </Button>
+          </div>
+        )}
         <div className="min-h-0 overflow-auto flex-1">
           <div className="w-full">
             <div
@@ -332,11 +347,14 @@ export default function PlanView() {
                 <div
                   key={header.day}
                   className={cn(
-                    "planning-board-header min-w-0 px-1.5 py-1.5 brand-ink",
+                    "planning-board-header min-w-0 px-1.5 py-1.5 brand-ink transition-colors",
                     header.isPreviewDay &&
                       (header.previewTone === "valid" ? "planning-preview-valid" : "planning-preview-invalid"),
                     header.isToday && "brand-highlight",
+                    planning.dragOverDate === header.day && "bg-[#68d5c8]/20 ring-1 ring-inset ring-[#68d5c8]",
+                    planning.placingJob && "cursor-pointer hover:bg-[#68d5c8]/15",
                   )}
+                  onClick={planning.placingJob ? () => planning.placeJobOnDate(header.day) : undefined}
                 >
                   <p className="text-[9px] font-semibold uppercase tracking-[0.14em] brand-ink-muted">
                     {header.weekdayLabel}
@@ -369,7 +387,29 @@ export default function PlanView() {
                   style={planning.boardBackgroundStyle}
                 />
 
-                <div className="pointer-events-none absolute inset-0 grid" style={planning.boardGridStyle}>
+                <div className="relative grid h-full" style={planning.boardGridStyle}>
+                  {planning.blocks.map((block) => (
+                    <PlanningBlockCard
+                      key={block.id}
+                      block={block}
+                      compact
+                      overview={isOverviewMode}
+                      readableCompact={readableCompactBlocks}
+                      employeeDropActive={planning.activeDrag?.type === "employee"}
+                      selected={planning.selectedBlock?.id === block.id}
+                      onSelectBlock={handleSelectBlock}
+                    />
+                  ))}
+                  <ResizePreviewGhost preview={planning.resizePreview} compact />
+                </div>
+
+                <div
+                  className={cn(
+                    "absolute inset-0 grid",
+                    planning.activeDrag ? "pointer-events-auto z-20" : "pointer-events-none",
+                  )}
+                  style={planning.boardGridStyle}
+                >
                   {planning.visibleDays
                     .map((day, index) => ({ day, column: index + 1 }))
                     .filter(({ day }) => planning.resizePreview?.addedDays.includes(day))
@@ -377,7 +417,7 @@ export default function PlanView() {
                       <div
                         key={`preview-${day}`}
                         className={cn(
-                          "rounded-none",
+                          "rounded-none pointer-events-none",
                           planning.resizePreview!.valid ? "planning-preview-valid" : "planning-preview-invalid",
                         )}
                         style={{
@@ -401,22 +441,6 @@ export default function PlanView() {
                       }
                     />
                   ))}
-                </div>
-
-                <div className="relative grid h-full" style={planning.boardGridStyle}>
-                  {planning.blocks.map((block) => (
-                    <PlanningBlockCard
-                      key={block.id}
-                      block={block}
-                      compact
-                      overview={isOverviewMode}
-                      readableCompact={readableCompactBlocks}
-                      employeeDropActive={planning.activeDrag?.type === "employee"}
-                      selected={planning.selectedBlock?.id === block.id}
-                      onSelectBlock={handleSelectBlock}
-                    />
-                  ))}
-                  <ResizePreviewGhost preview={planning.resizePreview} compact />
                 </div>
               </div>
             </div>
