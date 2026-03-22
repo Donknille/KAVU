@@ -22,6 +22,7 @@ import {
   resolveDropDateForTarget,
 } from "@/features/planning/dnd";
 import {
+  buildEmployeeRows,
   buildTeamOverview,
   buildTeamSections,
   EMPTY_PLANNING_BOARD,
@@ -1058,6 +1059,11 @@ export function usePlanningBoard() {
     [activeDrag, buildResizePreview, dragOverDate],
   );
 
+  const employeeRows = useMemo(
+    () => buildEmployeeRows(activeEmployees, blocks, visibleDays),
+    [activeEmployees, blocks, visibleDays],
+  );
+
   const removeEmployeeFromSelected = useCallback((employeeId: string, selection?: WorkerDaySelection) => {
     if (selectedBlock) {
       return removeEmployeeFromBlock(selectedBlock, employeeId, selection);
@@ -1153,6 +1159,7 @@ export function usePlanningBoard() {
     updateJobForm,
     setShowCreateJobDialog: setCreateJobDialogOpen,
     submitCreateJob: createBacklogJob,
+    employeeRows,
     placingJob,
     setPlacingJob,
     placeJobOnDate,

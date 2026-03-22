@@ -3,6 +3,7 @@ import type {
   PlanAssignment,
   PlanEmployee,
   PlanJob,
+  PlanningBlock,
   PlanningBoardResponse,
   ViewSpan,
 } from "@/features/planning/types";
@@ -217,4 +218,71 @@ export function getPlanningBoardLayout({
     boardGridStyle,
     boardBackgroundStyle,
   };
+}
+
+// --- Employee Board (Mitarbeiter-Ansicht) ---
+
+export type EmployeeDayCell = {
+  jobs: PlanJob[];
+  blockIds: string[];
+  isFree: boolean;
+};
+
+export type EmployeeRow = {
+  employee: PlanEmployee;
+  cells: Map<string, EmployeeDayCell>;
+  assignedDayCount: number;
+  freeDayCount: number;
+};
+
+export function buildEmployeeRows(
+  employees: PlanEmployee[],
+  blocks: PlanningBlock[],
+  visibleDays: string[],
+): EmployeeRow[] {
+  // Pre-index: for each employee, which blocks cover which days
+  const empDayBlocks = new Map<string, Map<string, PlanningBlock[]>>();
+
+  for (const block of blocks) {
+    for (const coverage of block.workerCoverage) {
+      let dayMap = empDayBlocks.get(coverage.employee.id);
+      if (!dayMap) {
+        dayMap = new Map();
+        empDayBlocks.set(coverage.employee.id, dayMap);
+      }
+      for (const day of coverage.days) {
+        const list = dayMap.get(day) ?? [];
+        list.push(block);
+        dayMap.set(day, list);
+      }
+    }
+  }
+
+  return employees.map((emp) => {
+    const dayMap = empDayBlocks.get(emp.id);
+    let assignedDayCount = 0;
+
+    const cells = new Map<string, EmployeeDayCell>(
+      visibleDays.map((day) => {
+        const dayBlocks = dayMap?.get(day) ?? [];
+        const isFree = dayBlocks.length === 0;
+        if (!isFree) assignedDayCount++;
+        return [
+          day,
+          {
+            jobs: dayBlocks.map((b) => b.job),
+            blockIds: dayBlocks.map((b) => b.id),
+            isFree,
+          },
+        ];
+      }),
+    );
+
+    return {
+      employee: emp,
+      cells,
+      assignedDayCount,
+      freeDayCount: visibleDays.length - assignedDayCount,
+    };
+  });
 }

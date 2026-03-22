@@ -37,6 +37,7 @@ import {
 import { type ViewSpan } from "@/features/planning/types";
 import { usePlanningBoard } from "@/features/planning/usePlanningBoard";
 import { VirtualStack } from "@/features/planning/virtual";
+import { EmployeeBoard } from "@/features/planning/EmployeeBoard";
 import { PlanOverviewList } from "@/features/planning/PlanOverviewList";
 import { formatRange, parseDateString, toDateStr } from "@/features/planning/utils";
 import { Badge } from "@/components/ui/badge";
@@ -59,7 +60,7 @@ export default function PlanView() {
   const backlogPanelRef = useRef<ImperativePanelHandle | null>(null);
   const [backlogCollapsed, setBacklogCollapsed] = useState(false);
   const [isWideDesktop, setIsWideDesktop] = useState(false);
-  const [viewMode, setViewMode] = useState<"board" | "overview">(() =>
+  const [viewMode, setViewMode] = useState<"board" | "employee" | "overview">(() =>
     typeof window !== "undefined" && window.innerWidth < 768 ? "overview" : "board",
   );
   const [overviewDay, setOverviewDay] = useState(() => toDateStr(new Date()));
@@ -766,22 +767,24 @@ export default function PlanView() {
             ))}
           </div>
 
-          <Button
-            variant={viewMode === "overview" ? "default" : "outline"}
-            size="sm"
-            className="brand-outline-control h-8 gap-1.5 px-2.5"
-            onClick={() => setViewMode((m) => (m === "board" ? "overview" : "board"))}
-            title={viewMode === "board" ? "Tagesübersicht" : "Planungsboard"}
-          >
-            {viewMode === "board" ? (
-              <LayoutList className="h-4 w-4" />
-            ) : (
-              <CalendarDays className="h-4 w-4" />
-            )}
-            <span className="hidden sm:inline">
-              {viewMode === "board" ? "Übersicht" : "Board"}
-            </span>
-          </Button>
+          <div className="brand-outline-chip flex items-center gap-0.5 rounded-full border p-0.5">
+            {([
+              { id: "board" as const, icon: CalendarDays, label: "Aufträge" },
+              { id: "employee" as const, icon: Users, label: "Team" },
+              { id: "overview" as const, icon: LayoutList, label: "Liste" },
+            ]).map((mode) => (
+              <Button
+                key={mode.id}
+                variant={viewMode === mode.id ? "default" : "ghost"}
+                size="sm"
+                className="h-7 gap-1 rounded-full px-2 text-[11px]"
+                onClick={() => setViewMode(mode.id)}
+              >
+                <mode.icon className="h-3 w-3" />
+                <span className="hidden sm:inline">{mode.label}</span>
+              </Button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -796,6 +799,43 @@ export default function PlanView() {
         </div>
       ) : null}
 
+      {viewMode === "employee" ? (
+        <div className="min-h-0 flex-1">
+          <Card className="brand-panel flex h-full min-h-0 flex-col overflow-hidden rounded-3xl">
+            <div className="planning-divider flex items-center justify-between gap-3 border-b px-3 py-2.5">
+              <div className="min-w-0">
+                <p className="brand-kicker">Team-Ansicht</p>
+                <p className="mt-1 truncate text-sm font-semibold brand-ink">
+                  Mitarbeiter-Einsatzplan {rangeLabel}
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Badge variant="outline" className="brand-outline-chip rounded-full px-2 py-0.5 text-[11px] font-medium">
+                  {planning.activeEmployees.length} Mitarbeiter
+                </Badge>
+                <Badge variant="outline" className="brand-outline-chip rounded-full px-2 py-0.5 text-[11px] font-medium">
+                  {planning.blocks.length} Aufträge
+                </Badge>
+              </div>
+            </div>
+            <div className="min-h-0 flex-1 overflow-auto">
+              <EmployeeBoard
+                employeeRows={planning.employeeRows}
+                visibleDays={planning.visibleDays}
+                dayHeaders={dayHeaders}
+                onCellClick={(employeeId, day) => {
+                  // TODO Phase 2: Dialog zum Zuweisen öffnen
+                  planning.setSelectedBlockId(null);
+                }}
+                onJobClick={(blockId) => {
+                  planning.setSelectedBlockId(blockId);
+                }}
+              />
+            </div>
+          </Card>
+        </div>
+      ) : null}
+
       <DndContext
         sensors={planning.sensors}
         collisionDetection={planning.collisionDetection}
@@ -804,7 +844,7 @@ export default function PlanView() {
         onDragStart={planning.handleDragStart}
         onDragEnd={planning.handleDragEnd}
       >
-        <div className={cn("flex min-h-0 flex-1 flex-col gap-2", viewMode === "overview" && "hidden")}>
+        <div className={cn("flex min-h-0 flex-1 flex-col gap-2", viewMode !== "board" && "hidden")}>
           {showMobileDetailsFocus ? (
             mobileDetailsFocusCard
           ) : isWideDesktop ? (
