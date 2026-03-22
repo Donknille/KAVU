@@ -580,37 +580,49 @@ export default function PlanView() {
 
   const selectedBlockPanel = useMemo(
     () => (
-      <Card className="brand-panel flex h-full min-h-0 flex-col overflow-hidden rounded-3xl">
-        <div className="planning-divider border-b p-3">
-          <p className="brand-kicker">Auftrag</p>
-          <p className="mt-1 text-sm font-semibold brand-ink">Details und Teamzuordnung</p>
-          <p className="text-xs brand-ink-soft">
-            Änderungen bleiben neben dem Kalender und nicht in einer separaten Seite.
-          </p>
-        </div>
-        <ScrollArea className="min-h-0 flex-1">
-          <div className="p-3">
-            <SelectedBlockPanel
-              selectedBlock={planning.selectedBlock}
-              availableEmployees={planning.activeEmployees}
-              availableStartDates={selectedBlockMoveDates}
-              getEmployeeAvailability={planning.getEmployeeAvailability}
-              onAssignEmployee={(employeeId, selection) => {
-                void planning.assignEmployeeToSelected(employeeId, selection);
-              }}
-              onMoveBlock={(targetDate) => {
-                void planning.moveSelectedBlock(targetDate);
-              }}
-              onRemoveEmployee={(employeeId, selection) => {
-                void planning.removeEmployeeFromSelected(employeeId, selection);
-              }}
-              onRemoveBlock={() => {
-                void planning.removeSelectedBlock();
-              }}
-            />
+      <div className="flex h-full min-h-0 flex-col gap-3">
+        <Card className="brand-panel flex flex-col overflow-hidden rounded-3xl">
+          <div className="planning-divider flex items-center justify-between gap-2 border-b p-3">
+            <div>
+              <p className="brand-kicker">Auftrag</p>
+              <p className="mt-1 text-sm font-semibold brand-ink">Details und Teamzuordnung</p>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="brand-outline-control h-7 gap-1 rounded-full px-2 text-[11px]"
+              onClick={() => planning.setSelectedBlockId(null)}
+            >
+              <X className="h-3 w-3" />
+              Schliessen
+            </Button>
           </div>
-        </ScrollArea>
-      </Card>
+          <ScrollArea className="min-h-0 max-h-[45vh]">
+            <div className="p-3">
+              <SelectedBlockPanel
+                selectedBlock={planning.selectedBlock}
+                availableEmployees={planning.activeEmployees}
+                availableStartDates={selectedBlockMoveDates}
+                getEmployeeAvailability={planning.getEmployeeAvailability}
+                onAssignEmployee={(employeeId, selection) => {
+                  void planning.assignEmployeeToSelected(employeeId, selection);
+                }}
+                onMoveBlock={(targetDate) => {
+                  void planning.moveSelectedBlock(targetDate);
+                }}
+                onRemoveEmployee={(employeeId, selection) => {
+                  void planning.removeEmployeeFromSelected(employeeId, selection);
+                }}
+                onRemoveBlock={() => {
+                  void planning.removeSelectedBlock();
+                }}
+              />
+            </div>
+          </ScrollArea>
+        </Card>
+        {teamContextPanel}
+      </div>
     ),
     [
       planning.activeEmployees,
@@ -620,7 +632,9 @@ export default function PlanView() {
       planning.removeEmployeeFromSelected,
       planning.removeSelectedBlock,
       planning.selectedBlock,
+      planning.setSelectedBlockId,
       selectedBlockMoveDates,
+      teamContextPanel,
     ],
   );
 
