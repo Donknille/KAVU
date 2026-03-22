@@ -104,7 +104,7 @@ export default function AdminAuthPage({ mode }: AdminAuthPageProps) {
       asideItems={[
         "Anmeldung mit E-Mail-Adresse und Passwort",
         "Sofortiger Zugriff auf Planung, Aufträge und Mitarbeitende",
-        "Einladungen werden im Anmeldeprozess automatisch uebernommen",
+        "Einladungen werden im Anmeldeprozess automatisch übernommen",
       ]}
       footer={
         <div className="grid gap-2 sm:grid-cols-2">

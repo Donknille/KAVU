@@ -52,7 +52,7 @@ export function InstallAppCard() {
           <div className="space-y-1">
             <p className="text-sm font-semibold text-[#173d66]">Meisterplaner auf dem Gerät speichern</p>
             <p className="text-sm text-[#173d66]/72">
-              Öffnen Sie die Mitarbeiteransicht direkt ueber den Startbildschirm und greifen Sie schneller auf aktuelle Einsätze zu.
+              Öffnen Sie die Mitarbeiteransicht direkt über den Startbildschirm und greifen Sie schneller auf aktuelle Einsätze zu.
             </p>
           </div>
         </div>

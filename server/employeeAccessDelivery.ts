@@ -195,7 +195,7 @@ async function sendViaSMTPAccess(input: SendEmployeeAccessInput): Promise<Employ
     return {
       status: "failed",
       delivered: false,
-      message: `Versand ueber SMTP fehlgeschlagen: ${result.error}`,
+      message: `Versand über SMTP fehlgeschlagen: ${result.error}`,
     };
   }
 

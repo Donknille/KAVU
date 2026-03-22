@@ -28,7 +28,7 @@ export function formatPlannedWindow(assignment: AssignmentScheduleLike | null | 
   const end = assignment?.plannedEndTime?.slice(0, 5);
 
   if (!start) {
-    return "Ohne Uhrzeit";
+    return "Flexible Ankunft";
   }
 
   return end ? `${start} - ${end}` : start;

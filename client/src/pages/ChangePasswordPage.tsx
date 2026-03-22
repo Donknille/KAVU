@@ -41,7 +41,7 @@ export default function ChangePasswordPage({
 
     if (newPassword !== confirmPassword) {
       toast({
-        title: "Passwoerter stimmen nicht ueberein",
+        title: "Passwörter stimmen nicht überein",
         variant: "destructive",
       });
       return;
@@ -92,13 +92,13 @@ export default function ChangePasswordPage({
           </div>
           <div>
             <h1 className="text-xl font-bold">
-              {required ? "Passwort jetzt festlegen" : "Passwort aendern"}
+              {required ? "Passwort jetzt festlegen" : "Passwort ändern"}
             </h1>
             <p className="text-sm text-muted-foreground">
               {required
                 ? employee
                   ? `${employee.firstName} ${employee.lastName} arbeitet jetzt in ${company?.name ?? "deinem Betrieb"}.`
-                  : "Dein temporaerer Zugang braucht jetzt ein persönliches Passwort."
+                  : "Dein temporärer Zugang braucht jetzt ein persönliches Passwort."
                 : employee
                   ? `${employee.firstName} ${employee.lastName} kann das eigene Passwort hier jederzeit aktualisieren.`
                   : "Hier kannst du dein Mitarbeiter-Passwort jederzeit aktualisieren."}
@@ -109,7 +109,7 @@ export default function ChangePasswordPage({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="currentPassword">
-              {required ? "Temporaeres Passwort" : "Aktuelles Passwort"}
+              {required ? "Temporäres Passwort" : "Aktuelles Passwort"}
             </Label>
             <PasswordField
               id="currentPassword"

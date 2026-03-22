@@ -209,7 +209,7 @@ export default function LandingPage() {
               <div>
                 <p className="brand-kicker">Meisterplaner im Einsatz</p>
                 <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#173d66]">
-                  {isMobile ? "Fuer den mobilen Einsatz optimiert" : "Die wichtigsten Funktionen im Ueberblick"}
+                  {isMobile ? "Für den mobilen Einsatz optimiert" : "Die wichtigsten Funktionen im Überblick"}
                 </h2>
               </div>
             </div>

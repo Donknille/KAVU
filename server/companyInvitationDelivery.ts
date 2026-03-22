@@ -40,9 +40,9 @@ function getTextBody(input: SendCompanyInvitationInput) {
     `Hallo ${input.invitation.firstName} ${input.invitation.lastName},`,
     "",
     `${input.company.name} hat dich${inviter} als ${getRoleLabel(input.invitation.role)} zu Meisterplaner eingeladen`,
-    "— der einfachen Einsatzplanung fuers Handwerk.",
+    "— der einfachen Einsatzplanung fürs Handwerk.",
     "",
-    "Registriere dich ueber diesen Link:",
+    "Registriere dich über diesen Link:",
     input.inviteUrl,
     "",
     "Was ist Meisterplaner?",
@@ -140,7 +140,7 @@ async function sendViaResend(input: SendCompanyInvitationInput): Promise<Invitat
     return {
       status: "failed",
       delivered: false,
-      message: `Versand ueber Resend fehlgeschlagen: ${truncateErrorMessage(rawError)}`,
+      message: `Versand über Resend fehlgeschlagen: ${truncateErrorMessage(rawError)}`,
     };
   }
 
@@ -204,7 +204,7 @@ async function sendViaSMTPInvitation(input: SendCompanyInvitationInput): Promise
     return {
       status: "failed",
       delivered: false,
-      message: `Versand ueber SMTP fehlgeschlagen: ${result.error}`,
+      message: `Versand über SMTP fehlgeschlagen: ${result.error}`,
     };
   }
 

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation, useParams } from "wouter";
 import { BrandMark } from "@/components/BrandMark";
@@ -19,6 +20,7 @@ import { type AssignmentAction } from "@/features/employee-offline/shared";
 import { useToast } from "@/hooks/use-toast";
 import { QK } from "@/lib/queryKeys";
 import {
+  ASSIGNMENT_STATUS_LABELS,
   formatAddress,
   formatDate,
   getNavigationUrl,
@@ -30,6 +32,8 @@ import {
   ArrowLeft,
   ArrowRight,
   CalendarDays,
+  ChevronDown,
+  ChevronUp,
   FileText,
   MapPin,
   Navigation,
@@ -66,6 +70,7 @@ export default function AssignmentDetail() {
     getPendingItemsForAssignment,
     getConflictItemsForAssignment,
   } = useEmployeeOfflineQueue();
+  const [trackerCollapsed, setTrackerCollapsed] = useState(false);
   const today = toDateStr(new Date());
   const endDate = toDateStr(addDays(new Date(), 13));
 
@@ -258,6 +263,12 @@ export default function AssignmentDetail() {
             Ansprechpartner und Wegbeschreibung für diesen Einsatz.
           </p>
         </div>
+        {job?.contactName && (
+          <p className="mb-2 text-sm font-medium brand-ink">
+            Ansprechpartner: {job.contactName}
+            {job.contactPhone && <span className="ml-1 brand-ink-soft">({job.contactPhone})</span>}
+          </p>
+        )}
         {address || job?.contactPhone ? (
           <div className="grid gap-3 sm:grid-cols-2">
             {address && (
@@ -294,7 +305,7 @@ export default function AssignmentDetail() {
           </div>
         ) : (
           <p className="text-sm brand-ink-soft">
-            Fuer diesen Einsatz sind derzeit keine Kontakt- oder Navigationsdaten hinterlegt.
+            Für diesen Einsatz sind derzeit keine Kontakt- oder Navigationsdaten hinterlegt.
           </p>
         )}
       </Card>
@@ -356,9 +367,35 @@ export default function AssignmentDetail() {
           isLoading={isSyncing && pendingItems.length > 0}
           disabled={assignmentConflicts.length > 0}
         />
+      ) : trackerCollapsed ? (
+        <div className="safe-area-bottom fixed bottom-0 left-0 right-0 border-t border-[color:var(--brand-panel-border)] bg-[var(--brand-header-bg)] backdrop-blur-xl">
+          <button
+            type="button"
+            onClick={() => setTrackerCollapsed(false)}
+            className="mx-auto flex w-full max-w-xl items-center justify-between px-4 py-3"
+          >
+            <div className="flex items-center gap-2">
+              <StatusBadge status={effectiveDetail.status} />
+              <span className="text-sm font-medium brand-ink">
+                {ASSIGNMENT_STATUS_LABELS[effectiveDetail.status] ?? effectiveDetail.status}
+              </span>
+            </div>
+            <ChevronUp className="h-4 w-4 brand-ink-muted" />
+          </button>
+        </div>
       ) : (
         <div className="safe-area-bottom fixed bottom-0 left-0 right-0 border-t border-[color:var(--brand-panel-border)] bg-[var(--brand-header-bg)] p-4 backdrop-blur-xl">
           <div className="mx-auto max-w-xl">
+            <div className="mb-2 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setTrackerCollapsed(true)}
+                className="rounded-full p-1 hover:bg-muted"
+                aria-label="Zeiterfassung minimieren"
+              >
+                <ChevronDown className="h-4 w-4 brand-ink-muted" />
+              </button>
+            </div>
             <EmployeeTimeTrackerCard
               status={effectiveDetail.status}
               timeEntry={timeEntry}

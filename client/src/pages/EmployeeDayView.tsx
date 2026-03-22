@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -53,6 +54,7 @@ export default function EmployeeDayView() {
   const totalAssignments =
     activeAssignments.length + todayAssignments.length + upcomingAssignments.length;
 
+  const [showUpcoming, setShowUpcoming] = useState(false);
   const focusLabel = getFocusLabel({
     activeAssignmentsCount: activeAssignments.length,
     todayAssignmentsCount: todayAssignments.length,
@@ -232,51 +234,67 @@ export default function EmployeeDayView() {
         </section>
       )}
 
-      <section className="space-y-3">
-        <div className="flex items-center gap-2">
-          <ClipboardList className="h-4 w-4 text-[#173d66]" />
-          <h2 className="font-semibold text-[#173d66]">
-            {activeAssignments.length > 0 ? "Danach heute" : "Als Nächstes heute"}
-          </h2>
-        </div>
-
-        {todayAssignments.length === 0 ? (
-          <Card className="brand-soft-card rounded-[26px] p-6 text-center">
-            <p className="font-medium text-[#173d66]/76">
-              {totalAssignments === 0 ? "Keine Einsätze für heute" : "Heute ist nichts Weiteres offen"}
-            </p>
-            <p className="mt-1 text-sm text-[#173d66]/64">
-              {totalAssignments === 0
-                ? "Sobald ein Einsatz für heute disponiert ist, wird er hier angezeigt."
-                : "Weitere Einsätze für den heutigen Tag werden hier fortlaufend ergänzt."}
-            </p>
-          </Card>
-        ) : (
-          <div className="space-y-3">
-            {todayAssignments.map((assignment) => (
-              <AssignmentCard
-                key={assignment.id}
-                assignment={assignment}
-                emphasizeTeam
-                onClick={() => navigate(`/assignment/${assignment.id}`)}
-              />
-            ))}
+      {(todayAssignments.length > 0 || activeAssignments.length > 0) && (
+        <section className="space-y-3">
+          <div className="flex items-center gap-2">
+            <ClipboardList className="h-4 w-4 text-[#173d66]" />
+            <h2 className="font-semibold text-[#173d66]">
+              {activeAssignments.length > 0 ? "Danach heute" : "Als Nächstes heute"}
+            </h2>
           </div>
-        )}
-      </section>
+
+          {todayAssignments.length === 0 ? (
+            <Card className="brand-soft-card rounded-[26px] p-6 text-center">
+              <p className="font-medium text-[#173d66]/76">
+                Alle Einsätze für heute laufen bereits.
+              </p>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {todayAssignments.map((assignment) => (
+                <AssignmentCard
+                  key={assignment.id}
+                  assignment={assignment}
+                  emphasizeTeam
+                  onClick={() => navigate(`/assignment/${assignment.id}`)}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       {upcomingAssignments.length > 0 && (
-        <div className="text-center">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1.5 text-xs text-muted-foreground"
-            onClick={() => navigate("/assignments")}
-          >
-            <CalendarDays className="h-3.5 w-3.5" />
-            {upcomingAssignments.length} weitere Einsätze anzeigen
-          </Button>
-        </div>
+        showUpcoming ? (
+          <section className="space-y-3">
+            <div className="flex items-center gap-2">
+              <CalendarDays className="h-4 w-4 text-[#173d66]" />
+              <h2 className="font-semibold text-[#173d66]">Kommende Einsätze</h2>
+            </div>
+            <div className="space-y-3">
+              {upcomingAssignments.map((assignment) => (
+                <AssignmentCard
+                  key={assignment.id}
+                  assignment={assignment}
+                  emphasizeTeam
+                  onClick={() => navigate(`/assignment/${assignment.id}`)}
+                />
+              ))}
+            </div>
+          </section>
+        ) : (
+          <div className="text-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 text-xs text-muted-foreground"
+              onClick={() => setShowUpcoming(true)}
+            >
+              <CalendarDays className="h-3.5 w-3.5" />
+              {upcomingAssignments.length} weitere Einsätze anzeigen
+            </Button>
+          </div>
+        )
       )}
     </div>
   );

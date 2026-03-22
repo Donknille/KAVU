@@ -3,7 +3,7 @@ export const ASSIGNMENT_STATUS_LABELS: Record<string, string> = {
   en_route: "Anfahrt",
   on_site: "Vor Ort",
   break: "Pause",
-  completed: "Abgefahren",
+  completed: "Erledigt",
 };
 
 export const JOB_STATUS_LABELS: Record<string, string> = {

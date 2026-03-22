@@ -32,7 +32,7 @@ export function PendingInvitationsSection({
         <div>
           <h2 className="font-semibold">Offene Einladungen</h2>
           <p className="text-sm text-muted-foreground">
-            Mitarbeiter registrieren sich ueber einen persönlichen Link.
+            Mitarbeiter registrieren sich über einen persönlichen Link.
           </p>
         </div>
         <Badge variant="secondary">{invitations.length}</Badge>
