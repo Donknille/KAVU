@@ -7,6 +7,8 @@ import {
   getAssignmentsForWorkerAdd,
   getAssignmentsForWorkerRemove,
 } from "../client/src/features/planning/utils.ts";
+import { buildPlanningBlocks } from "../shared/planningBoard.ts";
+import type { PlanningBoardAssignment } from "../shared/planningBoard.ts";
 
 type SmokeCase = {
   name: string;
@@ -250,9 +252,84 @@ const legacyCompatibleSmokeCases: SmokeCase[] = [
   },
 ];
 
-for (const smokeCase of [...smokeCases, ...legacyCompatibleSmokeCases]) {
+// --- Lane allocation smoke tests (core feature: 3+ parallel assignments) ---
+
+function makeAssignment(id: string, jobId: string, date: string): PlanningBoardAssignment {
+  return {
+    id,
+    jobId,
+    assignmentDate: date,
+    sortOrder: 0,
+    status: "planned",
+    job: { id: jobId, title: `Job ${jobId}`, jobNumber: jobId, customerName: "Test", status: "planned" },
+  };
+}
+
+const laneCases: SmokeCase[] = [
+  {
+    name: "3 different jobs on the same day get 3 separate lanes",
+    run: () => {
+      const days = ["2026-03-23"];
+      const assignments = [
+        makeAssignment("a1", "job-1", "2026-03-23"),
+        makeAssignment("a2", "job-2", "2026-03-23"),
+        makeAssignment("a3", "job-3", "2026-03-23"),
+      ];
+      const blocks = buildPlanningBlocks(assignments, days);
+      assert.equal(blocks.length, 3, "should produce 3 blocks");
+      const lanes = blocks.map((b) => b.lane).sort();
+      assert.deepEqual(lanes, [0, 1, 2], "blocks must be on lanes 0, 1, 2");
+    },
+  },
+  {
+    name: "5 different jobs on the same day get 5 separate lanes",
+    run: () => {
+      const days = ["2026-03-23"];
+      const assignments = Array.from({ length: 5 }, (_, i) =>
+        makeAssignment(`a${i}`, `job-${i}`, "2026-03-23"),
+      );
+      const blocks = buildPlanningBlocks(assignments, days);
+      assert.equal(blocks.length, 5, "should produce 5 blocks");
+      const lanes = new Set(blocks.map((b) => b.lane));
+      assert.equal(lanes.size, 5, "all 5 blocks must be on different lanes");
+    },
+  },
+  {
+    name: "10 jobs on the same day get 10 separate lanes (scale test)",
+    run: () => {
+      const days = ["2026-03-23"];
+      const assignments = Array.from({ length: 10 }, (_, i) =>
+        makeAssignment(`a${i}`, `job-${i}`, "2026-03-23"),
+      );
+      const blocks = buildPlanningBlocks(assignments, days);
+      assert.equal(blocks.length, 10, "should produce 10 blocks");
+      const maxLane = Math.max(...blocks.map((b) => b.lane));
+      assert.equal(maxLane, 9, "highest lane must be 9 (0-indexed)");
+    },
+  },
+  {
+    name: "multi-day block reuses lane when previous block ends",
+    run: () => {
+      const days = ["2026-03-23", "2026-03-24", "2026-03-25"];
+      const assignments = [
+        makeAssignment("a1", "job-1", "2026-03-23"),
+        makeAssignment("a1b", "job-1", "2026-03-24"),
+        makeAssignment("a2", "job-2", "2026-03-23"),
+        makeAssignment("a3", "job-3", "2026-03-25"), // starts after job-2 ends
+      ];
+      const blocks = buildPlanningBlocks(assignments, days);
+      // job-1 spans 23-24 (lane 0), job-2 on 23 (lane 1), job-3 on 25 (lane 0 or 1 — reused)
+      const job3Block = blocks.find((b) => b.jobId === "job-3");
+      assert.ok(job3Block, "job-3 block must exist");
+      assert.ok(job3Block!.lane <= 1, "job-3 should reuse lane 0 or 1, not create lane 2");
+    },
+  },
+];
+
+const allCases = [...smokeCases, ...legacyCompatibleSmokeCases, ...laneCases];
+for (const smokeCase of allCases) {
   smokeCase.run();
   console.log(`PASS ${smokeCase.name}`);
 }
 
-console.log(`Verified ${smokeCases.length + legacyCompatibleSmokeCases.length} planning DnD smoke checks.`);
+console.log(`Verified ${allCases.length} planning DnD smoke checks.`);
