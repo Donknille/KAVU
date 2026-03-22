@@ -115,7 +115,8 @@ export type PlanningDropData =
       startDate: string;
       endDate: string;
       days: string[];
-    };
+    }
+  | { dropType: "employee-cell"; employeeId: string; date: string };
 
 export type ResizePreview = {
   blockId: string;

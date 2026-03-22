@@ -989,6 +989,36 @@ export function usePlanningBoard() {
     try {
       const overDate = resolveDropDate(event, currentDrag);
 
+      // Drop job onto employee-cell: create block + assign employee
+      if (currentDrag.type === "job" && overData?.dropType === "employee-cell") {
+        const { date, employeeId } = overData;
+        await runBusyAction("Auftrag wird eingeplant...", async () => {
+          // 1. Create assignment
+          const createdAssignment = await apiRequestJson<PlanAssignment>("POST", "/api/assignments", {
+            jobId: currentDrag.job.id,
+            assignmentDate: date,
+          });
+          // 2. Assign employee to the new assignment
+          await apiRequest("POST", "/api/planning/assign-workers", {
+            assignmentIds: [createdAssignment.id],
+            employeeId,
+            mode: "add",
+          });
+          // 3. Update caches
+          const emp = activeEmployees.find((e) => e.id === employeeId);
+          updateAssignmentsCache((current) => [
+            ...current,
+            { ...createdAssignment, job: currentDrag.job, workers: emp ? [emp] : [] },
+          ]);
+          updateBacklogCache((current) => current.filter((entry) => entry.id !== currentDrag.job.id));
+          toast({
+            title: "Mitarbeiter eingeplant",
+            description: `${emp?.firstName ?? ""} arbeitet jetzt am ${formatCompactDate(date)} an ${currentDrag.job.jobNumber}.`,
+          });
+        });
+        return;
+      }
+
       if (currentDrag.type === "job" && overDate) {
         await createBlockFromBacklog(currentDrag.job, overDate);
         return;

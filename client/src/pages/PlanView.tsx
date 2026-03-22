@@ -799,43 +799,6 @@ export default function PlanView() {
         </div>
       ) : null}
 
-      {viewMode === "employee" ? (
-        <div className="min-h-0 flex-1">
-          <Card className="brand-panel flex h-full min-h-0 flex-col overflow-hidden rounded-3xl">
-            <div className="planning-divider flex items-center justify-between gap-3 border-b px-3 py-2.5">
-              <div className="min-w-0">
-                <p className="brand-kicker">Team-Ansicht</p>
-                <p className="mt-1 truncate text-sm font-semibold brand-ink">
-                  Mitarbeiter-Einsatzplan {rangeLabel}
-                </p>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Badge variant="outline" className="brand-outline-chip rounded-full px-2 py-0.5 text-[11px] font-medium">
-                  {planning.activeEmployees.length} Mitarbeiter
-                </Badge>
-                <Badge variant="outline" className="brand-outline-chip rounded-full px-2 py-0.5 text-[11px] font-medium">
-                  {planning.blocks.length} Aufträge
-                </Badge>
-              </div>
-            </div>
-            <div className="min-h-0 flex-1 overflow-auto">
-              <EmployeeBoard
-                employeeRows={planning.employeeRows}
-                visibleDays={planning.visibleDays}
-                dayHeaders={dayHeaders}
-                onCellClick={(employeeId, day) => {
-                  // TODO Phase 2: Dialog zum Zuweisen öffnen
-                  planning.setSelectedBlockId(null);
-                }}
-                onJobClick={(blockId) => {
-                  planning.setSelectedBlockId(blockId);
-                }}
-              />
-            </div>
-          </Card>
-        </div>
-      ) : null}
-
       <DndContext
         sensors={planning.sensors}
         collisionDetection={planning.collisionDetection}
@@ -844,6 +807,43 @@ export default function PlanView() {
         onDragStart={planning.handleDragStart}
         onDragEnd={planning.handleDragEnd}
       >
+        {viewMode === "employee" && (
+          <div className="flex min-h-0 flex-1 gap-2">
+            {backlogCollapsed ? backlogCollapsedRail : backlogExpandedPanel}
+            <div className="min-h-0 flex-1">
+              <Card className="brand-panel flex h-full min-h-0 flex-col overflow-hidden rounded-3xl">
+                <div className="planning-divider flex items-center justify-between gap-3 border-b px-3 py-2.5">
+                  <div className="min-w-0">
+                    <p className="brand-kicker">Team-Ansicht</p>
+                    <p className="mt-1 truncate text-sm font-semibold brand-ink">
+                      Mitarbeiter-Einsatzplan {rangeLabel}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Badge variant="outline" className="brand-outline-chip rounded-full px-2 py-0.5 text-[11px] font-medium">
+                      {planning.activeEmployees.length} Mitarbeiter
+                    </Badge>
+                    <Badge variant="outline" className="brand-outline-chip rounded-full px-2 py-0.5 text-[11px] font-medium">
+                      {planning.blocks.length} Aufträge
+                    </Badge>
+                  </div>
+                </div>
+                <EmployeeBoard
+                  employeeRows={planning.employeeRows}
+                  visibleDays={planning.visibleDays}
+                  dayHeaders={dayHeaders}
+                  isDragActive={!!planning.activeDrag}
+                  onCellClick={(employeeId, day) => {
+                    planning.setSelectedBlockId(null);
+                  }}
+                  onJobClick={(blockId) => {
+                    planning.setSelectedBlockId(blockId);
+                  }}
+                />
+              </Card>
+            </div>
+          </div>
+        )}
         <div className={cn("flex min-h-0 flex-1 flex-col gap-2", viewMode !== "board" && "hidden")}>
           {showMobileDetailsFocus ? (
             mobileDetailsFocusCard

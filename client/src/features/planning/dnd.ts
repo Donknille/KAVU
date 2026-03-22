@@ -36,7 +36,7 @@ export function preferCollisionHits<T extends CollisionLike>(
   const preferred = hits.filter((hit) => {
     const dropType = hit.data?.current?.dropType;
     if (dropType) {
-      return prefersBlocks ? dropType === "block" : dropType === "day";
+      return prefersBlocks ? dropType === "block" : (dropType === "day" || dropType === "employee-cell");
     }
 
     const hitId = String(hit.id);
