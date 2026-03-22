@@ -7,26 +7,31 @@ import { Plus, Search, Briefcase } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { JOB_CATEGORY_LABELS } from "@/lib/constants";
+import { JOB_CATEGORY_LABELS, JOB_STATUS_LABELS } from "@/lib/constants";
 import { QK } from "@/lib/queryKeys";
+import { cn } from "@/lib/utils";
+
+const STATUS_FILTERS = [
+  { value: "all", label: "Alle" },
+  { value: "planned", label: "Geplant" },
+  { value: "in_progress", label: "In Arbeit" },
+  { value: "completed", label: "Erledigt" },
+];
 
 export default function JobsList() {
   const [, navigate] = useLocation();
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const { data: jobs, isLoading } = useQuery<any[]>({
     queryKey: [QK.JOBS],
   });
 
   const filtered = jobs?.filter((j: any) => {
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return (
-      j.title?.toLowerCase().includes(q) ||
-      j.customerName?.toLowerCase().includes(q) ||
-      j.addressCity?.toLowerCase().includes(q) ||
-      j.jobNumber?.toLowerCase().includes(q)
-    );
+    const matchesSearch = !search || [j.title, j.customerName, j.addressCity, j.jobNumber]
+      .some((field) => field?.toLowerCase().includes(search.toLowerCase()));
+    const matchesStatus = statusFilter === "all" || j.status === statusFilter;
+    return matchesSearch && matchesStatus;
   });
 
   return (
@@ -48,6 +53,24 @@ export default function JobsList() {
           className="pl-9"
           data-testid="input-search-jobs"
         />
+      </div>
+
+      <div className="flex gap-1.5 overflow-x-auto pb-1">
+        {STATUS_FILTERS.map((filter) => (
+          <button
+            key={filter.value}
+            type="button"
+            onClick={() => setStatusFilter(filter.value)}
+            className={cn(
+              "shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors",
+              statusFilter === filter.value
+                ? "bg-[#173d66] text-white"
+                : "bg-muted text-muted-foreground hover:bg-muted/80",
+            )}
+          >
+            {filter.label}
+          </button>
+        ))}
       </div>
 
       {isLoading ? (

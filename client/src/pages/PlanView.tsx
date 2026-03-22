@@ -340,7 +340,7 @@ export default function PlanView() {
         <div className="min-h-0 overflow-auto flex-1">
           <div className="w-full">
             <div
-              className="planning-divider grid gap-px border-b bg-[var(--brand-icon-shell-bg)]"
+              className="planning-divider grid gap-px border-b bg-[var(--brand-icon-shell-bg)] sticky top-0 z-10"
               style={{ gridTemplateColumns: planning.boardGridStyle.gridTemplateColumns }}
             >
               {dayHeaders.map((header) => (
@@ -369,8 +369,8 @@ export default function PlanView() {
                       {header.dateLabel}
                     </p>
                     <div className="text-right text-[9px] brand-ink-muted">
-                      <p>{`${header.assignmentCount} ET`}</p>
-                      <p>{`${header.freeCount} frei`}</p>
+                      <p title="Einsatztage">{`${header.assignmentCount} ET`}</p>
+                      <p title="Mitarbeiter frei">{`${header.freeCount} frei`}</p>
                     </div>
                   </div>
                 </div>

@@ -117,6 +117,7 @@ export const BacklogJobCard = memo(function BacklogJobCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-start gap-1.5">
             <p
+              title={job.title}
               className={cn(
                 "min-w-0 flex-1 font-semibold leading-tight brand-ink",
                 compact ? "line-clamp-2 text-[11px]" : "line-clamp-2 text-[13px]"
@@ -143,6 +144,7 @@ export const BacklogJobCard = memo(function BacklogJobCard({
             {job.jobNumber} | {job.customerName}
           </p>
           <p
+            title={formatAddress(job.addressStreet, job.addressZip, job.addressCity) || undefined}
             className={cn(
               "mt-1 brand-ink-soft",
               compact ? "line-clamp-2 text-[10px] leading-snug" : "line-clamp-2 text-[11px]"
@@ -153,6 +155,7 @@ export const BacklogJobCard = memo(function BacklogJobCard({
         </div>
         <span
           ref={setActivatorNodeRef}
+          title="Zum Kalender ziehen — oder klicken um zu platzieren"
           className={cn(
             "mt-0.5 shrink-0 rounded-md p-1 brand-ink-muted transition hover:bg-[var(--brand-highlight-bg)] touch-none",
             compact ? "h-5 w-5" : "h-6 w-6"

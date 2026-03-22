@@ -98,6 +98,15 @@ export default function CreateJob() {
             />
           </div>
           <div>
+            <Label>Geplanter Start</Label>
+            <Input
+              type="date"
+              value={form.startDate}
+              onChange={(e) => update("startDate", e.target.value)}
+              data-testid="input-start-date"
+            />
+          </div>
+          <div>
             <Label>Kundenname *</Label>
             <Input
               value={form.customerName}
@@ -203,25 +212,26 @@ export default function CreateJob() {
             </div>
           </div>
 
-          <div className="border-t pt-4">
-            <Label>Geplanter Start</Label>
-            <Input
-              type="date"
-              value={form.startDate}
-              onChange={(e) => update("startDate", e.target.value)}
-              data-testid="input-start-date"
-            />
-          </div>
         </Card>
 
-        <Button
-          type="submit"
-          className="w-full h-12 text-base mt-4"
-          disabled={isLoading || !form.title || !form.customerName}
-          data-testid="button-create-job"
-        >
-          {isLoading ? "Wird erstellt..." : "Auftrag erstellen"}
-        </Button>
+        <div className="flex gap-3 mt-4">
+          <Button
+            type="button"
+            variant="outline"
+            className="flex-1 h-12 text-base"
+            onClick={() => window.history.back()}
+          >
+            Abbrechen
+          </Button>
+          <Button
+            type="submit"
+            className="flex-1 h-12 text-base"
+            disabled={isLoading || !form.title || !form.customerName}
+            data-testid="button-create-job"
+          >
+            {isLoading ? "Wird erstellt..." : "Auftrag erstellen"}
+          </Button>
+        </div>
       </form>
     </div>
   );

@@ -102,7 +102,18 @@ export default function JobDetail() {
           </h1>
           <p className="text-muted-foreground">{job.customerName}</p>
         </div>
-        <StatusBadge status={job.status} type="job" />
+        <div className="flex flex-col items-end gap-1.5">
+          <StatusBadge status={job.status} type="job" />
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs h-7"
+            onClick={() => navigate("/")}
+          >
+            <Calendar className="w-3 h-3 mr-1" />
+            Im Einsatzplan
+          </Button>
+        </div>
       </div>
 
       {(job.status === "completed" || job.status === "reviewed") && (

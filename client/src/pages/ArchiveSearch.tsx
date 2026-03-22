@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -9,24 +8,29 @@ import { Search, Archive, Briefcase } from "lucide-react";
 import { useLocation } from "wouter";
 import { JOB_CATEGORY_LABELS, formatDate } from "@/lib/constants";
 import { QK } from "@/lib/queryKeys";
+import { cn } from "@/lib/utils";
+
+const ARCHIVE_FILTERS = [
+  { value: "all", label: "Alle" },
+  { value: "completed", label: "Erledigt" },
+  { value: "reviewed", label: "Geprüft" },
+  { value: "billable", label: "Abrechenbar" },
+];
 
 export default function ArchiveSearch() {
   const [, navigate] = useLocation();
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const { data: jobs, isLoading } = useQuery<any[]>({
     queryKey: [QK.JOBS_ARCHIVED],
   });
 
   const filtered = jobs?.filter((j: any) => {
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return (
-      j.title?.toLowerCase().includes(q) ||
-      j.customerName?.toLowerCase().includes(q) ||
-      j.addressCity?.toLowerCase().includes(q) ||
-      j.jobNumber?.toLowerCase().includes(q)
-    );
+    const matchesSearch = !search || [j.title, j.customerName, j.addressCity, j.jobNumber]
+      .some((field) => field?.toLowerCase().includes(search.toLowerCase()));
+    const matchesStatus = statusFilter === "all" || j.status === statusFilter;
+    return matchesSearch && matchesStatus;
   });
 
   return (
@@ -45,6 +49,24 @@ export default function ArchiveSearch() {
           className="pl-9"
           data-testid="input-archive-search"
         />
+      </div>
+
+      <div className="flex gap-1.5 overflow-x-auto pb-1">
+        {ARCHIVE_FILTERS.map((filter) => (
+          <button
+            key={filter.value}
+            type="button"
+            onClick={() => setStatusFilter(filter.value)}
+            className={cn(
+              "shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors",
+              statusFilter === filter.value
+                ? "bg-[#173d66] text-white"
+                : "bg-muted text-muted-foreground hover:bg-muted/80",
+            )}
+          >
+            {filter.label}
+          </button>
+        ))}
       </div>
 
       {isLoading ? (
