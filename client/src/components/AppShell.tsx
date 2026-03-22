@@ -245,7 +245,7 @@ export function AppShell({ children, role, employee }: AppShellProps) {
             {children}
           </main>
 
-          {role === "employee" && !isEmployeeAssignmentRoute && (
+          {role === "employee" && (
             <nav className="safe-area-bottom flex border-t bg-background md:hidden">
               {employeeItems.map((item) => (
                 <Link
