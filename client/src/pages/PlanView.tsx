@@ -379,7 +379,7 @@ export default function PlanView() {
 
             <div className="p-1.5">
               <div
-                className="planning-board-frame relative overflow-hidden rounded-2xl border"
+                className="planning-board-frame relative rounded-2xl border"
                 style={planning.boardGridStyle}
               >
                 <div

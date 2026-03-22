@@ -200,7 +200,7 @@ export function getPlanningBoardLayout({
   const boardGridStyle: CSSProperties = {
     gridTemplateColumns: `repeat(${visibleDayCount}, minmax(${columnMinWidth}px, 1fr))`,
     gridTemplateRows: `repeat(${laneCount}, ${laneHeight}px)`,
-    minHeight: boardMinHeight,
+    minHeight: `${laneCount * laneHeight}px`,
   };
 
   const boardBackgroundStyle: CSSProperties = {
