@@ -404,7 +404,7 @@ export function usePlanningBoard() {
           workers: [],
         },
       ]);
-      updateBacklogCache((current) => current.filter((entry) => entry.id !== job.id));
+      // Job stays in backlog until completed — no removal needed
       toast({
         title: "Auftrag eingeplant",
         description: `${job.jobNumber} liegt jetzt am ${formatCompactDate(targetDate)} im Kalender.`,

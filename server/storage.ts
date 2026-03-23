@@ -873,26 +873,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUnassignedJobs(companyId: string): Promise<Job[]> {
+    // Return all open (non-archived, planned) jobs — they stay in backlog
+    // even after assignments exist, until status changes to completed/reviewed
     return db
       .select()
       .from(jobs)
-      .leftJoin(
-        assignments,
-        and(
-          eq(assignments.companyId, companyId),
-          eq(assignments.jobId, jobs.id)
-        )
-      )
       .where(
         and(
           eq(jobs.companyId, companyId),
           eq(jobs.status, "planned"),
           eq(jobs.isArchived, false),
-          isNull(assignments.id)
         )
       )
-      .orderBy(desc(jobs.createdAt))
-      .then((rows) => rows.map((row) => row.jobs));
+      .orderBy(desc(jobs.createdAt));
   }
 
   async createJob(data: CreateJobData): Promise<Job> {
