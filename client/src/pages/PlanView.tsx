@@ -336,79 +336,11 @@ export default function PlanView() {
           </div>
           <div className="flex items-center gap-1.5">
             <Badge variant="outline" className="brand-outline-chip rounded-full px-2 py-0.5 text-[11px] font-medium">
-              {filteredEmployeeRows.length}/{planning.activeEmployees.length} Mitarbeiter
+              {filteredEmployeeRows.length} Mitarbeiter
             </Badge>
             <Badge variant="outline" className="brand-outline-chip rounded-full px-2 py-0.5 text-[11px] font-medium">
               {planning.blocks.length} Aufträge
             </Badge>
-            <Popover open={filterOpen} onOpenChange={setFilterOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={employeeFilter.size > 0 || showOnlyFree ? "default" : "outline"}
-                  size="sm"
-                  className="h-7 gap-1 rounded-full px-2 text-[11px]"
-                >
-                  <Filter className="h-3 w-3" />
-                  Filter
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-56 p-2" align="end">
-                <div className="space-y-1">
-                  <label className="flex items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-muted cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={showOnlyFree}
-                      onChange={(e) => setShowOnlyFree(e.target.checked)}
-                      className="rounded"
-                    />
-                    Nur freie Mitarbeiter
-                  </label>
-                  <div className="border-t my-1" />
-                  <div className="flex items-center justify-between px-2 py-1">
-                    <span className="text-xs font-semibold brand-ink-muted">Mitarbeiter</span>
-                    <button
-                      type="button"
-                      className="text-[10px] text-primary hover:underline"
-                      onClick={() => setEmployeeFilter(new Set())}
-                    >
-                      Alle anzeigen
-                    </button>
-                  </div>
-                  {planning.activeEmployees.map((emp) => (
-                    <label
-                      key={emp.id}
-                      className="flex items-center gap-2 rounded px-2 py-1 text-sm hover:bg-muted cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={employeeFilter.size === 0 || employeeFilter.has(emp.id)}
-                        onChange={(e) => {
-                          setEmployeeFilter((prev) => {
-                            const next = new Set(prev.size === 0 ? planning.activeEmployees.map((x) => x.id) : prev);
-                            if (e.target.checked) {
-                              next.add(emp.id);
-                            } else {
-                              next.delete(emp.id);
-                            }
-                            // If all selected, reset to empty (= show all)
-                            if (next.size === planning.activeEmployees.length) return new Set();
-                            return next;
-                          });
-                        }}
-                        className="rounded"
-                      />
-                      <div
-                        className="h-4 w-4 rounded-full text-[7px] font-bold text-white flex items-center justify-center shrink-0"
-                        style={{ backgroundColor: emp.color || "#173d66" }}
-                      >
-                        {emp.firstName?.[0]}{emp.lastName?.[0]}
-                      </div>
-                      <span className="truncate">{emp.firstName} {emp.lastName?.charAt(0)}.</span>
-                    </label>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
           </div>
         </div>
         <div className="min-h-0 overflow-auto flex-1">
@@ -418,8 +350,59 @@ export default function PlanView() {
               className="planning-divider grid gap-px border-b bg-[var(--brand-icon-shell-bg)] sticky top-0 z-[15]"
               style={{ gridTemplateColumns: empHeaderGridCols }}
             >
-              <div className="sticky left-0 z-[16] bg-[var(--brand-icon-shell-bg)] border-r p-2 text-[10px] font-semibold uppercase tracking-wider brand-ink-muted">
-                Mitarbeiter
+              <div className="sticky left-0 z-[16] bg-[var(--brand-icon-shell-bg)] border-r px-2 py-1.5 flex items-center justify-between">
+                <span className="text-[10px] font-semibold uppercase tracking-wider brand-ink-muted">Mitarbeiter</span>
+                <Popover open={filterOpen} onOpenChange={setFilterOpen}>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className={cn(
+                        "flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-medium transition",
+                        employeeFilter.size > 0 || showOnlyFree
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted/50 brand-ink-muted hover:bg-muted",
+                      )}
+                    >
+                      <Filter className="h-2.5 w-2.5" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-52 p-2" align="start">
+                    <div className="space-y-1">
+                      <label className="flex items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-muted cursor-pointer">
+                        <input type="checkbox" checked={showOnlyFree} onChange={(e) => setShowOnlyFree(e.target.checked)} className="rounded" />
+                        Nur freie anzeigen
+                      </label>
+                      <div className="border-t my-1" />
+                      <div className="flex items-center justify-between px-2 py-0.5">
+                        <span className="text-[10px] font-semibold brand-ink-muted">Filter</span>
+                        <button type="button" className="text-[9px] text-primary hover:underline" onClick={() => { setEmployeeFilter(new Set()); setShowOnlyFree(false); }}>
+                          Zurücksetzen
+                        </button>
+                      </div>
+                      {planning.activeEmployees.map((emp) => (
+                        <label key={emp.id} className="flex items-center gap-2 rounded px-2 py-1 text-xs hover:bg-muted cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={employeeFilter.size === 0 || employeeFilter.has(emp.id)}
+                            onChange={(e) => {
+                              setEmployeeFilter((prev) => {
+                                const next = new Set(prev.size === 0 ? planning.activeEmployees.map((x) => x.id) : prev);
+                                if (e.target.checked) next.add(emp.id); else next.delete(emp.id);
+                                if (next.size === planning.activeEmployees.length) return new Set();
+                                return next;
+                              });
+                            }}
+                            className="rounded"
+                          />
+                          <div className="h-4 w-4 rounded-full text-[7px] font-bold text-white flex items-center justify-center shrink-0" style={{ backgroundColor: emp.color || "#173d66" }}>
+                            {emp.firstName?.[0]}{emp.lastName?.[0]}
+                          </div>
+                          <span className="truncate">{emp.firstName} {emp.lastName?.charAt(0)}.</span>
+                        </label>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
               {dayHeaders.map((header) => (
                 <div
