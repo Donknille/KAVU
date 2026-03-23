@@ -40,6 +40,17 @@ import {
   formatAddress,
 } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+
+// Deterministic color per job — same job = same color across all employees
+const JOB_COLORS = [
+  "#3b82f6", "#ef4444", "#eab308", "#22c55e", "#8b5cf6",
+  "#f97316", "#06b6d4", "#ec4899", "#14b8a6", "#6366f1",
+];
+function getJobColor(jobId: string): string {
+  let hash = 0;
+  for (let i = 0; i < jobId.length; i++) hash = (hash * 31 + jobId.charCodeAt(i)) | 0;
+  return JOB_COLORS[Math.abs(hash) % JOB_COLORS.length];
+}
 import type {
   ActiveDrag,
   EmployeeAvailability,
@@ -394,8 +405,7 @@ export const PlanningBlockCard = memo(function PlanningBlockCard({
     <div
       ref={setRefs}
       className={cn(
-        "group relative flex h-full min-w-0 overflow-hidden rounded-xl border bg-[var(--brand-soft-start)] shadow-[0_10px_24px_rgba(16,38,62,0.08)] transition animate-in fade-in-0 duration-200",
-        CATEGORY_BG[category] ?? CATEGORY_BG.other,
+        "group relative flex h-full min-w-0 overflow-hidden rounded-xl border shadow-[0_10px_24px_rgba(16,38,62,0.08)] transition animate-in fade-in-0 duration-200",
         block.canMove && "cursor-grab active:cursor-grabbing",
         selected && "ring-2 ring-[color:var(--brand-highlight-border)]",
         isOver && "ring-2 ring-[#68d5c8]",
@@ -406,6 +416,8 @@ export const PlanningBlockCard = memo(function PlanningBlockCard({
         gridRow: `${block.lane + 1}`,
         transform: CSS.Translate.toString(transform),
         zIndex: isDragging ? 50 : selected ? 20 : 10,
+        backgroundColor: `${getJobColor(block.jobId)}12`,
+        borderColor: `${getJobColor(block.jobId)}30`,
       }}
       onClick={() => onSelectBlock(block.id)}
     >
@@ -427,7 +439,7 @@ export const PlanningBlockCard = memo(function PlanningBlockCard({
 
       <div
         className="absolute left-0 top-0 h-full w-1.5"
-        style={{ backgroundColor: CATEGORY_COLORS[category] ?? CATEGORY_COLORS.other }}
+        style={{ backgroundColor: getJobColor(block.jobId) }}
       />
 
       {block.canResizeStart && (
@@ -543,53 +555,7 @@ export const PlanningBlockCard = memo(function PlanningBlockCard({
               </>
             )}
           </div>
-          <div className={cn("flex flex-wrap", compact ? "mt-1.5 gap-1" : "mt-2 gap-1.5")}>
-            {workerPreview.map((worker) => (
-              compact ? (
-                <span
-                  key={worker.id}
-                  className={cn(
-                    "brand-outline-chip inline-flex items-center justify-center rounded-full px-1 font-semibold",
-                    overview ? "h-4 min-w-4 text-[8px]" : "h-5 min-w-5 text-[9px]"
-                  )}
-                  style={{ borderColor: worker.color ?? "#64748b" }}
-                >
-                  {getEmployeeShortLabel(worker)}
-                </span>
-              ) : (
-                <span
-                  key={worker.id}
-                  className="brand-outline-chip inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium"
-                >
-                  <span
-                    className="h-2 w-2 rounded-full"
-                    style={{ backgroundColor: worker.color ?? "#64748b" }}
-                  />
-                  {getEmployeeShortLabel(worker)}
-                </span>
-              )
-            ))}
-            {remainingWorkers > 0 && (
-              <span
-                className={cn(
-                  "brand-outline-chip inline-flex items-center rounded-full font-medium",
-                  overview ? "px-1 py-0 text-[8px]" : compact ? "px-1 py-0 text-[9px]" : "px-1.5 py-0.5 text-[10px]"
-                )}
-              >
-                +{remainingWorkers}
-              </span>
-            )}
-            {block.workers.length === 0 && (
-              <span
-                className={cn(
-                  "inline-flex items-center rounded-full border border-dashed bg-[var(--brand-chip-bg)] font-medium text-muted-foreground",
-                  overview ? "px-1 py-0 text-[8px]" : compact ? "px-1 py-0 text-[9px]" : "px-1.5 py-0.5 text-[10px]"
-                )}
-              >
-                {overview ? "Team" : "Mitarbeiter hineinziehen"}
-              </span>
-            )}
-          </div>
+          {/* Worker avatars removed — employee rows make them redundant */}
         </div>
       </div>
     </div>
