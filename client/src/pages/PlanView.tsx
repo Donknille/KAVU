@@ -288,12 +288,10 @@ export default function PlanView() {
     ],
   );
 
-  // Employee-centric grid layout
-  const empGridCols = `8rem ${planning.boardGridStyle.gridTemplateColumns ?? ""}`;
-  const empGridRows = planning.employeePlanRows
-    .map((row) => `repeat(${row.laneCount}, ${planning.isMobile ? (planning.viewSpan === 2 ? 88 : 64) : planning.viewSpan === 2 ? 56 : 40}px)`)
-    .join(" ");
-  const empTotalRows = planning.employeePlanRows.reduce((s, r) => s + r.laneCount, 0);
+  // Per-employee grid dimensions
+  const empHeaderGridCols = `8rem ${planning.boardGridStyle.gridTemplateColumns ?? ""}`;
+  const dayGridCols = planning.boardGridStyle.gridTemplateColumns ?? "";
+  const laneHeight = planning.isMobile ? (planning.viewSpan === 2 ? 88 : 64) : planning.viewSpan === 2 ? 56 : 40;
 
   const calendarBoard = useMemo(
     () => (
@@ -325,10 +323,10 @@ export default function PlanView() {
         </div>
         <div className="min-h-0 overflow-auto flex-1">
           <div className="w-full">
-            {/* Day header row — sticky top, offset by employee-name column */}
+            {/* Day header row — sticky top */}
             <div
               className="planning-divider grid gap-px border-b bg-[var(--brand-icon-shell-bg)] sticky top-0 z-[15]"
-              style={{ gridTemplateColumns: empGridCols }}
+              style={{ gridTemplateColumns: empHeaderGridCols }}
             >
               <div className="sticky left-0 z-[16] bg-[var(--brand-icon-shell-bg)] border-r p-2 text-[10px] font-semibold uppercase tracking-wider brand-ink-muted">
                 Mitarbeiter
@@ -360,155 +358,124 @@ export default function PlanView() {
               ))}
             </div>
 
-            {/* Main board grid */}
-            <div className="p-1.5">
-              <div
-                className="planning-board-frame relative rounded-2xl border"
-                style={{ gridTemplateColumns: empGridCols, gridTemplateRows: empGridRows }}
-              >
-                {/* Background grid pattern */}
-                <div className="pointer-events-none absolute inset-0" style={planning.boardBackgroundStyle} />
-
-                {/* Employee name labels — sticky left, span their lane group */}
-                {planning.employeePlanRows.map((row, empIndex) => (
+            {/* One isolated grid per employee — blocks can NEVER escape their row */}
+            <div className="p-1.5 space-y-0">
+              {planning.employeePlanRows.map((row, empIndex) => {
+                const rowGridRows = `repeat(${row.laneCount}, ${laneHeight}px)`;
+                return (
                   <div
-                    key={`emp-${row.employee.id}`}
+                    key={row.employee.id}
                     className={cn(
-                      "sticky left-0 z-[5] flex items-center gap-2 border-r border-b bg-background px-2 py-1",
-                      empIndex % 2 === 1 && "bg-muted/30",
+                      "planning-board-frame relative border-x border-b",
+                      empIndex === 0 && "border-t rounded-t-2xl",
+                      empIndex === planning.employeePlanRows.length - 1 && "rounded-b-2xl",
+                      empIndex % 2 === 1 && "bg-muted/10",
                     )}
                     style={{
-                      gridColumn: "1",
-                      gridRow: `${row.globalRowOffset + 1} / span ${row.laneCount}`,
+                      display: "grid",
+                      gridTemplateColumns: empHeaderGridCols,
+                      gridTemplateRows: rowGridRows,
                     }}
                   >
+                    {/* Employee name — sticky left, spans all lanes */}
                     <div
-                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
-                      style={{ backgroundColor: row.employee.color || "#173d66" }}
+                      className="sticky left-0 z-[5] flex items-center gap-2 border-r bg-background px-2 py-1"
+                      style={{ gridColumn: "1", gridRow: `1 / span ${row.laneCount}` }}
                     >
-                      {(row.employee.firstName?.[0] ?? "")}{(row.employee.lastName?.[0] ?? "")}
+                      <div
+                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
+                        style={{ backgroundColor: row.employee.color || "#173d66" }}
+                      >
+                        {(row.employee.firstName?.[0] ?? "")}{(row.employee.lastName?.[0] ?? "")}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-xs font-medium brand-ink">
+                          {row.employee.firstName} {row.employee.lastName}
+                        </p>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="truncate text-xs font-medium brand-ink">{row.employee.firstName} {row.employee.lastName}</p>
+
+                    {/* Block cards layer — own grid starting after name column */}
+                    <div
+                      className="absolute grid h-full"
+                      style={{
+                        gridTemplateColumns: dayGridCols,
+                        gridTemplateRows: rowGridRows,
+                        left: "8rem",
+                        right: 0,
+                        top: 0,
+                        bottom: 0,
+                      }}
+                    >
+                      {row.blocks.map((block) => (
+                        <PlanningBlockCard
+                          key={`${row.employee.id}-${block.id}`}
+                          block={{
+                            ...block,
+                            lane: block.localLane,
+                          }}
+                          compact
+                          overview={isOverviewMode}
+                          readableCompact={readableCompactBlocks}
+                          employeeDropActive={planning.activeDrag?.type === "employee"}
+                          selected={planning.selectedBlock?.id === block.id}
+                          onSelectBlock={handleSelectBlock}
+                        />
+                      ))}
+                    </div>
+
+                    {/* DnD drop zone overlay — ABOVE blocks during drag (z-20) */}
+                    <div
+                      className={cn(
+                        "absolute grid",
+                        planning.activeDrag ? "pointer-events-auto z-20" : "pointer-events-none",
+                      )}
+                      style={{
+                        gridTemplateColumns: dayGridCols,
+                        gridTemplateRows: rowGridRows,
+                        left: "8rem",
+                        right: 0,
+                        top: 0,
+                        bottom: 0,
+                      }}
+                    >
+                      {planning.visibleDays.map((day, index) => (
+                        <DayColumnDropZone
+                          key={day}
+                          date={day}
+                          column={index + 1}
+                          laneCount={row.laneCount}
+                          isEnabled={
+                            !!planning.activeDrag &&
+                            (planning.activeDrag.type === "job" ||
+                              planning.activeDrag.type === "block-move" ||
+                              planning.activeDrag.type === "block-resize-start" ||
+                              planning.activeDrag.type === "block-resize-end")
+                          }
+                        />
+                      ))}
                     </div>
                   </div>
-                ))}
-
-                {/* Employee row separators — horizontal lines between employees */}
-                {planning.employeePlanRows.map((row, empIndex) => (
-                  <div
-                    key={`sep-${row.employee.id}`}
-                    className={cn(
-                      "pointer-events-none border-b",
-                      empIndex % 2 === 1 && "bg-muted/15",
-                    )}
-                    style={{
-                      gridColumn: `2 / -1`,
-                      gridRow: `${row.globalRowOffset + 1} / span ${row.laneCount}`,
-                    }}
-                  />
-                ))}
-
-                {/* Block cards layer — offset by 8rem to skip employee name column */}
-                <div
-                  className="absolute grid h-full"
-                  style={{
-                    gridTemplateColumns: planning.boardGridStyle.gridTemplateColumns,
-                    gridTemplateRows: empGridRows,
-                    left: "8rem",
-                    right: 0,
-                    top: 0,
-                    bottom: 0,
-                  }}
-                >
-                  {planning.employeePlanRows.flatMap((row) =>
-                    row.blocks.map((block) => (
-                      <PlanningBlockCard
-                        key={`${row.employee.id}-${block.id}`}
-                        block={{
-                          ...block,
-                          lane: row.globalRowOffset + block.localLane,
-                        }}
-                        compact
-                        overview={isOverviewMode}
-                        readableCompact={readableCompactBlocks}
-                        employeeDropActive={planning.activeDrag?.type === "employee"}
-                        selected={planning.selectedBlock?.id === block.id}
-                        onSelectBlock={handleSelectBlock}
-                      />
-                    )),
-                  )}
-                  <ResizePreviewGhost preview={planning.resizePreview} compact />
-                </div>
-
-                {/* DnD drop zone overlay — offset by 8rem, ABOVE blocks during drag (z-20) */}
-                <div
-                  className={cn(
-                    "absolute grid",
-                    planning.activeDrag ? "pointer-events-auto z-20" : "pointer-events-none",
-                  )}
-                  style={{
-                    gridTemplateColumns: planning.boardGridStyle.gridTemplateColumns,
-                    gridTemplateRows: empGridRows,
-                    left: "8rem",
-                    right: 0,
-                    top: 0,
-                    bottom: 0,
-                  }}
-                >
-                  {planning.visibleDays
-                    .map((day, index) => ({ day, column: index + 1 }))
-                    .filter(({ day }) => planning.resizePreview?.addedDays.includes(day))
-                    .map(({ day, column }) => (
-                      <div
-                        key={`preview-${day}`}
-                        className={cn(
-                          "rounded-none pointer-events-none",
-                          planning.resizePreview!.valid ? "planning-preview-valid" : "planning-preview-invalid",
-                        )}
-                        style={{
-                          gridColumn: `${column}`,
-                          gridRow: `1 / span ${empTotalRows}`,
-                        }}
-                      />
-                    ))}
-                  {planning.visibleDays.map((day, index) => (
-                    <DayColumnDropZone
-                      key={day}
-                      date={day}
-                      column={index + 1}
-                      laneCount={empTotalRows}
-                      isEnabled={
-                        !!planning.activeDrag &&
-                        (planning.activeDrag.type === "job" ||
-                          planning.activeDrag.type === "block-move" ||
-                          planning.activeDrag.type === "block-resize-start" ||
-                          planning.activeDrag.type === "block-resize-end")
-                      }
-                    />
-                  ))}
-                </div>
-              </div>
+                );
+              })}
             </div>
           </div>
         </div>
       </Card>
     ),
     [
+      dayGridCols,
       dayHeaders,
-      empGridCols,
-      empGridRows,
-      empTotalRows,
+      empHeaderGridCols,
       handleSelectBlock,
       isOverviewMode,
+      laneHeight,
       planning.activeDrag,
       planning.activeEmployees.length,
       planning.blocks.length,
-      planning.boardBackgroundStyle,
       planning.dragOverDate,
       planning.employeePlanRows,
       planning.isLoadingBoard,
-      planning.resizePreview,
       planning.selectedBlock,
       planning.visibleDays,
       rangeLabel,
