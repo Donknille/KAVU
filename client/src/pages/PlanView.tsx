@@ -594,63 +594,70 @@ export default function PlanView() {
     planning.setTeamSearch,
   ]);
 
-  const selectedBlockPanel = useMemo(
-    () => (
-      <div className="flex h-full min-h-0 flex-col gap-3">
-        <Card className="brand-panel flex flex-col overflow-hidden rounded-3xl">
-          <div className="planning-divider flex items-center justify-between gap-2 border-b p-3">
-            <div>
-              <p className="brand-kicker">Auftrag</p>
-              <p className="mt-1 text-sm font-semibold brand-ink">Details und Teamzuordnung</p>
+  const selectedBlockPanel = useMemo(() => {
+    const block = planning.selectedBlock;
+    if (!block) return null;
+    const address = [block.job.addressStreet, block.job.addressZip, block.job.addressCity].filter(Boolean).join(", ");
+    return (
+      <Card className="brand-panel flex flex-col overflow-hidden rounded-3xl">
+        <div className="planning-divider flex items-center justify-between gap-2 border-b p-3">
+          <p className="text-sm font-semibold brand-ink">{block.job.jobNumber} | {block.job.title}</p>
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            className="h-6 w-6 shrink-0"
+            onClick={() => planning.setSelectedBlockId(null)}
+          >
+            <X className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+        <div className="p-3 space-y-3 text-sm">
+          <p className="brand-ink-soft">{block.job.customerName}</p>
+          {address && (
+            <div className="flex items-start gap-1.5 brand-ink-soft">
+              <span className="text-[10px] mt-0.5">📍</span>
+              <span>{address}</span>
             </div>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="brand-outline-control h-7 gap-1 rounded-full px-2 text-[11px]"
-              onClick={() => planning.setSelectedBlockId(null)}
-            >
-              <X className="h-3 w-3" />
-              Schliessen
-            </Button>
+          )}
+          <div className="flex flex-wrap gap-1.5">
+            <Badge variant="secondary" className="text-[10px]">
+              {formatRange(block.startDate, block.endDate)}
+            </Badge>
+            <Badge variant="secondary" className="text-[10px]">
+              {block.workers.length} Mitarbeitende
+            </Badge>
           </div>
-          <ScrollArea className="min-h-0 max-h-[45vh]">
-            <div className="p-3">
-              <SelectedBlockPanel
-                selectedBlock={planning.selectedBlock}
-                availableEmployees={planning.activeEmployees}
-                availableStartDates={selectedBlockMoveDates}
-                getEmployeeAvailability={planning.getEmployeeAvailability}
-                onAssignEmployee={(employeeId, selection) => {
-                  void planning.assignEmployeeToSelected(employeeId, selection);
-                }}
-                onMoveBlock={(targetDate) => {
-                  void planning.moveSelectedBlock(targetDate);
-                }}
-                onRemoveEmployee={(employeeId, selection) => {
-                  void planning.removeEmployeeFromSelected(employeeId, selection);
-                }}
-                onRemoveBlock={() => {
-                  void planning.removeSelectedBlock();
-                }}
-              />
+          {block.workers.length > 0 && (
+            <div className="space-y-1">
+              <p className="text-[10px] font-semibold uppercase tracking-wider brand-ink-muted">Team</p>
+              <div className="flex flex-wrap gap-1.5">
+                {block.workers.map((w) => (
+                  <div key={w.id} className="flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5">
+                    <div
+                      className="h-4 w-4 rounded-full text-[8px] font-bold text-white flex items-center justify-center"
+                      style={{ backgroundColor: w.color || "#475569" }}
+                    >
+                      {w.firstName?.[0]}{w.lastName?.[0]}
+                    </div>
+                    <span className="text-[11px]">{w.firstName} {w.lastName}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </ScrollArea>
-        </Card>
-      </div>
-    ),
-    [
-      planning.activeEmployees,
-      planning.assignEmployeeToSelected,
-      planning.getEmployeeAvailability,
-      planning.moveSelectedBlock,
-      planning.removeEmployeeFromSelected,
-      planning.removeSelectedBlock,
-      planning.selectedBlock,
-      planning.setSelectedBlockId,
-      selectedBlockMoveDates,
-    ],
-  );
+          )}
+          <Button
+            variant="destructive"
+            size="sm"
+            className="w-full gap-1.5"
+            onClick={() => void planning.removeSelectedBlock()}
+          >
+            Auftrag aus Planung entfernen
+          </Button>
+        </div>
+      </Card>
+    );
+  }, [planning.selectedBlock, planning.setSelectedBlockId, planning.removeSelectedBlock]);
 
   // Team panel removed — employee rows in the board serve as the team overview
   const contextPanel = planning.selectedBlock ? selectedBlockPanel : null;
