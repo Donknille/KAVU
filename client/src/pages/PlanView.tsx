@@ -358,8 +358,9 @@ export default function PlanView() {
               ))}
             </div>
 
-            {/* One isolated grid per employee — blocks can NEVER escape their row */}
-            <div className="p-1.5 space-y-0">
+            {/* Employee rows + global DnD overlay */}
+            <div className="p-1.5 relative">
+              {/* Per-employee rows — blocks stay within their row */}
               {planning.employeePlanRows.map((row, empIndex) => {
                 const rowGridRows = `repeat(${row.laneCount}, ${laneHeight}px)`;
                 return (
@@ -423,41 +424,41 @@ export default function PlanView() {
                         />
                       ))}
                     </div>
-
-                    {/* DnD drop zone overlay — ABOVE blocks during drag (z-20) */}
-                    <div
-                      className={cn(
-                        "absolute grid",
-                        planning.activeDrag ? "pointer-events-auto z-20" : "pointer-events-none",
-                      )}
-                      style={{
-                        gridTemplateColumns: dayGridCols,
-                        gridTemplateRows: rowGridRows,
-                        left: "8rem",
-                        right: 0,
-                        top: 0,
-                        bottom: 0,
-                      }}
-                    >
-                      {planning.visibleDays.map((day, index) => (
-                        <DayColumnDropZone
-                          key={day}
-                          date={day}
-                          column={index + 1}
-                          laneCount={row.laneCount}
-                          isEnabled={
-                            !!planning.activeDrag &&
-                            (planning.activeDrag.type === "job" ||
-                              planning.activeDrag.type === "block-move" ||
-                              planning.activeDrag.type === "block-resize-start" ||
-                              planning.activeDrag.type === "block-resize-end")
-                          }
-                        />
-                      ))}
-                    </div>
                   </div>
                 );
               })}
+
+              {/* Global DnD drop zone overlay — ONE set of day zones spanning ALL employee rows */}
+              <div
+                className={cn(
+                  "absolute grid",
+                  planning.activeDrag ? "pointer-events-auto z-20" : "pointer-events-none",
+                )}
+                style={{
+                  gridTemplateColumns: dayGridCols,
+                  gridTemplateRows: "1fr",
+                  left: "8rem",
+                  right: 0,
+                  top: 0,
+                  bottom: 0,
+                }}
+              >
+                {planning.visibleDays.map((day, index) => (
+                  <DayColumnDropZone
+                    key={day}
+                    date={day}
+                    column={index + 1}
+                    laneCount={1}
+                    isEnabled={
+                      !!planning.activeDrag &&
+                      (planning.activeDrag.type === "job" ||
+                        planning.activeDrag.type === "block-move" ||
+                        planning.activeDrag.type === "block-resize-start" ||
+                        planning.activeDrag.type === "block-resize-end")
+                    }
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </div>
