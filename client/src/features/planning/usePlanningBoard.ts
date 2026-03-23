@@ -400,7 +400,7 @@ export function usePlanningBoard() {
       await refreshPlanningBoard();
       toast({
         title: "Auftrag eingeplant",
-        description: `${job.jobNumber} liegt jetzt am ${formatCompactDate(targetDate)} im Kalender.`,
+        description: `${job.jobNumber} liegt am ${formatCompactDate(targetDate)}. Ziehe einen Mitarbeiter auf den Block um ihn zuzuweisen.`,
       });
     });
   }

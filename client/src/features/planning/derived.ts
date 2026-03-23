@@ -230,6 +230,27 @@ export function buildEmployeePlanRows(
     return row;
   });
 
+  // Add "Offen" row for blocks with no worker assignment
+  const unassignedBlocks = blocks.filter((b) => !assignedBlockIds.has(b.id));
+  if (unassignedBlocks.length > 0) {
+    const sorted = [...unassignedBlocks].sort((a, b) =>
+      a.startIndex !== b.startIndex ? a.startIndex - b.startIndex : b.span - a.span,
+    );
+    const laneEnds: number[] = [];
+    const blocksWithLane = sorted.map((block) => {
+      let lane = 0;
+      while (laneEnds[lane] !== undefined && block.startIndex <= laneEnds[lane]) lane++;
+      laneEnds[lane] = block.endIndex;
+      return { ...block, localLane: lane };
+    });
+    rows.push({
+      employee: { id: "__unassigned__", firstName: "Offen", lastName: "", color: "#9ca3af" } as PlanEmployee,
+      blocks: blocksWithLane,
+      laneCount: Math.max(1, laneEnds.length),
+      globalRowOffset,
+    });
+  }
+
   return rows;
 }
 
