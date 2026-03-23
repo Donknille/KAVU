@@ -637,7 +637,6 @@ export default function PlanView() {
             </div>
           </ScrollArea>
         </Card>
-        {teamContextPanel}
       </div>
     ),
     [
@@ -650,7 +649,6 @@ export default function PlanView() {
       planning.selectedBlock,
       planning.setSelectedBlockId,
       selectedBlockMoveDates,
-      teamContextPanel,
     ],
   );
 
