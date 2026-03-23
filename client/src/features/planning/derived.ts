@@ -198,12 +198,14 @@ export function buildEmployeePlanRows(
   blocks: PlanningBlock[],
 ): EmployeePlanRow[] {
   let globalRowOffset = 0;
+  const assignedBlockIds = new Set<string>();
 
-  return employees.map((emp) => {
+  const rows = employees.map((emp) => {
     // Find all blocks where this employee is assigned
     const empBlocks = blocks.filter((b) =>
       b.workerCoverage.some((c) => c.employee.id === emp.id),
     );
+    for (const b of empBlocks) assignedBlockIds.add(b.id);
 
     // Lane allocation within the employee row (greedy, same as buildPlanningBlocks)
     const sorted = [...empBlocks].sort((a, b) =>
@@ -227,6 +229,29 @@ export function buildEmployeePlanRows(
     globalRowOffset += laneCount;
     return row;
   });
+
+  // Add "unassigned" row for blocks with no workers
+  const unassignedBlocks = blocks.filter((b) => !assignedBlockIds.has(b.id));
+  if (unassignedBlocks.length > 0) {
+    const sorted = [...unassignedBlocks].sort((a, b) =>
+      a.startIndex !== b.startIndex ? a.startIndex - b.startIndex : b.span - a.span,
+    );
+    const laneEnds: number[] = [];
+    const blocksWithLane = sorted.map((block) => {
+      let lane = 0;
+      while (laneEnds[lane] !== undefined && block.startIndex <= laneEnds[lane]) lane++;
+      laneEnds[lane] = block.endIndex;
+      return { ...block, localLane: lane };
+    });
+    rows.push({
+      employee: { id: "__unassigned__", firstName: "Nicht", lastName: "eingeteilt", color: "#9ca3af" } as PlanEmployee,
+      blocks: blocksWithLane,
+      laneCount: Math.max(1, laneEnds.length),
+      globalRowOffset,
+    });
+  }
+
+  return rows;
 }
 
 export function getPlanningBoardLayout({
