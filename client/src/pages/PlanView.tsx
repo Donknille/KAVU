@@ -370,10 +370,13 @@ export default function PlanView() {
                 <div className="pointer-events-none absolute inset-0" style={planning.boardBackgroundStyle} />
 
                 {/* Employee name labels — sticky left, span their lane group */}
-                {planning.employeePlanRows.map((row) => (
+                {planning.employeePlanRows.map((row, empIndex) => (
                   <div
                     key={`emp-${row.employee.id}`}
-                    className="sticky left-0 z-[5] flex items-center gap-2 border-r bg-background px-2 py-1"
+                    className={cn(
+                      "sticky left-0 z-[5] flex items-center gap-2 border-r border-b bg-background px-2 py-1",
+                      empIndex % 2 === 1 && "bg-muted/30",
+                    )}
                     style={{
                       gridColumn: "1",
                       gridRow: `${row.globalRowOffset + 1} / span ${row.laneCount}`,
@@ -391,13 +394,31 @@ export default function PlanView() {
                   </div>
                 ))}
 
-                {/* Block cards layer — uses EXISTING PlanningBlockCard with offset */}
+                {/* Employee row separators — horizontal lines between employees */}
+                {planning.employeePlanRows.map((row, empIndex) => (
+                  <div
+                    key={`sep-${row.employee.id}`}
+                    className={cn(
+                      "pointer-events-none border-b",
+                      empIndex % 2 === 1 && "bg-muted/15",
+                    )}
+                    style={{
+                      gridColumn: `2 / -1`,
+                      gridRow: `${row.globalRowOffset + 1} / span ${row.laneCount}`,
+                    }}
+                  />
+                ))}
+
+                {/* Block cards layer — offset by 8rem to skip employee name column */}
                 <div
                   className="absolute grid h-full"
                   style={{
-                    gridTemplateColumns: empGridCols,
+                    gridTemplateColumns: planning.boardGridStyle.gridTemplateColumns,
                     gridTemplateRows: empGridRows,
-                    inset: 0,
+                    left: "8rem",
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
                   }}
                 >
                   {planning.employeePlanRows.flatMap((row) =>
@@ -406,7 +427,6 @@ export default function PlanView() {
                         key={`${row.employee.id}-${block.id}`}
                         block={{
                           ...block,
-                          startIndex: block.startIndex + 1,
                           lane: row.globalRowOffset + block.localLane,
                         }}
                         compact
@@ -421,20 +441,23 @@ export default function PlanView() {
                   <ResizePreviewGhost preview={planning.resizePreview} compact />
                 </div>
 
-                {/* DnD drop zone overlay — ABOVE blocks during drag (z-20) */}
+                {/* DnD drop zone overlay — offset by 8rem, ABOVE blocks during drag (z-20) */}
                 <div
                   className={cn(
                     "absolute grid",
                     planning.activeDrag ? "pointer-events-auto z-20" : "pointer-events-none",
                   )}
                   style={{
-                    gridTemplateColumns: empGridCols,
+                    gridTemplateColumns: planning.boardGridStyle.gridTemplateColumns,
                     gridTemplateRows: empGridRows,
-                    inset: 0,
+                    left: "8rem",
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
                   }}
                 >
                   {planning.visibleDays
-                    .map((day, index) => ({ day, column: index + 2 }))
+                    .map((day, index) => ({ day, column: index + 1 }))
                     .filter(({ day }) => planning.resizePreview?.addedDays.includes(day))
                     .map(({ day, column }) => (
                       <div
@@ -453,7 +476,7 @@ export default function PlanView() {
                     <DayColumnDropZone
                       key={day}
                       date={day}
-                      column={index + 2}
+                      column={index + 1}
                       laneCount={empTotalRows}
                       isEnabled={
                         !!planning.activeDrag &&
