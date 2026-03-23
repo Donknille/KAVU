@@ -3,6 +3,7 @@ import type {
   PlanAssignment,
   PlanEmployee,
   PlanJob,
+  PlanningBlock,
   PlanningBoardResponse,
   ViewSpan,
 } from "@/features/planning/types";
@@ -178,6 +179,54 @@ export function buildTeamSections(entries: TeamOverviewEntry[], focusLabel: stri
       items: entries.filter((entry) => entry.section === "scheduled-focus"),
     },
   ].filter((section) => section.items.length > 0) as TeamSection[];
+}
+
+// --- Employee-centric plan rows ---
+
+export type EmployeePlanRow = {
+  employee: PlanEmployee;
+  /** Blocks assigned to this employee, with localLane set for sub-row positioning */
+  blocks: Array<PlanningBlock & { localLane: number }>;
+  /** Number of sub-lanes within this employee's row (for parallel assignments) */
+  laneCount: number;
+  /** Global row offset (sum of all previous employees' laneCounts) */
+  globalRowOffset: number;
+};
+
+export function buildEmployeePlanRows(
+  employees: PlanEmployee[],
+  blocks: PlanningBlock[],
+): EmployeePlanRow[] {
+  let globalRowOffset = 0;
+
+  return employees.map((emp) => {
+    // Find all blocks where this employee is assigned
+    const empBlocks = blocks.filter((b) =>
+      b.workerCoverage.some((c) => c.employee.id === emp.id),
+    );
+
+    // Lane allocation within the employee row (greedy, same as buildPlanningBlocks)
+    const sorted = [...empBlocks].sort((a, b) =>
+      a.startIndex !== b.startIndex ? a.startIndex - b.startIndex : b.span - a.span,
+    );
+    const laneEnds: number[] = [];
+    const blocksWithLane = sorted.map((block) => {
+      let lane = 0;
+      while (laneEnds[lane] !== undefined && block.startIndex <= laneEnds[lane]) lane++;
+      laneEnds[lane] = block.endIndex;
+      return { ...block, localLane: lane };
+    });
+
+    const laneCount = Math.max(1, laneEnds.length);
+    const row: EmployeePlanRow = {
+      employee: emp,
+      blocks: blocksWithLane,
+      laneCount,
+      globalRowOffset,
+    };
+    globalRowOffset += laneCount;
+    return row;
+  });
 }
 
 export function getPlanningBoardLayout({

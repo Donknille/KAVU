@@ -288,6 +288,13 @@ export default function PlanView() {
     ],
   );
 
+  // Employee-centric grid layout
+  const empGridCols = `8rem ${planning.boardGridStyle.gridTemplateColumns ?? ""}`;
+  const empGridRows = planning.employeePlanRows
+    .map((row) => `repeat(${row.laneCount}, ${planning.isMobile ? (planning.viewSpan === 2 ? 88 : 64) : planning.viewSpan === 2 ? 56 : 40}px)`)
+    .join(" ");
+  const empTotalRows = planning.employeePlanRows.reduce((s, r) => s + r.laneCount, 0);
+
   const calendarBoard = useMemo(
     () => (
       <Card className="brand-panel relative flex h-full min-h-0 flex-col overflow-hidden rounded-3xl">
@@ -302,47 +309,30 @@ export default function PlanView() {
         )}
         <div className="planning-divider flex items-center justify-between gap-3 border-b px-3 py-2.5">
           <div className="min-w-0">
-            <p className="brand-kicker">Kalender</p>
+            <p className="brand-kicker">Team-Ansicht</p>
             <p className="mt-1 truncate text-sm font-semibold brand-ink">
-              Einsatzplan im Zeitraum {rangeLabel}
+              Mitarbeiter-Einsatzplan {rangeLabel}
             </p>
           </div>
           <div className="flex items-center gap-1.5">
-            <Badge
-              variant="outline"
-              className="brand-outline-chip rounded-full px-2 py-0.5 text-[11px] font-medium"
-            >
-              {planning.blocks.length} geplant
+            <Badge variant="outline" className="brand-outline-chip rounded-full px-2 py-0.5 text-[11px] font-medium">
+              {planning.activeEmployees.length} Mitarbeiter
             </Badge>
-            <Badge
-              variant="outline"
-              className="brand-outline-chip rounded-full px-2 py-0.5 text-[11px] font-medium"
-            >
-              {planning.teamSummary.freeOnFocusDay} frei
+            <Badge variant="outline" className="brand-outline-chip rounded-full px-2 py-0.5 text-[11px] font-medium">
+              {planning.blocks.length} Aufträge
             </Badge>
           </div>
         </div>
-        {planning.placingJob && (
-          <div className="flex items-center justify-between gap-2 border-b bg-[#68d5c8]/10 px-3 py-2">
-            <p className="text-sm font-medium text-[#173d66]">
-              Klicke auf einen Tag um <span className="font-bold">{planning.placingJob.title}</span> zu platzieren
-            </p>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs"
-              onClick={() => planning.setPlacingJob(null)}
-            >
-              Abbrechen
-            </Button>
-          </div>
-        )}
         <div className="min-h-0 overflow-auto flex-1">
           <div className="w-full">
+            {/* Day header row — sticky top, offset by employee-name column */}
             <div
-              className="planning-divider grid gap-px border-b bg-[var(--brand-icon-shell-bg)] sticky top-0 z-10"
-              style={{ gridTemplateColumns: planning.boardGridStyle.gridTemplateColumns }}
+              className="planning-divider grid gap-px border-b bg-[var(--brand-icon-shell-bg)] sticky top-0 z-[15]"
+              style={{ gridTemplateColumns: empGridCols }}
             >
+              <div className="sticky left-0 z-[16] bg-[var(--brand-icon-shell-bg)] border-r p-2 text-[10px] font-semibold uppercase tracking-wider brand-ink-muted">
+                Mitarbeiter
+              </div>
               {dayHeaders.map((header) => (
                 <div
                   key={header.day}
@@ -352,66 +342,99 @@ export default function PlanView() {
                       (header.previewTone === "valid" ? "planning-preview-valid" : "planning-preview-invalid"),
                     header.isToday && "brand-highlight",
                     planning.dragOverDate === header.day && "bg-[#68d5c8]/20 ring-1 ring-inset ring-[#68d5c8]",
-                    planning.placingJob && "cursor-pointer hover:bg-[#68d5c8]/15",
                   )}
-                  onClick={planning.placingJob ? () => planning.placeJobOnDate(header.day) : undefined}
                 >
                   <p className="text-[9px] font-semibold uppercase tracking-[0.14em] brand-ink-muted">
                     {header.weekdayLabel}
                   </p>
                   <div className="mt-0.5 flex items-end justify-between gap-1">
-                    <p
-                      className={cn(
-                        "font-semibold leading-none",
-                        isOverviewMode ? "text-xs" : "text-sm",
-                      )}
-                    >
+                    <p className={cn("font-semibold leading-none", isOverviewMode ? "text-xs" : "text-sm")}>
                       {header.dateLabel}
                     </p>
                     <div className="text-right text-[9px] brand-ink-muted">
-                      <p title="Einsatztage">{`${header.assignmentCount} ET`}</p>
-                      <p title="Mitarbeiter frei">{`${header.freeCount} frei`}</p>
+                      <p>{`${header.assignmentCount} ET`}</p>
+                      <p>{`${header.freeCount} frei`}</p>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
 
+            {/* Main board grid */}
             <div className="p-1.5">
               <div
                 className="planning-board-frame relative rounded-2xl border"
-                style={planning.boardGridStyle}
+                style={{ gridTemplateColumns: empGridCols, gridTemplateRows: empGridRows }}
               >
-                <div
-                  className="pointer-events-none absolute inset-0"
-                  style={planning.boardBackgroundStyle}
-                />
+                {/* Background grid pattern */}
+                <div className="pointer-events-none absolute inset-0" style={planning.boardBackgroundStyle} />
 
-                <div className="relative grid h-full" style={planning.boardGridStyle}>
-                  {planning.blocks.map((block) => (
-                    <PlanningBlockCard
-                      key={block.id}
-                      block={block}
-                      compact
-                      overview={isOverviewMode}
-                      readableCompact={readableCompactBlocks}
-                      employeeDropActive={planning.activeDrag?.type === "employee"}
-                      selected={planning.selectedBlock?.id === block.id}
-                      onSelectBlock={handleSelectBlock}
-                    />
-                  ))}
+                {/* Employee name labels — sticky left, span their lane group */}
+                {planning.employeePlanRows.map((row) => (
+                  <div
+                    key={`emp-${row.employee.id}`}
+                    className="sticky left-0 z-[5] flex items-center gap-2 border-r bg-background px-2 py-1"
+                    style={{
+                      gridColumn: "1",
+                      gridRow: `${row.globalRowOffset + 1} / span ${row.laneCount}`,
+                    }}
+                  >
+                    <div
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
+                      style={{ backgroundColor: row.employee.color || "#173d66" }}
+                    >
+                      {(row.employee.firstName?.[0] ?? "")}{(row.employee.lastName?.[0] ?? "")}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-medium brand-ink">{row.employee.firstName} {row.employee.lastName}</p>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Block cards layer — uses EXISTING PlanningBlockCard with offset */}
+                <div
+                  className="absolute grid h-full"
+                  style={{
+                    gridTemplateColumns: empGridCols,
+                    gridTemplateRows: empGridRows,
+                    inset: 0,
+                  }}
+                >
+                  {planning.employeePlanRows.flatMap((row) =>
+                    row.blocks.map((block) => (
+                      <PlanningBlockCard
+                        key={`${row.employee.id}-${block.id}`}
+                        block={{
+                          ...block,
+                          startIndex: block.startIndex + 1,
+                          lane: row.globalRowOffset + block.localLane,
+                        }}
+                        compact
+                        overview={isOverviewMode}
+                        readableCompact={readableCompactBlocks}
+                        employeeDropActive={planning.activeDrag?.type === "employee"}
+                        selected={planning.selectedBlock?.id === block.id}
+                        onSelectBlock={handleSelectBlock}
+                      />
+                    )),
+                  )}
                   <ResizePreviewGhost preview={planning.resizePreview} compact />
                 </div>
 
+                {/* DnD drop zone overlay — ABOVE blocks during drag (z-20) */}
                 <div
                   className={cn(
-                    "absolute inset-0 grid",
+                    "absolute grid",
                     planning.activeDrag ? "pointer-events-auto z-20" : "pointer-events-none",
                   )}
-                  style={planning.boardGridStyle}
+                  style={{
+                    gridTemplateColumns: empGridCols,
+                    gridTemplateRows: empGridRows,
+                    inset: 0,
+                  }}
                 >
                   {planning.visibleDays
-                    .map((day, index) => ({ day, column: index + 1 }))
+                    .map((day, index) => ({ day, column: index + 2 }))
                     .filter(({ day }) => planning.resizePreview?.addedDays.includes(day))
                     .map(({ day, column }) => (
                       <div
@@ -422,7 +445,7 @@ export default function PlanView() {
                         )}
                         style={{
                           gridColumn: `${column}`,
-                          gridRow: `1 / span ${planning.laneCount}`,
+                          gridRow: `1 / span ${empTotalRows}`,
                         }}
                       />
                     ))}
@@ -430,8 +453,8 @@ export default function PlanView() {
                     <DayColumnDropZone
                       key={day}
                       date={day}
-                      column={index + 1}
-                      laneCount={planning.laneCount}
+                      column={index + 2}
+                      laneCount={empTotalRows}
                       isEnabled={
                         !!planning.activeDrag &&
                         (planning.activeDrag.type === "job" ||
@@ -450,17 +473,20 @@ export default function PlanView() {
     ),
     [
       dayHeaders,
+      empGridCols,
+      empGridRows,
+      empTotalRows,
       handleSelectBlock,
       isOverviewMode,
       planning.activeDrag,
-      planning.blocks,
+      planning.activeEmployees.length,
+      planning.blocks.length,
       planning.boardBackgroundStyle,
-      planning.boardGridStyle,
+      planning.dragOverDate,
+      planning.employeePlanRows,
       planning.isLoadingBoard,
-      planning.laneCount,
       planning.resizePreview,
       planning.selectedBlock,
-      planning.teamSummary.freeOnFocusDay,
       planning.visibleDays,
       rangeLabel,
       readableCompactBlocks,

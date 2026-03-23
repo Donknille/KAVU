@@ -22,6 +22,7 @@ import {
   resolveDropDateForTarget,
 } from "@/features/planning/dnd";
 import {
+  buildEmployeePlanRows,
   buildTeamOverview,
   buildTeamSections,
   EMPTY_PLANNING_BOARD,
@@ -1039,9 +1040,17 @@ export function usePlanningBoard() {
     toast,
   ]);
 
+  const employeePlanRows = useMemo(
+    () => buildEmployeePlanRows(activeEmployees, blocks),
+    [activeEmployees, blocks],
+  );
+  const totalEmployeeLanes = useMemo(
+    () => employeePlanRows.reduce((sum, row) => sum + row.laneCount, 0),
+    [employeePlanRows],
+  );
   const laneCount = useMemo(
-    () => Math.max(2, blocks.reduce((max, block) => Math.max(max, block.lane + 1), 0)),
-    [blocks],
+    () => Math.max(2, totalEmployeeLanes),
+    [totalEmployeeLanes],
   );
   const { boardBackgroundStyle, boardGridStyle } = useMemo(
     () =>
@@ -1108,6 +1117,7 @@ export function usePlanningBoard() {
     backlogList,
     backlogSearch,
     blocks,
+    employeePlanRows,
     boardBackgroundStyle,
     boardGridStyle,
     busyLabel,
