@@ -664,7 +664,8 @@ export default function PlanView() {
     ],
   );
 
-  const contextPanel = planning.selectedBlock ? selectedBlockPanel : teamContextPanel;
+  // Team panel removed — employee rows in the board serve as the team overview
+  const contextPanel = planning.selectedBlock ? selectedBlockPanel : null;
   const showMobileDetailsFocus = !!planning.selectedBlock && !isWideDesktop;
 
   const mobileDetailsFocusCard = (
@@ -858,29 +859,33 @@ export default function PlanView() {
               <ResizablePanel
                 id="planning-board"
                 order={2}
-                defaultSize={56}
+                defaultSize={contextPanel ? 56 : 82}
                 minSize={44}
                 className="min-h-0"
               >
                 {calendarBoard}
               </ResizablePanel>
-              <ResizableHandle withHandle className="mx-0.5 bg-transparent after:w-2" />
-              <ResizablePanel
-                id="planning-context"
-                order={3}
-                defaultSize={26}
-                minSize={20}
-                maxSize={34}
-                className="min-h-0"
-              >
-                {contextPanel}
-              </ResizablePanel>
+              {contextPanel && (
+                <>
+                  <ResizableHandle withHandle className="mx-0.5 bg-transparent after:w-2" />
+                  <ResizablePanel
+                    id="planning-context"
+                    order={3}
+                    defaultSize={26}
+                    minSize={20}
+                    maxSize={34}
+                    className="min-h-0"
+                  >
+                    {contextPanel}
+                  </ResizablePanel>
+                </>
+              )}
             </ResizablePanelGroup>
           ) : (
             <>
               <div className={cn("flex-none", backlogCollapsed && "hidden")}>{backlogExpandedPanel}</div>
               <div className="min-h-0 flex-1">{calendarBoard}</div>
-              <div className="flex-none max-h-[20rem]">{contextPanel}</div>
+              {contextPanel && <div className="flex-none max-h-[20rem]">{contextPanel}</div>}
             </>
           )}
         </div>
