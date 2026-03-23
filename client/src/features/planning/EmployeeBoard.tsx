@@ -1,10 +1,12 @@
 import { memo } from "react";
-import { useDroppable } from "@dnd-kit/core";
-import type { EmployeeDayCell, EmployeeRow } from "@/features/planning/derived";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
+import type { EmployeeBlockSpan, EmployeeRow } from "@/features/planning/derived";
 import type { PlanJob } from "@/features/planning/types";
-import type { PlanningDropData } from "@/features/planning/types";
+import type { PlanningDragData, PlanningDropData } from "@/features/planning/types";
 import { getEmployeeShortLabel } from "@/features/planning/utils";
 import { cn } from "@/lib/utils";
+import { GripVertical } from "lucide-react";
 
 // Deterministic color per job — same job = same color across all employees
 const TEAM_COLORS = [
@@ -34,24 +36,18 @@ type EmployeeBoardProps = {
   isDragActive: boolean;
 };
 
-// Individual droppable cell
-function DroppableCell({
+// Droppable cell for each employee × day (background layer for dropping jobs)
+const DroppableCell = memo(function DroppableCell({
   employeeId,
   day,
-  cell,
+  isFree,
   isDragActive,
-  onCellClick,
-  onJobClick,
 }: {
   employeeId: string;
   day: string;
-  cell: EmployeeDayCell | undefined;
+  isFree: boolean;
   isDragActive: boolean;
-  onCellClick: (employeeId: string, day: string) => void;
-  onJobClick: (blockId: string) => void;
 }) {
-  const isFree = cell?.isFree ?? true;
-
   const { setNodeRef, isOver } = useDroppable({
     id: `employee-cell:${employeeId}:${day}`,
     data: {
@@ -66,52 +62,114 @@ function DroppableCell({
     <div
       ref={setNodeRef}
       className={cn(
-        "min-h-[3rem] border-r p-0.5 transition-colors",
-        isFree && "cursor-pointer hover:bg-[#68d5c8]/5",
-        isOver && isFree && "bg-[#68d5c8]/20 ring-1 ring-inset ring-[#68d5c8]",
-        !isFree && "bg-muted/10",
+        "min-h-full border-r transition-colors",
+        isDragActive && isFree && "hover:bg-[#68d5c8]/5",
+        isOver && "bg-[#68d5c8]/20 ring-1 ring-inset ring-[#68d5c8]",
       )}
-      onClick={() =>
-        isFree
-          ? onCellClick(employeeId, day)
-          : cell?.blockIds[0] && onJobClick(cell.blockIds[0])
-      }
+    />
+  );
+});
+
+// A spanning block within an employee row — draggable + resizable
+const EmployeeBlockSpanCard = memo(function EmployeeBlockSpanCard({
+  span: bs,
+  onJobClick,
+}: {
+  span: EmployeeBlockSpan;
+  onJobClick: (blockId: string) => void;
+}) {
+  const color = getJobColor(bs.job.id);
+
+  const {
+    attributes: moveAttributes,
+    listeners: moveListeners,
+    setActivatorNodeRef: setMoveActivatorRef,
+    setNodeRef: setMoveNodeRef,
+    transform,
+    isDragging,
+  } = useDraggable({
+    id: `block-move:${bs.blockId}`,
+    data: {
+      dragType: "block-move",
+      blockId: bs.blockId,
+    } satisfies PlanningDragData,
+  });
+
+  const {
+    attributes: endAttributes,
+    listeners: endListeners,
+    setNodeRef: setEndNodeRef,
+  } = useDraggable({
+    id: `block-resize-end:${bs.blockId}`,
+    data: {
+      dragType: "block-resize-end",
+      blockId: bs.blockId,
+    } satisfies PlanningDragData,
+  });
+
+  return (
+    <div
+      ref={setMoveNodeRef}
+      className={cn(
+        "group absolute flex items-center overflow-hidden rounded-md border text-[9px] font-medium transition cursor-pointer",
+        isDragging && "opacity-50 z-50",
+      )}
+      style={{
+        gridColumn: `${bs.startIndex + 2} / span ${bs.span}`, // +2 because col 1 is employee name
+        gridRow: `${bs.lane + 1}`,
+        backgroundColor: `${color}18`,
+        borderColor: `${color}40`,
+        borderLeftWidth: "3px",
+        borderLeftColor: color,
+        color,
+        left: "2px",
+        right: "2px",
+        top: "2px",
+        bottom: "2px",
+        transform: CSS.Translate.toString(transform),
+        zIndex: isDragging ? 50 : 10,
+        position: "relative",
+      }}
+      onClick={(e) => {
+        e.stopPropagation();
+        onJobClick(bs.blockId);
+      }}
     >
-      {cell?.jobs.map((job, idx) => {
-        const color = getJobColor(job.id);
-        const status = cell.statuses[idx] ?? "planned";
-        const statusColor = status === "planned" ? "#9ca3af" : status === "completed" ? "#22c55e" : "#3b82f6";
-        return (
-          <div
-            key={`${job.id}-${idx}`}
-            className="rounded px-1 py-0.5 text-[9px] font-medium truncate mb-0.5 cursor-pointer"
-            style={{
-              backgroundColor: `${color}15`,
-              color,
-              borderLeft: `3px solid ${color}`,
-            }}
-            title={`${job.jobNumber} | ${job.title}\n${job.customerName ?? ""}\nStatus: ${status}`}
-          >
-            <span
-              className="inline-block h-1.5 w-1.5 rounded-full mr-0.5 align-middle"
-              style={{ backgroundColor: statusColor }}
-            />
-            {job.jobNumber}
-            <span className="ml-0.5 opacity-50">
-              {job.title.length > 10 ? `${job.title.slice(0, 10)}…` : job.title}
-            </span>
-          </div>
-        );
-      })}
+      {/* Move handle */}
+      <span
+        ref={setMoveActivatorRef}
+        className="shrink-0 cursor-grab touch-none px-0.5 opacity-0 group-hover:opacity-60 transition-opacity"
+        {...moveAttributes}
+        {...moveListeners}
+      >
+        <GripVertical className="h-3 w-3" />
+      </span>
+
+      {/* Content */}
+      <span className="truncate flex-1 pr-1">
+        {bs.job.jobNumber}
+        <span className="ml-0.5 opacity-60">
+          {bs.job.title.length > 12 ? `${bs.job.title.slice(0, 12)}…` : bs.job.title}
+        </span>
+      </span>
+
+      {/* Resize end handle */}
+      {bs.span >= 1 && (
+        <span
+          ref={setEndNodeRef}
+          className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize touch-none opacity-0 group-hover:opacity-100 transition-opacity"
+          style={{ backgroundColor: `${color}30` }}
+          {...endAttributes}
+          {...endListeners}
+        />
+      )}
     </div>
   );
-}
+});
 
 // Legend showing job → color mapping
 function JobLegend({ jobs }: { jobs: PlanJob[] }) {
   if (jobs.length === 0) return null;
-
-  // Deduplicate by job ID
   const uniqueJobs = Array.from(new Map(jobs.map((j) => [j.id, j])).values());
 
   return (
@@ -120,10 +178,7 @@ function JobLegend({ jobs }: { jobs: PlanJob[] }) {
         const color = getJobColor(job.id);
         return (
           <div key={job.id} className="flex items-center gap-1.5">
-            <div
-              className="h-2.5 w-2.5 rounded-sm"
-              style={{ backgroundColor: color }}
-            />
+            <div className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: color }} />
             <span className="text-[10px] brand-ink-muted">
               {job.jobNumber} {job.title.length > 20 ? `${job.title.slice(0, 20)}…` : job.title}
             </span>
@@ -148,8 +203,8 @@ export const EmployeeBoard = memo(function EmployeeBoard({
   // Collect all jobs for legend
   const allJobs: PlanJob[] = [];
   for (const row of employeeRows) {
-    for (const cell of row.cells.values()) {
-      allJobs.push(...cell.jobs);
+    for (const bs of row.blockSpans) {
+      allJobs.push(bs.job);
     }
   }
 
@@ -161,7 +216,7 @@ export const EmployeeBoard = memo(function EmployeeBoard({
           className="planning-divider grid border-b bg-[var(--brand-icon-shell-bg)] sticky top-0 z-10"
           style={{ gridTemplateColumns: gridCols }}
         >
-          <div className="border-r p-2 text-[10px] font-semibold uppercase tracking-wider brand-ink-muted">
+          <div className="border-r p-2 text-[10px] font-semibold uppercase tracking-wider brand-ink-muted sticky left-0 bg-[var(--brand-icon-shell-bg)] z-[11]">
             Mitarbeiter
           </div>
           {dayHeaders.map((header) => (
@@ -183,44 +238,70 @@ export const EmployeeBoard = memo(function EmployeeBoard({
         </div>
 
         {/* Employee Rows */}
-        {employeeRows.map((row) => (
-          <div
-            key={row.employee.id}
-            className="grid border-b hover:bg-muted/20 transition-colors"
-            style={{ gridTemplateColumns: gridCols }}
-          >
-            {/* Employee Name Cell */}
-            <div className="sticky left-0 z-[5] flex items-center gap-2 border-r bg-background px-2 py-1.5">
+        {employeeRows.map((row) => {
+          const rowHeight = Math.max(1, row.laneCount) * 2.2; // rem per lane
+          return (
+            <div key={row.employee.id} className="border-b hover:bg-muted/10 transition-colors">
               <div
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
-                style={{ backgroundColor: row.employee.color || "#173d66" }}
+                className="grid relative"
+                style={{
+                  gridTemplateColumns: gridCols,
+                  gridTemplateRows: `repeat(${Math.max(1, row.laneCount)}, minmax(2rem, auto))`,
+                  minHeight: `${rowHeight}rem`,
+                }}
               >
-                {getEmployeeShortLabel(row.employee)}
-              </div>
-              <div className="min-w-0">
-                <p className="truncate text-xs font-medium brand-ink">
-                  {row.employee.firstName} {row.employee.lastName}
-                </p>
-                <p className="text-[10px] brand-ink-muted">
-                  {row.assignedDayCount} von {row.assignedDayCount + row.freeDayCount} Tagen
-                </p>
+                {/* Employee Name Cell — spans all lanes */}
+                <div
+                  className="sticky left-0 z-[5] flex items-center gap-2 border-r bg-background px-2 py-1.5"
+                  style={{ gridRow: `1 / span ${Math.max(1, row.laneCount)}` }}
+                >
+                  <div
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
+                    style={{ backgroundColor: row.employee.color || "#173d66" }}
+                  >
+                    {getEmployeeShortLabel(row.employee)}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-medium brand-ink">
+                      {row.employee.firstName} {row.employee.lastName}
+                    </p>
+                    <p className="text-[10px] brand-ink-muted">
+                      {row.assignedDayCount} von {row.assignedDayCount + row.freeDayCount} Tagen
+                    </p>
+                  </div>
+                </div>
+
+                {/* Background droppable cells — one per day, spanning all lanes */}
+                {visibleDays.map((day) => {
+                  const cell = row.cells.get(day);
+                  return (
+                    <div
+                      key={day}
+                      style={{ gridRow: `1 / span ${Math.max(1, row.laneCount)}` }}
+                      onClick={() => (cell?.isFree ?? true) ? onCellClick(row.employee.id, day) : undefined}
+                    >
+                      <DroppableCell
+                        employeeId={row.employee.id}
+                        day={day}
+                        isFree={cell?.isFree ?? true}
+                        isDragActive={isDragActive}
+                      />
+                    </div>
+                  );
+                })}
+
+                {/* Spanning block cards — positioned via grid */}
+                {row.blockSpans.map((bs) => (
+                  <EmployeeBlockSpanCard
+                    key={`${bs.blockId}-${bs.startDate}`}
+                    span={bs}
+                    onJobClick={onJobClick}
+                  />
+                ))}
               </div>
             </div>
-
-            {/* Day Cells */}
-            {visibleDays.map((day) => (
-              <DroppableCell
-                key={day}
-                employeeId={row.employee.id}
-                day={day}
-                cell={row.cells.get(day)}
-                isDragActive={isDragActive}
-                onCellClick={onCellClick}
-                onJobClick={onJobClick}
-              />
-            ))}
-          </div>
-        ))}
+          );
+        })}
 
         {/* Empty State */}
         {employeeRows.length === 0 && (

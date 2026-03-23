@@ -229,9 +229,23 @@ export type EmployeeDayCell = {
   isFree: boolean;
 };
 
+export type EmployeeBlockSpan = {
+  blockId: string;
+  job: PlanJob;
+  startIndex: number;
+  span: number;
+  startDate: string;
+  endDate: string;
+  days: string[];
+  status: string;
+  lane: number;
+};
+
 export type EmployeeRow = {
   employee: PlanEmployee;
   cells: Map<string, EmployeeDayCell>;
+  blockSpans: EmployeeBlockSpan[];
+  laneCount: number;
   assignedDayCount: number;
   freeDayCount: number;
 };
@@ -280,9 +294,79 @@ export function buildEmployeeRows(
       }),
     );
 
+    // Build spanning blocks for this employee
+    const dayIndexByDate = new Map(visibleDays.map((d, i) => [d, i]));
+    const empBlocks = new Map<string, { block: PlanningBlock; days: string[] }>();
+
+    // Collect which days each block covers for this employee
+    for (const block of blocks) {
+      const coverage = block.workerCoverage.find((c) => c.employee.id === emp.id);
+      if (!coverage) continue;
+      const coveredVisibleDays = coverage.days.filter((d) => dayIndexByDate.has(d)).sort();
+      if (coveredVisibleDays.length === 0) continue;
+      empBlocks.set(block.id, { block, days: coveredVisibleDays });
+    }
+
+    // Convert to spanning blocks (split on gaps)
+    const blockSpans: EmployeeBlockSpan[] = [];
+    for (const [, { block, days }] of empBlocks) {
+      let chunk: string[] = [];
+      for (const day of days) {
+        const idx = dayIndexByDate.get(day)!;
+        if (chunk.length > 0) {
+          const prevIdx = dayIndexByDate.get(chunk[chunk.length - 1])!;
+          if (idx !== prevIdx + 1) {
+            // Gap — flush chunk
+            const startIdx = dayIndexByDate.get(chunk[0])!;
+            blockSpans.push({
+              blockId: block.id,
+              job: block.job,
+              startIndex: startIdx,
+              span: chunk.length,
+              startDate: chunk[0],
+              endDate: chunk[chunk.length - 1],
+              days: [...chunk],
+              status: block.status,
+              lane: 0,
+            });
+            chunk = [];
+          }
+        }
+        chunk.push(day);
+      }
+      if (chunk.length > 0) {
+        const startIdx = dayIndexByDate.get(chunk[0])!;
+        blockSpans.push({
+          blockId: block.id,
+          job: block.job,
+          startIndex: startIdx,
+          span: chunk.length,
+          startDate: chunk[0],
+          endDate: chunk[chunk.length - 1],
+          days: [...chunk],
+          status: block.status,
+          lane: 0,
+        });
+      }
+    }
+
+    // Assign lanes (same algorithm as main board)
+    blockSpans.sort((a, b) => a.startIndex !== b.startIndex ? a.startIndex - b.startIndex : b.span - a.span);
+    const laneEnds: number[] = [];
+    for (const bs of blockSpans) {
+      let lane = 0;
+      while (laneEnds[lane] !== undefined && bs.startIndex <= laneEnds[lane]) {
+        lane++;
+      }
+      laneEnds[lane] = bs.startIndex + bs.span - 1;
+      bs.lane = lane;
+    }
+
     return {
       employee: emp,
       cells,
+      blockSpans,
+      laneCount: Math.max(1, laneEnds.length),
       assignedDayCount,
       freeDayCount: visibleDays.length - assignedDayCount,
     };
