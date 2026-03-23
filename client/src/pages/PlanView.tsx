@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DndContext, DragOverlay } from "@dnd-kit/core";
 import type { ImperativePanelHandle } from "react-resizable-panels";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   ArrowLeft,
   ArrowRight,
@@ -9,6 +10,7 @@ import {
   CalendarRange,
   ChevronsLeft,
   ChevronsRight,
+  Filter,
   LayoutList,
   Plus,
   Users,
@@ -63,6 +65,9 @@ export default function PlanView() {
     typeof window !== "undefined" && window.innerWidth < 768 ? "overview" : "board",
   );
   const [overviewDay, setOverviewDay] = useState(() => toDateStr(new Date()));
+  const [employeeFilter, setEmployeeFilter] = useState<Set<string>>(new Set()); // empty = show all
+  const [showOnlyFree, setShowOnlyFree] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
 
   function shiftOverviewDay(delta: number) {
     setOverviewDay((current) => {
@@ -298,6 +303,18 @@ export default function PlanView() {
   const dayGridCols = planning.boardGridStyle.gridTemplateColumns ?? "";
   const laneHeight = planning.isMobile ? (planning.viewSpan === 2 ? 88 : 64) : planning.viewSpan === 2 ? 56 : 40;
 
+  // Filter employee rows
+  const filteredEmployeeRows = useMemo(() => {
+    let rows = planning.employeePlanRows;
+    if (employeeFilter.size > 0) {
+      rows = rows.filter((r) => employeeFilter.has(r.employee.id));
+    }
+    if (showOnlyFree) {
+      rows = rows.filter((r) => r.blocks.length === 0 || r.laneCount <= 1);
+    }
+    return rows;
+  }, [planning.employeePlanRows, employeeFilter, showOnlyFree]);
+
   const calendarBoard = useMemo(
     () => (
       <Card className="brand-panel relative flex h-full min-h-0 flex-col overflow-hidden rounded-3xl">
@@ -319,11 +336,79 @@ export default function PlanView() {
           </div>
           <div className="flex items-center gap-1.5">
             <Badge variant="outline" className="brand-outline-chip rounded-full px-2 py-0.5 text-[11px] font-medium">
-              {planning.activeEmployees.length} Mitarbeiter
+              {filteredEmployeeRows.length}/{planning.activeEmployees.length} Mitarbeiter
             </Badge>
             <Badge variant="outline" className="brand-outline-chip rounded-full px-2 py-0.5 text-[11px] font-medium">
               {planning.blocks.length} Aufträge
             </Badge>
+            <Popover open={filterOpen} onOpenChange={setFilterOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={employeeFilter.size > 0 || showOnlyFree ? "default" : "outline"}
+                  size="sm"
+                  className="h-7 gap-1 rounded-full px-2 text-[11px]"
+                >
+                  <Filter className="h-3 w-3" />
+                  Filter
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-56 p-2" align="end">
+                <div className="space-y-1">
+                  <label className="flex items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-muted cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={showOnlyFree}
+                      onChange={(e) => setShowOnlyFree(e.target.checked)}
+                      className="rounded"
+                    />
+                    Nur freie Mitarbeiter
+                  </label>
+                  <div className="border-t my-1" />
+                  <div className="flex items-center justify-between px-2 py-1">
+                    <span className="text-xs font-semibold brand-ink-muted">Mitarbeiter</span>
+                    <button
+                      type="button"
+                      className="text-[10px] text-primary hover:underline"
+                      onClick={() => setEmployeeFilter(new Set())}
+                    >
+                      Alle anzeigen
+                    </button>
+                  </div>
+                  {planning.activeEmployees.map((emp) => (
+                    <label
+                      key={emp.id}
+                      className="flex items-center gap-2 rounded px-2 py-1 text-sm hover:bg-muted cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={employeeFilter.size === 0 || employeeFilter.has(emp.id)}
+                        onChange={(e) => {
+                          setEmployeeFilter((prev) => {
+                            const next = new Set(prev.size === 0 ? planning.activeEmployees.map((x) => x.id) : prev);
+                            if (e.target.checked) {
+                              next.add(emp.id);
+                            } else {
+                              next.delete(emp.id);
+                            }
+                            // If all selected, reset to empty (= show all)
+                            if (next.size === planning.activeEmployees.length) return new Set();
+                            return next;
+                          });
+                        }}
+                        className="rounded"
+                      />
+                      <div
+                        className="h-4 w-4 rounded-full text-[7px] font-bold text-white flex items-center justify-center shrink-0"
+                        style={{ backgroundColor: emp.color || "#173d66" }}
+                      >
+                        {emp.firstName?.[0]}{emp.lastName?.[0]}
+                      </div>
+                      <span className="truncate">{emp.firstName} {emp.lastName?.charAt(0)}.</span>
+                    </label>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
         <div className="min-h-0 overflow-auto flex-1">
@@ -367,7 +452,7 @@ export default function PlanView() {
             {/* Employee rows + global DnD overlay */}
             <div className="p-1.5 relative">
               {/* Per-employee rows — blocks stay within their row */}
-              {planning.employeePlanRows.map((row, empIndex) => {
+              {filteredEmployeeRows.map((row, empIndex) => {
                 const rowGridRows = `repeat(${row.laneCount}, ${laneHeight}px)`;
                 return (
                   <div
@@ -474,19 +559,22 @@ export default function PlanView() {
       dayGridCols,
       dayHeaders,
       empHeaderGridCols,
+      employeeFilter,
+      filterOpen,
+      filteredEmployeeRows,
       handleSelectBlock,
       isOverviewMode,
       laneHeight,
       planning.activeDrag,
-      planning.activeEmployees.length,
+      planning.activeEmployees,
       planning.blocks.length,
       planning.dragOverDate,
-      planning.employeePlanRows,
       planning.isLoadingBoard,
       planning.selectedBlock,
       planning.visibleDays,
       rangeLabel,
       readableCompactBlocks,
+      showOnlyFree,
     ],
   );
 
