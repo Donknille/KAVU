@@ -396,15 +396,8 @@ export function usePlanningBoard() {
         assignmentDate: targetDate,
       });
 
-      updateAssignmentsCache((current) => [
-        ...current,
-        {
-          ...createdAssignment,
-          job,
-          workers: [],
-        },
-      ]);
-      // Job stays in backlog until completed — no removal needed
+      // Refresh from server to get correct block/employee data
+      await refreshPlanningBoard();
       toast({
         title: "Auftrag eingeplant",
         description: `${job.jobNumber} liegt jetzt am ${formatCompactDate(targetDate)} im Kalender.`,
@@ -474,6 +467,7 @@ export function usePlanningBoard() {
         })
       );
       setSelectedBlockId(block.id);
+      await refreshPlanningBoard();
       const firstAssignedDay = pendingAssignments[0]?.assignmentDate;
       const lastAssignedDay = pendingAssignments[pendingAssignments.length - 1]?.assignmentDate;
       toast({
@@ -524,18 +518,7 @@ export function usePlanningBoard() {
         employeeId,
         mode: "remove",
       });
-      updateAssignmentsCache((current) =>
-        current.map((assignment) => {
-          if (!targetAssignments.some((entry) => entry.id === assignment.id)) {
-            return assignment;
-          }
-
-          return {
-            ...assignment,
-            workers: (assignment.workers ?? []).filter((worker) => worker.id !== employeeId),
-          };
-        })
-      );
+      await refreshPlanningBoard();
       toast({
         title: "Mitarbeiter entfernt",
         description:
@@ -610,6 +593,7 @@ export function usePlanningBoard() {
         )
       );
       setSelectedBlockId(block.id);
+      await refreshPlanningBoard();
       toast({
         title: "Auftrag verschoben",
         description: `${block.job.jobNumber} wurde auf ${formatRange(
@@ -710,10 +694,7 @@ export function usePlanningBoard() {
         workers: [...block.workers],
       }));
 
-      updateAssignmentsCache((current) => [
-        ...current.filter((assignment) => !removedAssignmentIds.has(assignment.id)),
-        ...createdAssignments,
-      ]);
+      await refreshPlanningBoard();
       toast({
         title: "Zeitraum aktualisiert",
         description: `${block.job.jobNumber} läuft jetzt von ${formatRange(
