@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DndContext, DragOverlay } from "@dnd-kit/core";
 import type { ImperativePanelHandle } from "react-resizable-panels";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -53,6 +53,45 @@ import {
 } from "@/components/ui/resizable";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { useDroppable } from "@dnd-kit/core";
+
+// Drop zone per employee+day — used for job placement with employee assignment
+const EmployeeDayDropZone = memo(function EmployeeDayDropZone({
+  employeeId,
+  date,
+  column,
+  laneCount,
+  isEnabled,
+}: {
+  employeeId: string;
+  date: string;
+  column: number;
+  laneCount: number;
+  isEnabled: boolean;
+}) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `employee-day:${employeeId}:${date}`,
+    data: {
+      dropType: "employee-day" as const,
+      employeeId,
+      date,
+    },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        "transition",
+        isEnabled && isOver && "bg-[#68d5c8]/18 ring-1 ring-inset ring-[#68d5c8] rounded",
+      )}
+      style={{
+        gridColumn: column,
+        gridRow: `1 / span ${laneCount}`,
+      }}
+    />
+  );
+});
 
 export default function PlanView() {
   const planning = usePlanningBoard();
@@ -498,6 +537,33 @@ export default function PlanView() {
                         />
                       ))}
                     </div>
+
+                    {/* Per-employee drop zones for job placement (unique IDs per employee+day) */}
+                    <div
+                      className={cn(
+                        "absolute grid",
+                        planning.activeDrag?.type === "job" ? "pointer-events-auto z-20" : "pointer-events-none",
+                      )}
+                      style={{
+                        gridTemplateColumns: dayGridCols,
+                        gridTemplateRows: rowGridRows,
+                        left: nameColWidth,
+                        right: 0,
+                        top: 0,
+                        bottom: 0,
+                      }}
+                    >
+                      {planning.visibleDays.map((day, index) => (
+                        <EmployeeDayDropZone
+                          key={`${row.employee.id}:${day}`}
+                          employeeId={row.employee.id}
+                          date={day}
+                          column={index + 1}
+                          laneCount={row.laneCount}
+                          isEnabled={planning.activeDrag?.type === "job"}
+                        />
+                      ))}
+                    </div>
                   </div>
                 );
               })}
@@ -510,11 +576,13 @@ export default function PlanView() {
                 </div>
               )}
 
-              {/* Global DnD drop zone overlay — ONE set of day zones spanning ALL employee rows */}
+              {/* Global DnD drop zone overlay — for resize/move only (job drops use per-employee zones) */}
               <div
                 className={cn(
                   "absolute grid",
-                  planning.activeDrag ? "pointer-events-auto z-20" : "pointer-events-none",
+                  planning.activeDrag && planning.activeDrag.type !== "job"
+                    ? "pointer-events-auto z-20"
+                    : "pointer-events-none",
                 )}
                 style={{
                   gridTemplateColumns: dayGridCols,

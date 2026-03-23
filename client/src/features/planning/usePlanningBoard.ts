@@ -380,6 +380,32 @@ export function usePlanningBoard() {
     });
   }
 
+  async function createBlockWithEmployee(job: PlanJob, targetDate: string, employeeId: string) {
+    if (getJobConflictDates(job.id, [targetDate]).length > 0) {
+      toast({
+        title: "Auftrag bereits eingeplant",
+        description: "Fuer diesen Tag existiert bereits ein Eintrag.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    await runBusyAction("Auftrag wird eingeplant...", async () => {
+      const createdAssignment = await apiRequestJson<PlanAssignment>("POST", "/api/assignments", {
+        jobId: job.id,
+        assignmentDate: targetDate,
+        workerIds: [employeeId],
+      });
+
+      await refreshPlanningBoard();
+      const emp = activeEmployees.find((e) => e.id === employeeId);
+      toast({
+        title: "Auftrag eingeplant",
+        description: `${job.jobNumber} am ${formatCompactDate(targetDate)} fuer ${emp?.firstName ?? "Mitarbeiter"} eingeplant.`,
+      });
+    });
+  }
+
   async function createBlockFromBacklog(job: PlanJob, targetDate: string) {
     if (getJobConflictDates(job.id, [targetDate]).length > 0) {
       toast({
@@ -970,6 +996,14 @@ export function usePlanningBoard() {
     try {
       const overDate = resolveDropDate(event, currentDrag);
 
+      // Job dropped on employee-day zone → create assignment + assign worker
+      if (currentDrag.type === "job" && overData?.dropType === "employee-day") {
+        const { date, employeeId } = overData;
+        await createBlockWithEmployee(currentDrag.job, date, employeeId);
+        return;
+      }
+
+      // Job dropped on generic day zone (no employee) → create without worker
       if (currentDrag.type === "job" && overDate) {
         await createBlockFromBacklog(currentDrag.job, overDate);
         return;

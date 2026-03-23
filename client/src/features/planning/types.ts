@@ -109,6 +109,7 @@ export type PlanningDragData =
 
 export type PlanningDropData =
   | { dropType: "day"; date: string }
+  | { dropType: "employee-day"; employeeId: string; date: string }
   | {
       dropType: "block";
       blockId: string;
