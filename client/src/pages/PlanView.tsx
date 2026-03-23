@@ -127,9 +127,13 @@ export default function PlanView() {
         const isToday = summary.day === toDateStr(new Date());
         const isPreviewDay = planning.resizePreview?.addedDays.includes(summary.day) ?? false;
 
+        const isSaturday = date.getDay() === 6;
+        const isMonday = date.getDay() === 1;
         return {
           day: summary.day,
           isToday,
+          isSaturday,
+          isMonday,
           isPreviewDay,
           previewTone: planning.resizePreview?.valid ? "valid" : "invalid",
           weekdayLabel: date.toLocaleDateString("de-DE", {
@@ -289,7 +293,8 @@ export default function PlanView() {
   );
 
   // Per-employee grid dimensions
-  const empHeaderGridCols = `8rem ${planning.boardGridStyle.gridTemplateColumns ?? ""}`;
+  const nameColWidth = "9rem";
+  const empHeaderGridCols = `${nameColWidth} ${planning.boardGridStyle.gridTemplateColumns ?? ""}`;
   const dayGridCols = planning.boardGridStyle.gridTemplateColumns ?? "";
   const laneHeight = planning.isMobile ? (planning.viewSpan === 2 ? 88 : 64) : planning.viewSpan === 2 ? 56 : 40;
 
@@ -335,25 +340,26 @@ export default function PlanView() {
                 <div
                   key={header.day}
                   className={cn(
-                    "planning-board-header min-w-0 px-1.5 py-1.5 brand-ink transition-colors",
+                    "planning-board-header min-w-0 px-1 py-1.5 brand-ink transition-colors text-center",
                     header.isPreviewDay &&
                       (header.previewTone === "valid" ? "planning-preview-valid" : "planning-preview-invalid"),
-                    header.isToday && "brand-highlight",
+                    header.isToday && "bg-[#173d66]/10 font-bold",
+                    header.isSaturday && "bg-muted/30",
+                    header.isMonday && "border-l-2 border-l-[#173d66]/20",
                     planning.dragOverDate === header.day && "bg-[#68d5c8]/20 ring-1 ring-inset ring-[#68d5c8]",
                   )}
                 >
-                  <p className="text-[9px] font-semibold uppercase tracking-[0.14em] brand-ink-muted">
+                  <p className="text-[8px] font-semibold uppercase tracking-[0.1em] brand-ink-muted">
                     {header.weekdayLabel}
                   </p>
-                  <div className="mt-0.5 flex items-end justify-between gap-1">
-                    <p className={cn("font-semibold leading-none", isOverviewMode ? "text-xs" : "text-sm")}>
-                      {header.dateLabel}
+                  <p className={cn("font-semibold leading-none mt-0.5", isOverviewMode ? "text-[10px]" : "text-xs")}>
+                    {header.dateLabel}
+                  </p>
+                  {!isOverviewMode && (
+                    <p className="text-[8px] brand-ink-muted mt-0.5">
+                      {header.assignmentCount}E {header.freeCount}f
                     </p>
-                    <div className="text-right text-[9px] brand-ink-muted">
-                      <p>{`${header.assignmentCount} ET`}</p>
-                      <p>{`${header.freeCount} frei`}</p>
-                    </div>
-                  </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -391,7 +397,7 @@ export default function PlanView() {
                       </div>
                       <div className="min-w-0">
                         <p className="truncate text-xs font-medium brand-ink">
-                          {row.employee.firstName} {row.employee.lastName}
+                          {row.employee.firstName} {row.employee.lastName?.charAt(0)}.
                         </p>
                       </div>
                     </div>
@@ -402,7 +408,7 @@ export default function PlanView() {
                       style={{
                         gridTemplateColumns: dayGridCols,
                         gridTemplateRows: rowGridRows,
-                        left: "8rem",
+                        left: nameColWidth,
                         right: 0,
                         top: 0,
                         bottom: 0,
@@ -437,7 +443,7 @@ export default function PlanView() {
                 style={{
                   gridTemplateColumns: dayGridCols,
                   gridTemplateRows: "1fr",
-                  left: "8rem",
+                  left: nameColWidth,
                   right: 0,
                   top: 0,
                   bottom: 0,
