@@ -502,6 +502,14 @@ export default function PlanView() {
                 );
               })}
 
+              {filteredEmployeeRows.length === 0 && (
+                <div className="p-8 text-center text-sm brand-ink-soft border rounded-2xl">
+                  {planning.activeEmployees.length === 0
+                    ? "Noch keine Mitarbeiter angelegt. Erstellen Sie Mitarbeiter unter \"Mitarbeiter\"."
+                    : "Kein Mitarbeiter entspricht dem Filter. Filter zuruecksetzen um alle anzuzeigen."}
+                </div>
+              )}
+
               {/* Global DnD drop zone overlay — ONE set of day zones spanning ALL employee rows */}
               <div
                 className={cn(
