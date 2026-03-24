@@ -274,6 +274,7 @@ export default function PlanView() {
               <Button
                 size="sm"
                 className="h-8 gap-2 px-2.5"
+                data-tour="create-job"
                 onClick={() => planning.setShowCreateJobDialog(true)}
               >
                 <Plus className="h-4 w-4" />
@@ -395,6 +396,7 @@ export default function PlanView() {
                   <PopoverTrigger asChild>
                     <button
                       type="button"
+                      data-tour="employee-filter"
                       className={cn(
                         "flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-medium transition",
                         employeeFilter.size > 0 || showOnlyFree
