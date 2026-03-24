@@ -395,20 +395,40 @@ export function usePlanningBoard() {
       return;
     }
 
-    await runBusyAction("Auftrag wird eingeplant...", async () => {
-      const createdAssignment = await apiRequestJson<PlanAssignment>("POST", "/api/assignments", {
+    const emp = activeEmployees.find((e) => e.id === employeeId);
+
+    // Optimistic: show block immediately
+    const tempId = `temp-${Date.now()}`;
+    const optimisticAssignment: PlanAssignment = {
+      id: tempId,
+      jobId: job.id,
+      assignmentDate: targetDate,
+      sortOrder: 0,
+      status: "planned",
+      job,
+      workers: emp ? [emp] : [],
+    };
+    updateAssignmentsCache((current) => [...current, optimisticAssignment]);
+    updateBacklogCache((current) => current.filter((j) => j.id !== job.id));
+
+    toast({
+      title: "Auftrag eingeplant",
+      description: `${job.jobNumber} am ${formatCompactDate(targetDate)} für ${emp?.firstName ?? "Mitarbeiter"}.`,
+    });
+
+    // API call in background, then sync with server
+    try {
+      await apiRequestJson<PlanAssignment>("POST", "/api/assignments", {
         jobId: job.id,
         assignmentDate: targetDate,
         workerIds: [employeeId],
       });
-
-      await refreshPlanningBoard();
-      const emp = activeEmployees.find((e) => e.id === employeeId);
-      toast({
-        title: "Auftrag eingeplant",
-        description: `${job.jobNumber} am ${formatCompactDate(targetDate)} für ${emp?.firstName ?? "Mitarbeiter"} eingeplant.`,
-      });
-    });
+    } catch {
+      // Rollback on error
+      updateAssignmentsCache((current) => current.filter((a) => a.id !== tempId));
+      toast({ title: "Fehler beim Einplanen", variant: "destructive" });
+    }
+    void refreshPlanningBoard();
   }
 
   async function createBlockFromBacklog(job: PlanJob, targetDate: string) {
@@ -609,36 +629,36 @@ export function usePlanningBoard() {
     const orderedAssignments = [...block.assignments].sort((left, right) =>
       left.assignmentDate.localeCompare(right.assignmentDate)
     );
+    const updates = orderedAssignments.map((assignment, index) => ({
+      assignmentId: assignment.id,
+      assignmentDate: nextDays[index],
+    }));
+    const dateByAssignmentId = new Map(
+      updates.map((update) => [update.assignmentId, update.assignmentDate])
+    );
 
-    await runBusyAction("Auftrag wird verschoben...", async () => {
-      const updates = orderedAssignments.map((assignment, index) => ({
-        assignmentId: assignment.id,
-        assignmentDate: nextDays[index],
-      }));
-      await apiRequest("POST", "/api/planning/move-block", { updates });
-      const dateByAssignmentId = new Map(
-        updates.map((update) => [update.assignmentId, update.assignmentDate])
-      );
-      updateAssignmentsCache((current) =>
-        current.map((assignment) =>
-          dateByAssignmentId.has(assignment.id)
-            ? {
-                ...assignment,
-                assignmentDate: dateByAssignmentId.get(assignment.id)!,
-              }
-            : assignment
-        )
-      );
-      setSelectedBlockId(block.id);
-      await refreshPlanningBoard();
-      toast({
-        title: "Auftrag verschoben",
-        description: `${block.job.jobNumber} wurde auf ${formatRange(
-          nextDays[0],
-          nextDays[nextDays.length - 1]
-        )} verschoben.`,
-      });
+    // Optimistic: move assignments immediately in cache
+    updateAssignmentsCache((current) =>
+      current.map((assignment) =>
+        dateByAssignmentId.has(assignment.id)
+          ? { ...assignment, assignmentDate: dateByAssignmentId.get(assignment.id)! }
+          : assignment
+      )
+    );
+    setSelectedBlockId(block.id);
+
+    toast({
+      title: "Auftrag verschoben",
+      description: `${block.job.jobNumber} auf ${formatRange(nextDays[0], nextDays[nextDays.length - 1])} verschoben.`,
     });
+
+    // API call + sync
+    try {
+      await apiRequest("POST", "/api/planning/move-block", { updates });
+    } catch {
+      toast({ title: "Fehler beim Verschieben", variant: "destructive" });
+    }
+    void refreshPlanningBoard();
   }
 
   async function resizeBlock(block: PlanningBlock, edge: "start" | "end", targetDate: string) {
@@ -703,43 +723,56 @@ export function usePlanningBoard() {
 
     const template = block.assignments[0];
     const workerIds = block.workers.map((worker) => worker.id);
+    const removedAssignments = block.assignments.filter((assignment) =>
+      removedDays.includes(assignment.assignmentDate)
+    );
+    const removedAssignmentIds = new Set(removedAssignments.map((a) => a.id));
 
-    await runBusyAction("Zeitraum wird aktualisiert...", async () => {
-      const removedAssignments = block.assignments.filter((assignment) =>
-        removedDays.includes(assignment.assignmentDate)
-      );
-      const resizeResult = await apiRequestJson<{ ok: true; createdAssignments: PlanAssignment[] }>(
+    // Optimistic: update cache immediately
+    const tempAssignments = addedDays.map((day, i) => ({
+      id: `temp-resize-${Date.now()}-${i}`,
+      jobId: block.jobId,
+      assignmentDate: day,
+      sortOrder: 0,
+      status: "planned" as const,
+      plannedStartTime: template.plannedStartTime,
+      plannedEndTime: template.plannedEndTime,
+      note: template.note,
+      job: block.job,
+      workers: [...block.workers],
+    }));
+
+    updateAssignmentsCache((current) => [
+      ...current.filter((a) => !removedAssignmentIds.has(a.id)),
+      ...tempAssignments,
+    ]);
+
+    toast({
+      title: "Zeitraum aktualisiert",
+      description: `${block.job.jobNumber} läuft jetzt von ${formatRange(nextDays[0], nextDays[nextDays.length - 1])}.`,
+    });
+
+    // API call + sync
+    try {
+      await apiRequestJson<{ ok: true; createdAssignments: PlanAssignment[] }>(
         "POST",
         "/api/planning/resize-block",
         {
-          removeAssignmentIds: removedAssignments.map((assignment) => assignment.id),
+          removeAssignmentIds: [...removedAssignmentIds],
           createAssignments: addedDays.map((day) => ({
-          jobId: block.jobId,
-          assignmentDate: day,
-          plannedStartTime: template.plannedStartTime || undefined,
-          plannedEndTime: template.plannedEndTime || undefined,
-          note: template.note || undefined,
-          workerIds,
+            jobId: block.jobId,
+            assignmentDate: day,
+            plannedStartTime: template.plannedStartTime || undefined,
+            plannedEndTime: template.plannedEndTime || undefined,
+            note: template.note || undefined,
+            workerIds,
           })),
         }
       );
-
-      const removedAssignmentIds = new Set(removedAssignments.map((assignment) => assignment.id));
-      const createdAssignments = resizeResult.createdAssignments.map((assignment) => ({
-        ...assignment,
-        job: block.job,
-        workers: [...block.workers],
-      }));
-
-      await refreshPlanningBoard();
-      toast({
-        title: "Zeitraum aktualisiert",
-        description: `${block.job.jobNumber} läuft jetzt von ${formatRange(
-          nextDays[0],
-          nextDays[nextDays.length - 1]
-        )}.`,
-      });
-    });
+    } catch {
+      toast({ title: "Fehler beim Ändern", variant: "destructive" });
+    }
+    void refreshPlanningBoard();
   }
 
   const [pendingRemoveBlock, setPendingRemoveBlock] = useState<PlanningBlock | null>(null);
