@@ -386,18 +386,53 @@ export function usePlanningBoard() {
   }
 
   async function createBlockWithEmployee(job: PlanJob, targetDate: string, employeeId: string) {
-    if (getJobConflictDates(job.id, [targetDate]).length > 0) {
+    const emp = activeEmployees.find((e) => e.id === employeeId);
+
+    // Check if this job already has an assignment on this date
+    const existingAssignment = assignments.find(
+      (a) => a.jobId === job.id && a.assignmentDate === targetDate,
+    );
+
+    if (existingAssignment) {
+      // Job already planned on this day — add employee as additional worker
+      const alreadyAssigned = (existingAssignment.workers ?? []).some((w) => w.id === employeeId);
+      if (alreadyAssigned) {
+        toast({
+          title: "Bereits zugewiesen",
+          description: `${emp?.firstName ?? "Mitarbeiter"} arbeitet an diesem Tag bereits an ${job.jobNumber}.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Optimistic: add worker to existing assignment
+      updateAssignmentsCache((current) =>
+        current.map((a) =>
+          a.id === existingAssignment.id
+            ? { ...a, workers: [...(a.workers ?? []), ...(emp ? [emp] : [])] }
+            : a,
+        ),
+      );
+
       toast({
-        title: "Auftrag bereits eingeplant",
-        description: "Für diesen Tag existiert bereits ein Eintrag.",
-        variant: "destructive",
+        title: "Mitarbeiter hinzugefügt",
+        description: `${emp?.firstName ?? "Mitarbeiter"} arbeitet jetzt am ${formatCompactDate(targetDate)} an ${job.jobNumber}.`,
       });
+
+      try {
+        await apiRequest("POST", "/api/planning/assign-workers", {
+          assignmentIds: [existingAssignment.id],
+          employeeId,
+          mode: "add",
+        });
+      } catch {
+        toast({ title: "Fehler beim Zuweisen", variant: "destructive" });
+      }
+      void refreshPlanningBoard();
       return;
     }
 
-    const emp = activeEmployees.find((e) => e.id === employeeId);
-
-    // Optimistic: show block immediately
+    // No existing assignment — create new one with worker
     const tempId = `temp-${Date.now()}`;
     const optimisticAssignment: PlanAssignment = {
       id: tempId,
@@ -416,7 +451,6 @@ export function usePlanningBoard() {
       description: `${job.jobNumber} am ${formatCompactDate(targetDate)} für ${emp?.firstName ?? "Mitarbeiter"}.`,
     });
 
-    // API call in background, then sync with server
     try {
       await apiRequestJson<PlanAssignment>("POST", "/api/assignments", {
         jobId: job.id,
@@ -424,7 +458,6 @@ export function usePlanningBoard() {
         workerIds: [employeeId],
       });
     } catch {
-      // Rollback on error
       updateAssignmentsCache((current) => current.filter((a) => a.id !== tempId));
       toast({ title: "Fehler beim Einplanen", variant: "destructive" });
     }
