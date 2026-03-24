@@ -1014,9 +1014,8 @@ export function usePlanningBoard() {
         return;
       }
 
-      // Job dropped on generic day zone (no employee) → create without worker
-      if (currentDrag.type === "job" && overDate) {
-        await createBlockFromBacklog(currentDrag.job, overDate);
+      // Job dropped outside employee zones — ignore (block needs a worker)
+      if (currentDrag.type === "job") {
         return;
       }
 
