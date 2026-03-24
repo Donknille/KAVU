@@ -21,6 +21,10 @@ function isSunday(value: Date) {
   return value.getDay() === 0;
 }
 
+export function isSaturday(dateStr: string) {
+  return parseDateString(dateStr).getDay() === 6;
+}
+
 export function toStartOfWeek(value: Date) {
   const next = new Date(value);
   next.setHours(12, 0, 0, 0);

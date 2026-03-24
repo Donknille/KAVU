@@ -56,6 +56,7 @@ import {
   getAssignmentsForWorkerRemove,
   getEmployeeLabel,
   getVisibleDays,
+  isSaturday,
   toDateStr,
   toStartOfWeek,
   uniqueSortedDates,
@@ -572,16 +573,22 @@ export function usePlanningBoard() {
     if (targetIndex === undefined) {
       return;
     }
-    if (targetIndex + block.span > visibleDays.length) {
+    // Collect enough workdays (skip Saturdays) to match block.span
+    const workdayCount = block.days.filter((d) => !isSaturday(d)).length || block.span;
+    const nextDays: string[] = [];
+    for (let i = targetIndex; i < visibleDays.length && nextDays.length < workdayCount; i++) {
+      if (!isSaturday(visibleDays[i])) {
+        nextDays.push(visibleDays[i]);
+      }
+    }
+    if (nextDays.length < workdayCount) {
       toast({
         title: "Zeitraum ausserhalb der Ansicht",
-        description: "Der Auftrag passt in dieser Wochenansicht nicht mehr vollständig hinein.",
+        description: "Der Auftrag passt in dieser Wochenansicht nicht mehr vollstaendig hinein.",
         variant: "destructive",
       });
       return;
     }
-
-    const nextDays = visibleDays.slice(targetIndex, targetIndex + block.span);
     if (nextDays.join("|") === block.days.join("|")) {
       return;
     }
@@ -663,7 +670,7 @@ export function usePlanningBoard() {
 
     const newStartIndex = edge === "start" ? targetIndex : block.startIndex;
     const newEndIndex = edge === "end" ? targetIndex : block.endIndex;
-    const nextDays = visibleDays.slice(newStartIndex, newEndIndex + 1);
+    const nextDays = visibleDays.slice(newStartIndex, newEndIndex + 1).filter((day) => !isSaturday(day));
 
     if (nextDays.join("|") === block.days.join("|")) {
       return;
