@@ -1145,6 +1145,19 @@ export class PreviewStorage {
     });
   }
 
+  async deleteJob(companyId: string, id: string) {
+    const index = this.data.jobs.findIndex((j) => j.id === id && j.companyId === companyId);
+    if (index === -1) return false;
+    this.data.jobs.splice(index, 1);
+    return true;
+  }
+
+  async getAssignmentsByJob(companyId: string, jobId: string) {
+    return this.data.assignments.filter(
+      (a) => a.companyId === companyId && a.jobId === jobId,
+    );
+  }
+
   async getAssignment(id: string) {
     return this.data.assignments.find((assignment) => assignment.id === id);
   }

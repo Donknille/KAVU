@@ -137,4 +137,24 @@ export function registerJobRoutes(
       res.json(job);
     }),
   );
+
+  app.delete(
+    "/api/jobs/:id",
+    isAuthenticated,
+    requireAdmin,
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+      const existing = await storage.getJobForCompany(req.companyId, req.params.id);
+      if (!existing) return res.status(404).json({ message: "Not found" });
+
+      // Only allow deletion if job has no assignments
+      const assignments = await storage.getAssignmentsByJob(req.companyId, req.params.id);
+      if (assignments.length > 0) {
+        return res.status(409).json({ message: "Auftrag hat noch aktive Einsätze. Bitte zuerst alle Einsätze entfernen." });
+      }
+
+      await storage.deleteJob(req.companyId, req.params.id);
+      invalidateCompanyReadCaches(req.companyId);
+      res.json({ ok: true });
+    }),
+  );
 }

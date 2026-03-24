@@ -171,6 +171,8 @@ export interface IStorage {
     data: Partial<InsertJob>,
   ): Promise<Job | undefined>;
   searchJobs(companyId: string, query: string): Promise<Job[]>;
+  deleteJob(companyId: string, id: string): Promise<boolean>;
+  getAssignmentsByJob(companyId: string, jobId: string): Promise<Assignment[]>;
 
   getAssignment(id: string): Promise<Assignment | undefined>;
   getAssignmentForCompany(companyId: string, id: string): Promise<Assignment | undefined>;
@@ -933,6 +935,20 @@ export class DatabaseStorage implements IStorage {
         )
       )
       .orderBy(desc(jobs.createdAt));
+  }
+
+  async deleteJob(companyId: string, id: string): Promise<boolean> {
+    const result = await db
+      .delete(jobs)
+      .where(and(eq(jobs.companyId, companyId), eq(jobs.id, id)));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async getAssignmentsByJob(companyId: string, jobId: string): Promise<Assignment[]> {
+    return db
+      .select()
+      .from(assignments)
+      .where(and(eq(assignments.companyId, companyId), eq(assignments.jobId, jobId)));
   }
 
   async getAssignment(id: string): Promise<Assignment | undefined> {
