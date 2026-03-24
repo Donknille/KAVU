@@ -23,14 +23,14 @@ const TOUR_STEPS: TourStep[] = [
     selector: '[data-sidebar="sidebar"]',
     title: "Navigation",
     description:
-      "Hier findest du alle Bereiche: Einsatzplan, Auftraege, Mitarbeiter und Archiv.",
+      "Hier findest du alle Bereiche: Einsatzplan, Aufträge, Mitarbeiter und Archiv.",
     placement: "right",
   },
   {
     selector: '[data-panel-id="planning-backlog"]',
     title: "Backlog",
     description:
-      "Im Backlog sammelst du alle ungeplanten Auftraege. Von hier ziehst du sie per Drag & Drop in den Kalender.",
+      "Im Backlog sammelst du alle ungeplanten Aufträge. Von hier ziehst du sie per Drag & Drop in den Kalender.",
     placement: "right",
   },
   {
@@ -43,7 +43,7 @@ const TOUR_STEPS: TourStep[] = [
     selector: '[data-panel-id="planning-board"]',
     title: "Kalender",
     description:
-      "Der Kalender zeigt deine Mitarbeiter und ihre Einsaetze. Ziehe Auftraege aus dem Backlog direkt auf eine Mitarbeiter-Zeile.",
+      "Der Kalender zeigt deine Mitarbeiter und ihre Einsätze. Ziehe Aufträge aus dem Backlog direkt auf eine Mitarbeiter-Zeile.",
     placement: "left",
   },
   {
@@ -57,7 +57,7 @@ const TOUR_STEPS: TourStep[] = [
     selector: null,
     title: "Alles klar!",
     description:
-      "Du kannst jetzt loslegen. Erstelle deinen ersten Auftrag oder plane bestehende Auftraege ein.",
+      "Du kannst jetzt loslegen. Erstelle deinen ersten Auftrag oder plane bestehende Aufträge ein.",
   },
 ];
 
@@ -403,7 +403,7 @@ function TourTooltip({
             className="text-sm text-[#173d66]/50 underline"
             onClick={onSkip}
           >
-            Tour ueberspringen
+            Tour überspringen
           </button>
         ) : (
           <span />

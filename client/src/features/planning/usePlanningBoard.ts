@@ -389,7 +389,7 @@ export function usePlanningBoard() {
     if (getJobConflictDates(job.id, [targetDate]).length > 0) {
       toast({
         title: "Auftrag bereits eingeplant",
-        description: "Fuer diesen Tag existiert bereits ein Eintrag.",
+        description: "Für diesen Tag existiert bereits ein Eintrag.",
         variant: "destructive",
       });
       return;
@@ -406,7 +406,7 @@ export function usePlanningBoard() {
       const emp = activeEmployees.find((e) => e.id === employeeId);
       toast({
         title: "Auftrag eingeplant",
-        description: `${job.jobNumber} am ${formatCompactDate(targetDate)} fuer ${emp?.firstName ?? "Mitarbeiter"} eingeplant.`,
+        description: `${job.jobNumber} am ${formatCompactDate(targetDate)} für ${emp?.firstName ?? "Mitarbeiter"} eingeplant.`,
       });
     });
   }
@@ -415,7 +415,7 @@ export function usePlanningBoard() {
     if (getJobConflictDates(job.id, [targetDate]).length > 0) {
       toast({
         title: "Auftrag bereits eingeplant",
-        description: "Fuer diesen Tag existiert bereits ein Eintrag.",
+        description: "Für diesen Tag existiert bereits ein Eintrag.",
         variant: "destructive",
       });
       return;
@@ -453,7 +453,7 @@ export function usePlanningBoard() {
     if (targetAssignments.length === 0) {
       toast({
         title: "Keine offenen Tage mehr",
-        description: "Fuer die gewählten Tage gibt es keine offenen oder laufenden Einsatzdaten mehr.",
+        description: "Für die gewählten Tage gibt es keine offenen oder laufenden Einsatzdaten mehr.",
         variant: "destructive",
       });
       return;
@@ -537,7 +537,7 @@ export function usePlanningBoard() {
     if (targetAssignments.length === 0) {
       toast({
         title: "Keine offenen Tage mehr",
-        description: "Fuer die gewählten Tage gibt es keine noch nicht gestarteten Einsatzdaten mehr, aus denen Mitarbeitende entfernt werden können.",
+        description: "Für die gewählten Tage gibt es keine noch nicht gestarteten Einsatzdaten mehr, aus denen Mitarbeitende entfernt werden können.",
         variant: "destructive",
       });
       return;
@@ -587,8 +587,8 @@ export function usePlanningBoard() {
     }
     if (nextDays.length < workdayCount) {
       toast({
-        title: "Zeitraum ausserhalb der Ansicht",
-        description: "Der Auftrag passt in dieser Wochenansicht nicht mehr vollstaendig hinein.",
+        title: "Zeitraum außerhalb der Ansicht",
+        description: "Der Auftrag passt in dieser Wochenansicht nicht mehr vollständig hinein.",
         variant: "destructive",
       });
       return;
@@ -600,7 +600,7 @@ export function usePlanningBoard() {
     if (getJobConflictDates(block.jobId, nextDays, block.assignmentIds).length > 0) {
       toast({
         title: "Auftrag kollidiert",
-        description: "Fuer den Auftrag liegen im Zielzeitraum bereits andere Tages-Einsätze vor.",
+        description: "Für den Auftrag liegen im Zielzeitraum bereits andere Tages-Einsätze vor.",
         variant: "destructive",
       });
       return;
@@ -1141,7 +1141,7 @@ export function usePlanningBoard() {
       await apiRequest("PATCH", `/api/assignments/${id}`, { accommodationNote: note });
     }
     void refreshPlanningBoard();
-    toast({ title: note ? "Uebernachtung gespeichert" : "Uebernachtung entfernt" });
+    toast({ title: note ? "Übernachtung gespeichert" : "Übernachtung entfernt" });
   }, [refreshPlanningBoard, toast]);
 
   return {

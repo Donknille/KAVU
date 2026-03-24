@@ -700,7 +700,7 @@ function AccommodationSection({
       >
         <BedDouble className="h-4 w-4 brand-ink-muted shrink-0" />
         <span className="text-xs font-semibold brand-ink">
-          {existingNote ? "Uebernachtung hinterlegt" : "Uebernachtung hinzufuegen"}
+          {existingNote ? "Übernachtung hinterlegt" : "Übernachtung hinzufügen"}
         </span>
         <span className="ml-auto text-[10px] brand-ink-muted">{isOpen ? "▲" : "▼"}</span>
       </button>
@@ -1074,7 +1074,7 @@ export function SelectedBlockPanel({
                       disabled={!selectedEmployeeId || selectedAssignDays.length === 0 || !onAssignEmployee}
                     >
                       <Plus className="h-4 w-4" />
-                      Fuer ausgewählte Tage zuweisen
+                      Für ausgewählte Tage zuweisen
                     </Button>
                   </div>
                 )}
@@ -1244,7 +1244,7 @@ export function SelectedBlockPanel({
           </div>
         )}
 
-        {/* Uebernachtungsinfo (optional) */}
+        {/* Übernachtungsinfo (optional) */}
         {onUpdateAccommodation && (
           <AccommodationSection
             assignments={selectedBlock.assignments}

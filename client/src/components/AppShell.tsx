@@ -20,7 +20,6 @@ import {
   Calendar,
   CalendarDays,
 
-  CreditCard,
   KeyRound,
   LogOut,
   Sun,
@@ -33,7 +32,6 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { BillingBanner } from "@/components/BillingBanner";
 import { useEmployeeOfflineQueue } from "@/features/employee-offline/EmployeeOfflineQueueProvider";
 import { getPreviewEmployeeToken } from "@/lib/preview-session";
-import { useCurrentSession } from "@/features/session/useCurrentSession";
 
 interface AppShellProps {
   children: ReactNode;
@@ -71,12 +69,7 @@ function isItemActive(
 
 export function AppShell({ children, role, employee }: AppShellProps) {
   const [location] = useLocation();
-  const { data: meData } = useCurrentSession();
-  const billingEnabled = meData?.billing?.stripeEnabled ?? false;
-  const billingItems = billingEnabled && role === "admin"
-    ? [{ title: "Abonnement", url: "/billing", icon: CreditCard }]
-    : [];
-  const items = role === "admin" ? [...adminItems, ...billingItems] : employeeItems;
+  const items = role === "admin" ? adminItems : employeeItems;
   const previewToken = getPreviewEmployeeToken();
   const { isOnline, pendingCount, conflictCount } = useEmployeeOfflineQueue();
   const activeItem = items.find((item) => isItemActive(location, item.url, role)) ?? items[0];

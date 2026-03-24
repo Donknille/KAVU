@@ -28,7 +28,7 @@ export default function EmployeeLoginPage() {
   return (
     <AuthShell
       title="Mitarbeiter anmelden"
-      subtitle="Fuer Teams ohne persönliche E-Mail-Adresse. Anmeldung mit Betriebscode, Benutzername und Passwort."
+      subtitle="Für Teams ohne persönliche E-Mail-Adresse. Anmeldung mit Betriebscode, Benutzername und Passwort."
       asideEyebrow="Mitarbeiterzugang"
       asideTitle="Zugang für operative Mitarbeitende"
       asideDescription="Der Anmeldeprozess ist für den täglichen Einsatz auf mobilen Geräten ausgelegt."

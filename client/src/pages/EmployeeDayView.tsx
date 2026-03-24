@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -54,7 +53,6 @@ export default function EmployeeDayView() {
   const totalAssignments =
     activeAssignments.length + todayAssignments.length + upcomingAssignments.length;
 
-  const [showUpcoming, setShowUpcoming] = useState(false);
   const focusLabel = getFocusLabel({
     activeAssignmentsCount: activeAssignments.length,
     todayAssignmentsCount: todayAssignments.length,
@@ -190,7 +188,7 @@ export default function EmployeeDayView() {
               </div>
             ) : (
               <div className="space-y-2">
-                <p className="text-sm font-medium">Fuer heute sind derzeit keine Einsätze eingeplant.</p>
+                <p className="text-sm font-medium">Für heute sind derzeit keine Einsätze eingeplant.</p>
                 <p className="text-sm text-slate-300">
                   Neue Termine werden nach der Disposition hier angezeigt.
                 </p>
@@ -219,7 +217,7 @@ export default function EmployeeDayView() {
         <section className="space-y-3">
           <div className="flex items-center gap-2">
             <CalendarDays className="h-4 w-4 text-[#173d66]" />
-            <h2 className="font-semibold text-[#173d66]">Deine naechsten Tage</h2>
+            <h2 className="font-semibold text-[#173d66]">Deine nächsten Tage</h2>
           </div>
           <div className="space-y-2">
             {(() => {
@@ -252,7 +250,7 @@ export default function EmployeeDayView() {
                         {a.accommodationNote && (
                           <p className="mt-0.5 flex items-center gap-1 text-[10px] text-amber-700">
                             <BedDouble className="h-3 w-3" />
-                            Uebernachtung
+                            Übernachtung
                           </p>
                         )}
                       </div>
@@ -325,7 +323,6 @@ export default function EmployeeDayView() {
         </section>
       )}
 
-      {/* Old "Kommende Einsätze" section removed — replaced by Wochenvorschau above */}
     </div>
   );
 }

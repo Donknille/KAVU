@@ -574,7 +574,7 @@ export default function PlanView() {
                 <div className="p-8 text-center text-sm brand-ink-soft border rounded-2xl">
                   {planning.activeEmployees.length === 0
                     ? "Noch keine Mitarbeiter angelegt. Erstellen Sie Mitarbeiter unter \"Mitarbeiter\"."
-                    : "Kein Mitarbeiter entspricht dem Filter. Filter zuruecksetzen um alle anzuzeigen."}
+                    : "Kein Mitarbeiter entspricht dem Filter. Filter zurücksetzen um alle anzuzeigen."}
                 </div>
               )}
 
@@ -709,7 +709,7 @@ export default function PlanView() {
         <div className="min-h-0 flex-1 p-2.5">
           {planning.teamEntries.length === 0 ? (
             <div className="brand-soft-card rounded-2xl border-dashed p-5 text-center text-sm brand-ink-soft">
-              Fuer den aktuellen Filter wurden keine Mitarbeitenden gefunden.
+              Für den aktuellen Filter wurden keine Mitarbeitenden gefunden.
             </div>
           ) : (
             <VirtualStack

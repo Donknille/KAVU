@@ -507,7 +507,7 @@ export default function EmployeesList() {
                 <div className="space-y-1">
                   <Label htmlFor="createAccess">Zugang direkt anlegen</Label>
                   <p className="text-sm text-muted-foreground">
-                    Fuer Mitarbeitende ohne persönliche E-Mail-Adresse. Benutzername und temporaeres Passwort werden automatisch bereitgestellt.
+                    Für Mitarbeitende ohne persönliche E-Mail-Adresse. Benutzername und temporäres Passwort werden automatisch bereitgestellt.
                   </p>
                 </div>
               </div>

@@ -69,7 +69,7 @@ export default function AdminAuthPage({ mode }: AdminAuthPageProps) {
         : "Betrieb registrieren";
   const subtitle =
     mode === "login"
-      ? "Fuer Inhaber, Büro und Disposition. Anmeldung mit E-Mail-Adresse und Passwort."
+      ? "Für Inhaber, Büro und Disposition. Anmeldung mit E-Mail-Adresse und Passwort."
       : "Registrieren Sie Ihr Inhaberkonto und richten Sie anschließend den Betrieb ein.";
 
   const inviteBanner = inviteToken ? (

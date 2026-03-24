@@ -97,7 +97,7 @@ export default function LandingPage() {
 
             <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
               <section className="brand-panel rounded-[36px] p-6 md:p-8">
-                <p className="brand-kicker">Fuer Inhaber, Büro und Baustelle</p>
+                <p className="brand-kicker">Für Inhaber, Büro und Baustelle</p>
                 <h1
                   className="mt-4 max-w-3xl text-4xl font-semibold tracking-tight text-[#173d66] md:text-6xl"
                   data-testid="text-hero-title"
@@ -149,7 +149,7 @@ export default function LandingPage() {
                   </div>
                   <h2 className="mt-4 text-2xl font-semibold text-[#173d66]">Betrieb verwalten</h2>
                   <p className="mt-2 text-sm leading-6 text-[#173d66]/72">
-                    Fuer Inhaber, Büro und Disposition. Anmeldung und Registrierung erfolgen in einem eigenen, klaren Bereich.
+                    Für Inhaber, Büro und Disposition. Anmeldung und Registrierung erfolgen in einem eigenen, klaren Bereich.
                   </p>
                   <div className="mt-6 grid gap-2 sm:grid-cols-2">
                     <Button asChild className="h-12 bg-[#173d66] text-base text-white hover:bg-[#123251]" data-testid="button-admin-login-primary">
@@ -179,7 +179,7 @@ export default function LandingPage() {
                   </div>
                   <h2 className="mt-4 text-2xl font-semibold text-[#173d66]">Mitarbeiter anmelden</h2>
                   <p className="mt-2 text-sm leading-6 text-[#173d66]/72">
-                    Fuer operative Teams ohne persönliche E-Mail-Adresse. Anmeldung mit Betriebscode, Benutzername und Passwort.
+                    Für operative Teams ohne persönliche E-Mail-Adresse. Anmeldung mit Betriebscode, Benutzername und Passwort.
                   </p>
                   <div className="mt-6">
                     <Button

@@ -22,11 +22,6 @@ export type PublicCompany = {
   name: string;
   logoUrl: string | null;
   phone: string | null;
-  stripeCustomerId: string | null;
-  stripeSubscriptionId: string | null;
-  subscriptionStatus: "trialing" | "active" | "past_due" | "canceled" | "paused" | null;
-  trialEndsAt: Date | null;
-  currentPeriodEnd: Date | null;
   createdAt: Date | null;
   updatedAt: Date | null;
   /** Only present for admin employees */
@@ -34,15 +29,11 @@ export type PublicCompany = {
 };
 
 export type BillingInfo = {
-  subscriptionStatus: "trialing" | "active" | "past_due" | "canceled" | "paused";
-  trialEndsAt: Date | null;
-  currentPeriodEnd: Date | null;
-  trialDaysLeft: number | null;
   isFrozen: boolean;
-  stripeEnabled: boolean;
+  trialDaysLeft: number | null;
 };
 
-/** Flat response type for /api/me – fields are absent/null when needsSetup is true */
+/** Flat response type for /api/me */
 export type MeResponse = {
   employee: PublicEmployee | null;
   company: PublicCompany | null;
