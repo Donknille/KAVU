@@ -425,8 +425,8 @@ export function usePlanningBoard() {
           employeeId,
           mode: "add",
         });
-      } catch {
-        toast({ title: "Fehler beim Zuweisen", variant: "destructive" });
+      } catch (error: any) {
+        toast({ title: "Fehler beim Zuweisen", description: error?.message, variant: "destructive" });
       }
       void refreshPlanningBoard();
       return;
@@ -457,9 +457,9 @@ export function usePlanningBoard() {
         assignmentDate: targetDate,
         workerIds: [employeeId],
       });
-    } catch {
+    } catch (error: any) {
       updateAssignmentsCache((current) => current.filter((a) => a.id !== tempId));
-      toast({ title: "Fehler beim Einplanen", variant: "destructive" });
+      toast({ title: "Fehler beim Einplanen", description: error?.message, variant: "destructive" });
     }
     void refreshPlanningBoard();
   }
@@ -662,10 +662,15 @@ export function usePlanningBoard() {
     const orderedAssignments = [...block.assignments].sort((left, right) =>
       left.assignmentDate.localeCompare(right.assignmentDate)
     );
-    const updates = orderedAssignments.map((assignment, index) => ({
-      assignmentId: assignment.id,
-      assignmentDate: nextDays[index],
-    }));
+    // Map each assignment to its new date — if more assignments than nextDays
+    // (e.g. block has Saturday assignments but nextDays skips Saturdays),
+    // drop the extra assignments from the update
+    const updates = orderedAssignments
+      .slice(0, nextDays.length)
+      .map((assignment, index) => ({
+        assignmentId: assignment.id,
+        assignmentDate: nextDays[index],
+      }));
     const dateByAssignmentId = new Map(
       updates.map((update) => [update.assignmentId, update.assignmentDate])
     );
@@ -688,8 +693,9 @@ export function usePlanningBoard() {
     // API call + sync
     try {
       await apiRequest("POST", "/api/planning/move-block", { updates });
-    } catch {
-      toast({ title: "Fehler beim Verschieben", variant: "destructive" });
+    } catch (error: any) {
+      const msg = error?.message || "Unbekannter Fehler";
+      toast({ title: "Fehler beim Verschieben", description: msg, variant: "destructive" });
     }
     void refreshPlanningBoard();
   }
@@ -802,8 +808,8 @@ export function usePlanningBoard() {
           })),
         }
       );
-    } catch {
-      toast({ title: "Fehler beim Ändern", variant: "destructive" });
+    } catch (error: any) {
+      toast({ title: "Fehler beim Ändern", description: error?.message, variant: "destructive" });
     }
     void refreshPlanningBoard();
   }
