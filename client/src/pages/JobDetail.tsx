@@ -190,19 +190,13 @@ export default function JobDetail() {
               </div>
             )}
             {job.description && (
-              <div className="flex items-start gap-2">
-                <FileText className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
-                <span className="text-sm">{job.description}</span>
-              </div>
+              <p className="text-sm brand-ink-soft">{job.description}</p>
             )}
             {job.startDate && (
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-muted-foreground shrink-0" />
-                <span className="text-sm">
-                  {formatDate(job.startDate)}
-                  {job.endDate && ` - ${formatDate(job.endDate)}`}
-                </span>
-              </div>
+              <p className="text-sm brand-ink-soft">
+                {formatDate(job.startDate)}
+                {job.endDate && ` - ${formatDate(job.endDate)}`}
+              </p>
             )}
           </Card>
 

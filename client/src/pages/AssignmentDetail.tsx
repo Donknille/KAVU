@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation, useParams } from "wouter";
-import { BrandMark } from "@/components/BrandMark";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -175,8 +174,7 @@ export default function AssignmentDetail() {
         <div className="space-y-4 p-5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <BrandMark size={36} />
-              <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.22em] brand-ink-muted">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] brand-ink-muted">
                 {assignmentDateLabel}
               </p>
               <h1

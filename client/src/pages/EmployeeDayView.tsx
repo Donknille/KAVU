@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BrandMark } from "@/components/BrandMark";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AssignmentCard } from "@/components/AssignmentCard";
 import { ConnectionStatusBadge } from "@/components/ConnectionStatusBadge";
@@ -76,39 +75,26 @@ export default function EmployeeDayView() {
         <div className="space-y-5 p-5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <BrandMark
-                showWordmark
-                subtitle="Mitarbeiteransicht"
-                size={40}
-                labelClassName="text-lg"
-                subtitleClassName="text-[10px]"
-              />
               <h1
-                className="mt-4 text-2xl font-semibold tracking-tight brand-ink"
+                className="text-2xl font-semibold tracking-tight brand-ink"
                 data-testid="text-today-title"
               >
                 Heute im Blick
               </h1>
-              <p className="mt-1 max-w-md text-sm brand-ink-soft">
-                Sehen Sie sofort, was jetzt ansteht, was danach folgt und mit wem der nächste Einsatz umgesetzt wird.
-              </p>
             </div>
             <ConnectionStatusBadge isOnline={isOnline} compact className="brand-outline-chip" />
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
-            <div className="brand-soft-card rounded-2xl p-3">
-              <p className="brand-kicker">Aktiv</p>
-              <p className="mt-1 text-2xl font-semibold brand-ink">{activeAssignments.length}</p>
-            </div>
-            <div className="brand-soft-card rounded-2xl p-3">
-              <p className="brand-kicker">Danach</p>
-              <p className="mt-1 text-2xl font-semibold brand-ink">{todayAssignments.length}</p>
-            </div>
-            <div className="brand-soft-card rounded-2xl p-3">
-              <p className="brand-kicker">Später</p>
-              <p className="mt-1 text-2xl font-semibold brand-ink">{upcomingAssignments.length}</p>
-            </div>
+          <div className="flex flex-wrap gap-2">
+            <span className="brand-outline-chip rounded-full px-3 py-1 text-xs font-medium brand-ink">
+              {activeAssignments.length} aktiv
+            </span>
+            <span className="brand-outline-chip rounded-full px-3 py-1 text-xs font-medium brand-ink">
+              {todayAssignments.length} danach
+            </span>
+            <span className="brand-outline-chip rounded-full px-3 py-1 text-xs font-medium brand-ink">
+              {upcomingAssignments.length} kommend
+            </span>
           </div>
 
           <div className="brand-navy-panel rounded-[26px] p-4">

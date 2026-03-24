@@ -43,7 +43,6 @@ import { PlanOverviewList } from "@/features/planning/PlanOverviewList";
 import { formatRange, parseDateString, toDateStr } from "@/features/planning/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BrandMark } from "@/components/BrandMark";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -369,9 +368,8 @@ export default function PlanView() {
         )}
         <div className="planning-divider flex items-center justify-between gap-3 border-b px-3 py-2.5">
           <div className="min-w-0">
-            <p className="brand-kicker">Team-Ansicht</p>
-            <p className="mt-1 truncate text-sm font-semibold brand-ink">
-              Mitarbeiter-Einsatzplan {rangeLabel}
+            <p className="truncate text-sm font-semibold brand-ink">
+              {rangeLabel}
             </p>
           </div>
           <div className="flex items-center gap-1.5">
@@ -866,8 +864,8 @@ export default function PlanView() {
     <div className="flex h-full min-h-0 flex-col gap-3 p-3 lg:p-4">
       <div className="brand-panel flex flex-col gap-3 rounded-3xl px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">
-          <BrandMark showWordmark subtitle="Disposition" size={40} labelClassName="text-[1.55rem]" />
-          <div className="mt-3 flex flex-wrap gap-1.5">
+          <h1 className="text-lg font-semibold brand-ink">Einsatzplan</h1>
+          <div className="mt-2 flex flex-wrap gap-1.5">
             <Badge
               variant="outline"
               className="brand-outline-chip gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium"

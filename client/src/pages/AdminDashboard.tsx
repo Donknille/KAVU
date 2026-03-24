@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { AssignmentCard } from "@/components/AssignmentCard";
-import { BrandMark } from "@/components/BrandMark";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -72,14 +71,9 @@ export default function AdminDashboard() {
       <section className="brand-panel rounded-[34px] p-5 md:p-7">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
-            <BrandMark showWordmark subtitle="Zentrale" size={46} labelClassName="text-[1.85rem]" />
-            <p className="brand-kicker mt-5">Tagessteuerung</p>
-            <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[#173d66]" data-testid="text-dashboard-title">
-              Dashboard für Disposition und Betriebsüberblick
+            <h1 className="text-2xl font-semibold tracking-tight text-[#173d66]" data-testid="text-dashboard-title">
+              Dashboard
             </h1>
-            <p className="mt-3 text-sm leading-6 text-[#173d66]/72 md:text-base">
-              Heutige Einsätze, offene Abstimmungen und nicht disponierte Aufträge liegen in einer gemeinsamen Arbeitsoberflaeche.
-            </p>
             <div className="mt-5 flex flex-wrap gap-2">
               <span className="brand-highlight rounded-full px-4 py-2 text-sm font-medium">
                 {stats?.todayAssignmentCount || 0} Einsätze für heute
