@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AssignmentCard } from "@/components/AssignmentCard";
 import { ConnectionStatusBadge } from "@/components/ConnectionStatusBadge";
 import { InstallAppCard } from "@/components/InstallAppCard";
-import { AssignmentTeamPreview, getAssignmentTeamNames } from "@/features/employee/AssignmentTeamPreview";
+import { AssignmentTeamPreview, TeamContactList, getAssignmentTeamNames } from "@/features/employee/AssignmentTeamPreview";
 import {
   addDays,
   formatPlannedWindow,
@@ -18,7 +18,7 @@ import {
 } from "@/features/employee/assignmentSchedule";
 import { OfflineQueueAlert } from "@/features/employee-offline/OfflineQueueAlert";
 import { useEmployeeOfflineQueue } from "@/features/employee-offline/EmployeeOfflineQueueProvider";
-import { ArrowRight, CalendarDays, ClipboardList, Clock3, Sun } from "lucide-react";
+import { ArrowRight, CalendarDays, ClipboardList, Clock3, Sun, Users } from "lucide-react";
 import { useLocation } from "wouter";
 import { formatDate, toDateStr } from "@/lib/constants";
 
@@ -135,22 +135,20 @@ export default function EmployeeDayView() {
                   </p>
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-white/12 bg-white/8 p-3">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-300">
-                      Zeitfenster
-                    </p>
-                    <div className="mt-2 flex items-center gap-2 text-sm text-slate-100">
-                      <Clock3 className="h-4 w-4" />
-                      <span>{formatPlannedWindow(focusAssignment)}</span>
-                    </div>
+                <div className="rounded-2xl border border-white/12 bg-white/8 p-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-300">
+                    Zeitfenster
+                  </p>
+                  <div className="mt-2 flex items-center gap-2 text-sm text-slate-100">
+                    <Clock3 className="h-4 w-4" />
+                    <span>{formatPlannedWindow(focusAssignment)}</span>
                   </div>
-                  <AssignmentTeamPreview
-                    assignment={focusAssignment}
-                    label="Mit wem"
-                    inverse
-                  />
                 </div>
+                <AssignmentTeamPreview
+                  assignment={focusAssignment}
+                  label="Mit wem"
+                  inverse
+                />
 
                 {nextAssignment && (
                   <div className="rounded-2xl border border-white/12 bg-white/6 p-3">
@@ -204,6 +202,63 @@ export default function EmployeeDayView() {
 
       <InstallAppCard />
       <OfflineQueueAlert />
+
+      {/* Team-Kontakte zum aktuellen Einsatz */}
+      {focusAssignment && (
+        <section className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-[#173d66]" />
+            <h2 className="font-semibold text-[#173d66]">Dein Team</h2>
+          </div>
+          <TeamContactList assignment={focusAssignment} />
+        </section>
+      )}
+
+      {/* Wochenvorschau */}
+      {upcomingAssignments.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex items-center gap-2">
+            <CalendarDays className="h-4 w-4 text-[#173d66]" />
+            <h2 className="font-semibold text-[#173d66]">Deine naechsten Tage</h2>
+          </div>
+          <div className="space-y-2">
+            {(() => {
+              // Group upcoming assignments by date
+              const byDate = new Map<string, any[]>();
+              for (const a of upcomingAssignments) {
+                const list = byDate.get(a.assignmentDate) ?? [];
+                list.push(a);
+                byDate.set(a.assignmentDate, list);
+              }
+              return [...byDate.entries()].slice(0, 10).map(([date, dayAssignments]) => (
+                <Card key={date} className="brand-soft-card rounded-2xl p-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] brand-ink-muted">
+                    {date === today ? "Heute" : formatDate(date)}
+                  </p>
+                  {dayAssignments.map((a: any) => (
+                    <div
+                      key={a.id}
+                      className="mt-2 flex items-start justify-between gap-2 cursor-pointer"
+                      onClick={() => navigate(`/assignment/${a.id}`)}
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium brand-ink truncate">
+                          {a.job?.title || "Auftrag"}
+                        </p>
+                        <p className="text-xs brand-ink-soft truncate">
+                          {a.job?.customerName}
+                          {a.workers?.length > 0 && ` | Mit: ${getAssignmentTeamNames(a, 2)}`}
+                        </p>
+                      </div>
+                      <ArrowRight className="h-3.5 w-3.5 shrink-0 brand-ink-muted mt-0.5" />
+                    </div>
+                  ))}
+                </Card>
+              ));
+            })()}
+          </div>
+        </section>
+      )}
 
       {activeAssignments.length > 0 && (
         <section className="space-y-3">
@@ -264,38 +319,7 @@ export default function EmployeeDayView() {
         </section>
       )}
 
-      {upcomingAssignments.length > 0 && (
-        showUpcoming ? (
-          <section className="space-y-3">
-            <div className="flex items-center gap-2">
-              <CalendarDays className="h-4 w-4 text-[#173d66]" />
-              <h2 className="font-semibold text-[#173d66]">Kommende Einsätze</h2>
-            </div>
-            <div className="space-y-3">
-              {upcomingAssignments.map((assignment) => (
-                <AssignmentCard
-                  key={assignment.id}
-                  assignment={assignment}
-                  emphasizeTeam
-                  onClick={() => navigate(`/assignment/${assignment.id}`)}
-                />
-              ))}
-            </div>
-          </section>
-        ) : (
-          <div className="text-center">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-1.5 text-xs text-muted-foreground"
-              onClick={() => setShowUpcoming(true)}
-            >
-              <CalendarDays className="h-3.5 w-3.5" />
-              {upcomingAssignments.length} weitere Einsätze anzeigen
-            </Button>
-          </div>
-        )
-      )}
+      {/* Old "Kommende Einsätze" section removed — replaced by Wochenvorschau above */}
     </div>
   );
 }

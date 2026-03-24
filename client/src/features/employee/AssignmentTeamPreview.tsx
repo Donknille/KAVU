@@ -1,10 +1,11 @@
-import { Users } from "lucide-react";
+import { MessageCircle, Phone as PhoneIcon, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type AssignmentWorkerLike = {
   id?: string;
   firstName?: string | null;
   lastName?: string | null;
+  phone?: string | null;
   color?: string | null;
 };
 
@@ -69,6 +70,82 @@ export function getAssignmentTeamNames(
   }
 
   return `${visibleNames.join(", ")} +${hiddenCount}`;
+}
+
+function sanitizePhone(phone: string) {
+  return phone.replace(/[^0-9+]/g, "");
+}
+
+function whatsAppUrl(phone: string) {
+  const clean = sanitizePhone(phone).replace(/^\+/, "");
+  return `https://wa.me/${clean}`;
+}
+
+export function TeamContactList({
+  assignment,
+  className,
+}: {
+  assignment: AssignmentWithWorkers | null | undefined;
+  className?: string;
+}) {
+  const workers = getAssignmentWorkers(assignment);
+  if (workers.length === 0) {
+    return (
+      <div className={cn("rounded-2xl border brand-outline-chip px-3 py-2.5", className)}>
+        <div className="flex items-center gap-1.5">
+          <Users className="h-3.5 w-3.5 brand-ink-muted" />
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] brand-ink-muted">Team</p>
+        </div>
+        <p className="mt-2 text-sm brand-ink-soft">Team wird noch abgestimmt</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn("rounded-2xl border brand-outline-chip px-3 py-2.5 space-y-2", className)}>
+      <div className="flex items-center gap-1.5">
+        <Users className="h-3.5 w-3.5 brand-ink-muted" />
+        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] brand-ink-muted">
+          Team ({workers.length})
+        </p>
+      </div>
+      {workers.map((worker) => (
+        <div key={worker.id ?? `${worker.firstName}`} className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <span
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-white"
+              style={{ backgroundColor: worker.color ?? "#475569" }}
+            >
+              {getWorkerInitials(worker)}
+            </span>
+            <span className="truncate text-sm font-medium brand-ink">
+              {formatWorkerShortName(worker)}
+            </span>
+          </div>
+          {worker.phone && (
+            <div className="flex items-center gap-1.5 shrink-0">
+              <a
+                href={`tel:${sanitizePhone(worker.phone)}`}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-[#68d5c8]/15 text-[#173d66] transition hover:bg-[#68d5c8]/25"
+                title="Anrufen"
+              >
+                <PhoneIcon className="h-3.5 w-3.5" />
+              </a>
+              <a
+                href={whatsAppUrl(worker.phone)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-[#25D366]/15 text-[#25D366] transition hover:bg-[#25D366]/25"
+                title="WhatsApp"
+              >
+                <MessageCircle className="h-3.5 w-3.5" />
+              </a>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export function AssignmentTeamPreview({
