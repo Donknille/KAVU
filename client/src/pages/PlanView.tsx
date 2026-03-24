@@ -856,9 +856,6 @@ export default function PlanView() {
             onRemoveBlock={() => {
               void planning.removeSelectedBlock();
             }}
-            onUpdateAccommodation={(ids, note) => {
-              void planning.updateAccommodation(ids, note);
-            }}
           />
         </div>
       </ScrollArea>

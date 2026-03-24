@@ -1136,14 +1136,6 @@ export function usePlanningBoard() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [placingJob]);
 
-  const updateAccommodation = useCallback(async (assignmentIds: string[], note: string | null) => {
-    for (const id of assignmentIds) {
-      await apiRequest("PATCH", `/api/assignments/${id}`, { accommodationNote: note });
-    }
-    void refreshPlanningBoard();
-    toast({ title: note ? "Übernachtung gespeichert" : "Übernachtung entfernt" });
-  }, [refreshPlanningBoard, toast]);
-
   return {
     activeDrag,
     activeEmployees,
@@ -1198,7 +1190,6 @@ export function usePlanningBoard() {
     updateJobForm,
     setShowCreateJobDialog: setCreateJobDialogOpen,
     submitCreateJob: createBacklogJob,
-    updateAccommodation,
     placingJob,
     setPlacingJob,
     placeJobOnDate,

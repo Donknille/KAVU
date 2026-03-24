@@ -2,7 +2,6 @@ import { memo, useEffect, useState } from "react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import {
-  BedDouble,
   GripVertical,
   LockKeyhole,
   MapPin,
@@ -679,64 +678,6 @@ export function DragOverlayCard({ activeDrag }: { activeDrag: ActiveDrag | null 
   );
 }
 
-function AccommodationSection({
-  assignments,
-  onSave,
-}: {
-  assignments: Array<Record<string, any>>;
-  onSave: (note: string | null) => void;
-}) {
-  const existingNote = assignments.find((a) => a.accommodationNote)?.accommodationNote ?? "";
-  const [isOpen, setIsOpen] = useState(!!existingNote);
-  const [draft, setDraft] = useState(existingNote);
-  const [saved, setSaved] = useState(false);
-
-  return (
-    <div className="brand-soft-card rounded-2xl p-3 space-y-2">
-      <button
-        type="button"
-        className="flex w-full items-center gap-2 text-left"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <BedDouble className="h-4 w-4 brand-ink-muted shrink-0" />
-        <span className="text-xs font-semibold brand-ink">
-          {existingNote ? "Übernachtung hinterlegt" : "Übernachtung hinzufügen"}
-        </span>
-        <span className="ml-auto text-[10px] brand-ink-muted">{isOpen ? "▲" : "▼"}</span>
-      </button>
-      {isOpen && (
-        <div className="space-y-2">
-          <textarea
-            className="w-full rounded-xl border bg-white/50 px-3 py-2 text-xs brand-ink placeholder:brand-ink-muted resize-none focus:outline-none focus:ring-1 focus:ring-[#68d5c8]"
-            rows={3}
-            placeholder="z.B. Hotel Ibis Stuttgart, Zimmer 312&#10;Check-in ab 15:00, Pin: 4829"
-            value={draft}
-            onChange={(e) => { setDraft(e.target.value); setSaved(false); }}
-          />
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              className="rounded-lg bg-[#68d5c8] px-3 py-1 text-xs font-semibold text-white transition hover:bg-[#5cc4b7]"
-              onClick={() => { onSave(draft || null); setSaved(true); }}
-            >
-              {saved ? "Gespeichert" : "Speichern"}
-            </button>
-            {existingNote && (
-              <button
-                type="button"
-                className="text-xs text-red-500 underline"
-                onClick={() => { setDraft(""); onSave(null); setSaved(true); }}
-              >
-                Entfernen
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 export function SelectedBlockPanel({
   selectedBlock,
   availableEmployees = [],
@@ -746,7 +687,6 @@ export function SelectedBlockPanel({
   onMoveBlock,
   onRemoveEmployee,
   onRemoveBlock,
-  onUpdateAccommodation,
 }: {
   selectedBlock: PlanningBlock | null;
   availableEmployees?: PlanEmployee[];
@@ -756,7 +696,6 @@ export function SelectedBlockPanel({
   onMoveBlock?: (targetDate: string) => void;
   onRemoveEmployee: (employeeId: string, selection?: WorkerDaySelection) => void;
   onRemoveBlock: () => void;
-  onUpdateAccommodation?: (assignmentIds: string[], note: string | null) => void;
 }) {
   const today = toDateStr(new Date());
   const assignmentByDate = new Map(
@@ -1242,14 +1181,6 @@ export function SelectedBlockPanel({
               Aus ausgewählten Tagen entfernen
             </Button>
           </div>
-        )}
-
-        {/* Übernachtungsinfo (optional) */}
-        {onUpdateAccommodation && (
-          <AccommodationSection
-            assignments={selectedBlock.assignments}
-            onSave={(note) => onUpdateAccommodation(selectedBlock.assignmentIds, note)}
-          />
         )}
 
         <div className="brand-soft-card rounded-2xl p-3 text-xs brand-ink-soft">

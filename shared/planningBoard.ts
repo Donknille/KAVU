@@ -31,7 +31,6 @@ export type PlanningBoardAssignment = {
   plannedEndTime?: string | null;
   sortOrder: number;
   note?: string | null;
-  accommodationNote?: string | null;
   status: string;
   job?: PlanningBoardJob;
   workers?: PlanningBoardEmployee[];
