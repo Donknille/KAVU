@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { StatusBadge } from "@/components/StatusBadge";
-import { MapPin, Clock, User } from "lucide-react";
+import { BedDouble, MapPin, Clock, User } from "lucide-react";
 import { formatAddress } from "@/lib/constants";
 import {
   AssignmentTeamPreview,
@@ -69,6 +69,13 @@ export function AssignmentCard({
                 {assignment.plannedStartTime?.slice(0, 5)}
                 {assignment.plannedEndTime && ` - ${assignment.plannedEndTime.slice(0, 5)}`}
               </span>
+            </div>
+          )}
+
+          {assignment.accommodationNote && (
+            <div className="mb-1 flex items-start gap-1.5 text-sm rounded-lg bg-amber-50 border border-amber-200 p-2">
+              <BedDouble className="w-3.5 h-3.5 shrink-0 text-amber-600 mt-0.5" />
+              <span className="text-amber-800 whitespace-pre-line">{assignment.accommodationNote}</span>
             </div>
           )}
         </>

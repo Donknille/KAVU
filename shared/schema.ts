@@ -149,6 +149,7 @@ export const assignments = pgTable("assignments", {
   plannedEndTime: time("planned_end_time"),
   sortOrder: integer("sort_order").notNull().default(0),
   note: text("note"),
+  accommodationNote: text("accommodation_note"),
   status: assignmentStatusEnum("status").notNull().default("planned"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

@@ -18,7 +18,7 @@ import {
 } from "@/features/employee/assignmentSchedule";
 import { OfflineQueueAlert } from "@/features/employee-offline/OfflineQueueAlert";
 import { useEmployeeOfflineQueue } from "@/features/employee-offline/EmployeeOfflineQueueProvider";
-import { ArrowRight, CalendarDays, ClipboardList, Clock3, Sun, Users } from "lucide-react";
+import { ArrowRight, BedDouble, CalendarDays, ClipboardList, Clock3, Sun, Users } from "lucide-react";
 import { useLocation } from "wouter";
 import { formatDate, toDateStr } from "@/lib/constants";
 
@@ -249,6 +249,12 @@ export default function EmployeeDayView() {
                           {a.job?.customerName}
                           {a.workers?.length > 0 && ` | Mit: ${getAssignmentTeamNames(a, 2)}`}
                         </p>
+                        {a.accommodationNote && (
+                          <p className="mt-0.5 flex items-center gap-1 text-[10px] text-amber-700">
+                            <BedDouble className="h-3 w-3" />
+                            Uebernachtung
+                          </p>
+                        )}
                       </div>
                       <ArrowRight className="h-3.5 w-3.5 shrink-0 brand-ink-muted mt-0.5" />
                     </div>
