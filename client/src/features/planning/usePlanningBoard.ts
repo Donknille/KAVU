@@ -941,7 +941,7 @@ export function usePlanningBoard() {
 
     const startIndex = edge === "start" ? targetIndex : block.startIndex;
     const endIndex = edge === "end" ? targetIndex : block.endIndex;
-    const nextDays = visibleDays.slice(startIndex, endIndex + 1);
+    const nextDays = visibleDays.slice(startIndex, endIndex + 1).filter((day) => !isSaturday(day));
 
     if (nextDays.length === 0) {
       return null;
