@@ -17,47 +17,54 @@ const TOUR_STEPS: TourStep[] = [
     selector: null,
     title: "Willkommen bei Meisterplaner!",
     description:
-      "Lass uns die Planungsansicht kennenlernen. Wir zeigen dir die wichtigsten Bereiche in wenigen Schritten.",
+      "Wir zeigen dir in wenigen Schritten, wie du deine Mitarbeiter und Aufträge planst.",
   },
   {
     selector: '[data-sidebar="sidebar"]',
     title: "Navigation",
     description:
-      "Hier findest du alle Bereiche: Einsatzplan, Aufträge, Mitarbeiter und Archiv.",
+      "Hier wechselst du zwischen Einsatzplan, Aufträge, Mitarbeiter und Archiv.",
     placement: "right",
   },
   {
     selector: '[data-panel-id="planning-backlog"]',
-    title: "Backlog",
+    title: "Backlog — Ungeplante Aufträge",
     description:
-      "Im Backlog sammelst du alle ungeplanten Aufträge. Von hier ziehst du sie per Drag & Drop in den Kalender.",
+      "Hier liegen alle Aufträge die noch nicht eingeplant sind. Rote Badges zeigen neue, gelbe bereits teilweise geplante Aufträge.",
     placement: "right",
   },
   {
     selector: '[data-tour="create-job"]',
-    title: "Auftrag erstellen",
-    description: "Klicke hier um einen neuen Auftrag zu erstellen.",
+    title: "Neuen Auftrag anlegen",
+    description: "Erstelle hier einen neuen Auftrag. Er landet zuerst im Backlog.",
     placement: "bottom",
   },
   {
     selector: '[data-panel-id="planning-board"]',
-    title: "Kalender",
+    title: "Team-Ansicht — Wer macht was?",
     description:
-      "Der Kalender zeigt deine Mitarbeiter und ihre Einsätze. Ziehe Aufträge aus dem Backlog direkt auf eine Mitarbeiter-Zeile.",
+      "Jede Zeile ist ein Mitarbeiter. Ziehe einen Auftrag aus dem Backlog auf eine Zeile, um ihn einzuplanen. Gleiche Farbe = gleicher Auftrag.",
+    placement: "left",
+  },
+  {
+    selector: '[data-panel-id="planning-board"]',
+    title: "Aufträge anpassen",
+    description:
+      "Ziehe am rechten Rand eines Blocks, um die Dauer zu ändern. Verschiebe Blöcke per Drag auf andere Tage. Samstage werden automatisch übersprungen.",
     placement: "left",
   },
   {
     selector: '[data-tour="employee-filter"]',
-    title: "Mitarbeiter-Filter",
+    title: "Mitarbeiter filtern",
     description:
-      "Filtere nach einzelnen Mitarbeitern oder zeige nur die freien an.",
+      "Zeige nur bestimmte Mitarbeiter an oder filtere nach freien Kapazitäten.",
     placement: "bottom",
   },
   {
     selector: null,
-    title: "Alles klar!",
+    title: "Bereit!",
     description:
-      "Du kannst jetzt loslegen. Erstelle deinen ersten Auftrag oder plane bestehende Aufträge ein.",
+      "Erstelle deinen ersten Auftrag, plane ihn ein und weise Mitarbeiter zu. Bei Fragen klicke auf einen Block für Details.",
   },
 ];
 
@@ -422,11 +429,146 @@ function TourTooltip({
 }
 
 // ---------------------------------------------------------------------------
+// Employee Onboarding Tour (mobile-optimized, modal-only)
+// ---------------------------------------------------------------------------
+
+const EMPLOYEE_STORAGE_KEY = "meisterplaner_employee_tour_completed";
+
+const EMPLOYEE_TOUR_STEPS: TourStep[] = [
+  {
+    selector: null,
+    title: "Willkommen bei Meisterplaner!",
+    description:
+      "Hier siehst du deine Einsätze, dein Team und kannst deine Arbeitszeiten erfassen.",
+  },
+  {
+    selector: null,
+    title: "Dein Tagesplan",
+    description:
+      "Oben siehst du deinen aktuellen Einsatz mit Adresse und Zeitfenster. Tippe auf die Adresse, um die Navigation zu starten.",
+  },
+  {
+    selector: null,
+    title: "Dein Team & Kontakt",
+    description:
+      "Unter dem Einsatz findest du deine Teamkollegen. Per Klick kannst du sie direkt anrufen oder eine WhatsApp-Nachricht schreiben.",
+  },
+  {
+    selector: null,
+    title: "Deine nächsten Tage",
+    description:
+      "Weiter unten siehst du eine Vorschau der kommenden Arbeitstage — so weißt du immer, was als nächstes kommt.",
+  },
+  {
+    selector: null,
+    title: "Los geht's!",
+    description:
+      "Tippe auf einen Einsatz für alle Details. Viel Erfolg auf der Baustelle!",
+  },
+];
+
+export function EmployeeOnboardingTour() {
+  const [s, dispatch] = useReducer(reducer, {
+    active: false,
+    step: 0,
+    rect: null,
+    pos: null,
+  });
+
+  useEffect(() => {
+    if (window.localStorage.getItem(EMPLOYEE_STORAGE_KEY) === "1") return;
+    const id = setTimeout(() => dispatch({ type: "START" }), 600);
+    return () => clearTimeout(id);
+  }, []);
+
+  useEffect(() => {
+    if (!s.active) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        window.localStorage.setItem(EMPLOYEE_STORAGE_KEY, "1");
+        dispatch({ type: "DISMISS" });
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [s.active]);
+
+  const handleNext = useCallback(() => {
+    if (s.step >= EMPLOYEE_TOUR_STEPS.length - 1) {
+      window.localStorage.setItem(EMPLOYEE_STORAGE_KEY, "1");
+    }
+    dispatch({ type: "NEXT" });
+  }, [s.step]);
+
+  const handleSkip = useCallback(() => {
+    window.localStorage.setItem(EMPLOYEE_STORAGE_KEY, "1");
+    dispatch({ type: "DISMISS" });
+  }, []);
+
+  if (!s.active) return null;
+
+  const step = EMPLOYEE_TOUR_STEPS[s.step];
+  const isLast = s.step === EMPLOYEE_TOUR_STEPS.length - 1;
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4"
+      style={{ animation: "tour-fade-in 300ms ease-out" }}
+      onClick={handleSkip}
+    >
+      <div
+        className="w-full max-w-sm rounded-2xl border border-[#e2e8f0] bg-white p-6 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <p className="text-xs text-[#173d66]/40">
+          {s.step + 1} / {EMPLOYEE_TOUR_STEPS.length}
+        </p>
+        <h3 className="mt-1 text-lg font-semibold text-[#173d66]">
+          {step.title}
+        </h3>
+        <p className="mt-3 text-sm leading-relaxed text-[#173d66]/70">
+          {step.description}
+        </p>
+        <div className="mt-5 flex items-center justify-between">
+          {!isLast ? (
+            <button
+              type="button"
+              className="text-sm text-[#173d66]/50 underline"
+              onClick={handleSkip}
+            >
+              Überspringen
+            </button>
+          ) : (
+            <span />
+          )}
+          <button
+            type="button"
+            autoFocus
+            className="rounded-xl bg-[#68d5c8] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#5cc4b7]"
+            onClick={handleNext}
+          >
+            {isLast ? "Loslegen" : "Weiter →"}
+          </button>
+        </div>
+      </div>
+      <style>{`
+        @keyframes tour-fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+      `}</style>
+    </div>,
+    document.body,
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Dev utility
 // ---------------------------------------------------------------------------
 
 export function resetTour(): void {
   window.localStorage.removeItem(STORAGE_KEY);
+  window.localStorage.removeItem(EMPLOYEE_STORAGE_KEY);
   window.location.reload();
 }
 

@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import OnboardingTour from "@/components/OnboardingTour";
+import OnboardingTour, { EmployeeOnboardingTour } from "@/components/OnboardingTour";
 import { Route, Switch } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -152,6 +152,7 @@ export function AuthenticatedShell() {
     <EmployeeOfflineQueueProvider employeeId={employee.id} enabled={role === "employee"}>
       <AppShell role={role} employee={employee}>
         {role === "admin" && <OnboardingTour />}
+        {role === "employee" && <EmployeeOnboardingTour />}
         {meData.requiresPasswordChange ? (
           <Suspense fallback={<PageFallback />}>
             <ChangePasswordPage employee={meData.employee} company={meData.company} required />
