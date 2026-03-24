@@ -123,6 +123,10 @@ export function usePlanningBoard() {
     () => (selectedBlockId ? blocksById.get(selectedBlockId) ?? null : null),
     [blocksById, selectedBlockId],
   );
+  const plannedJobIds = useMemo(
+    () => new Set(assignments.map((a) => a.jobId)),
+    [assignments],
+  );
   const backlogList = useMemo(
     () => filterJobs(backlogJobs, deferredBacklogSearch),
     [backlogJobs, deferredBacklogSearch],
@@ -1138,6 +1142,7 @@ export function usePlanningBoard() {
     backlogJobs,
     backlogList,
     backlogSearch,
+    plannedJobIds,
     blocks,
     employeePlanRows,
     boardBackgroundStyle,

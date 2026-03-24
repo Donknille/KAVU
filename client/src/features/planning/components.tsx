@@ -75,10 +75,12 @@ export const BacklogJobCard = memo(function BacklogJobCard({
   job,
   compact,
   onClickPlace,
+  isPartiallyPlanned,
 }: {
   job: PlanJob;
   compact: boolean;
   onClickPlace?: (job: PlanJob) => void;
+  isPartiallyPlanned?: boolean;
 }) {
   const {
     attributes,
@@ -140,10 +142,13 @@ export const BacklogJobCard = memo(function BacklogJobCard({
               variant="secondary"
               className={cn(
                 "shrink-0 rounded-full py-0",
-                compact ? "px-1.5 text-[9px]" : "px-2 text-[10px]"
+                compact ? "px-1.5 text-[9px]" : "px-2 text-[10px]",
+                isPartiallyPlanned
+                  ? "bg-amber-100 text-amber-700 border-amber-200"
+                  : "bg-red-50 text-red-600 border-red-200",
               )}
             >
-              Backlog
+              {isPartiallyPlanned ? "Teilweise" : "Neu"}
             </Badge>
           </div>
           <p

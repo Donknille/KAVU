@@ -322,7 +322,7 @@ export default function PlanView() {
                 items={planning.backlogList}
                 itemHeight={108}
                 className="min-h-0 flex-1 overflow-y-auto pr-1"
-                renderItem={(job) => <BacklogJobCard key={job.id} job={job} compact={false} onClickPlace={planning.setPlacingJob} />}
+                renderItem={(job) => <BacklogJobCard key={job.id} job={job} compact={false} onClickPlace={planning.setPlacingJob} isPartiallyPlanned={planning.plannedJobIds.has(job.id)} />}
               />
             )}
           </div>
