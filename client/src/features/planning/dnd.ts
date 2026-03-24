@@ -40,7 +40,7 @@ export function preferCollisionHits<T extends CollisionLike>(
     }
 
     const hitId = String(hit.id);
-    return prefersBlocks ? hitId.startsWith("block:") : hitId.startsWith("day:");
+    return prefersBlocks ? hitId.startsWith("block:") : (hitId.startsWith("day:") || hitId.startsWith("employee-day:"));
   });
 
   if (preferred.length > 0) {
