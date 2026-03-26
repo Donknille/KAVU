@@ -32,6 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, apiRequestJson, queryClient } from "@/lib/queryClient";
 import { QK } from "@/lib/queryKeys";
 import {
+  FileDown,
   KeyRound,
   Mail,
   Phone,
@@ -310,16 +311,29 @@ export default function EmployeesList() {
                     {getInvitationRoleLabel(emp.role)}
                   </Badge>
                   {emp.loginId ? (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => provisionAccessMutation.mutate(emp.id)}
-                      disabled={provisionAccessMutation.isPending}
-                      data-testid={`button-reset-access-${emp.id}`}
-                    >
-                      <KeyRound className="mr-1 h-4 w-4" />
-                      Zugang neu setzen
-                    </Button>
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => provisionAccessMutation.mutate(emp.id)}
+                        disabled={provisionAccessMutation.isPending}
+                        data-testid={`button-reset-access-${emp.id}`}
+                      >
+                        <KeyRound className="mr-1 h-4 w-4" />
+                        Zugang neu setzen
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          window.open(`/api/employees/${emp.id}/credentials-pdf`, "_blank");
+                        }}
+                        data-testid={`button-pdf-${emp.id}`}
+                      >
+                        <FileDown className="mr-1 h-4 w-4" />
+                        PDF
+                      </Button>
+                    </>
                   ) : (
                     <Button
                       variant="outline"

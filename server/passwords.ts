@@ -6,6 +6,12 @@ export function hashPassword(password: string) {
   return `${salt}:${derived}`;
 }
 
+export function generateTemporaryPassword(length = 10): string {
+  const chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  const bytes = randomBytes(length);
+  return Array.from(bytes, (b) => chars[b % chars.length]).join("");
+}
+
 export function verifyPassword(password: string, passwordHash: string) {
   const [salt, storedHash] = passwordHash.split(":", 2);
   if (!salt || !storedHash) {

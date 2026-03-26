@@ -270,4 +270,63 @@ export function registerEmployeeRoutes(
       });
     }),
   );
+
+  // PDF credentials download
+  app.get(
+    "/api/employees/:id/credentials-pdf",
+    isAuthenticated,
+    requireAdmin,
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+      const employee = await storage.getEmployeeForCompany(req.companyId, req.params.id);
+      if (!employee) {
+        return res.status(404).json({ message: "Not found" });
+      }
+      if (!employee.loginId) {
+        return res.status(400).json({ message: "Mitarbeiter hat noch keinen Zugang. Bitte zuerst Zugang erstellen." });
+      }
+
+      const company = await storage.getCompany(req.companyId);
+      if (!company) {
+        return res.status(404).json({ message: "Company not found" });
+      }
+
+      // Generate a fresh temporary password for the PDF
+      const { generateTemporaryPassword, hashPassword } = await import("../passwords.js");
+      const tempPassword = generateTemporaryPassword();
+      const passwordHash = await hashPassword(tempPassword);
+
+      // Update employee password and set mustChangePassword
+      await storage.updateEmployee(req.companyId, employee.id, {
+        passwordHash,
+        mustChangePassword: true,
+      });
+
+      if (employee.userId) {
+        invalidateLocalAuthIdentity(employee.userId, "employee_access");
+      }
+
+      const { APP_BASE_URL } = await import("../runtimeConfig.js");
+      const loginUrl = `${APP_BASE_URL}/login/employee`;
+
+      const { generateCredentialsPdf } = await import("../employeeCredentialsPdf.js");
+
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="Zugangsdaten-${employee.firstName}-${employee.lastName}.pdf"`,
+      );
+
+      await generateCredentialsPdf(
+        {
+          companyName: company.name,
+          employeeName: `${employee.firstName} ${employee.lastName}`,
+          loginUrl,
+          accessCode: company.accessCode ?? "",
+          loginId: employee.loginId!,
+          temporaryPassword: tempPassword,
+        },
+        res,
+      );
+    }),
+  );
 }
