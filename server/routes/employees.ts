@@ -8,8 +8,7 @@ import {
   isUserTenantConflict,
   USER_TENANT_CONFLICT_MESSAGE,
 } from "../tenantErrors.js";
-import { sendEmployeeAccessEmail } from "../employeeAccessDelivery.js";
-import { getCurrentUserEmail } from "../companyInvitationApi.js";
+// Email delivery removed — PDF credentials are the primary onboarding method
 import { invalidateCompanyReadCaches } from "../readCaches.js";
 import { requireNotFrozen } from "../billing.js";
 import { isAuthenticated } from "../replit_integrations/auth/index.js";
@@ -61,29 +60,12 @@ export function toPublicEmployee(employee: any, options: { includeAccess?: boole
   return rest;
 }
 
-async function maybeDeliverEmployeeAccess(
-  req: AuthenticatedRequest,
-  employee: any,
-  company: any,
-  access: any,
-  shouldSend: boolean,
-) {
-  if (!shouldSend) {
-    return {
-      status: "skipped",
-      delivered: false,
-      message: "Zugangsdaten werden nur im Browser angezeigt.",
-    };
-  }
-
-  const recipientEmail = await getCurrentUserEmail(req);
-  return sendEmployeeAccessEmail({
-    company,
-    employee,
-    access,
-    recipientEmail,
-    recipientName: [req.employee?.firstName, req.employee?.lastName].filter(Boolean).join(" "),
-  });
+function skipDelivery() {
+  return {
+    status: "skipped" as const,
+    delivered: false,
+    message: "Zugangsdaten per PDF herunterladen.",
+  };
 }
 
 export function registerEmployeeRoutes(
@@ -153,13 +135,7 @@ export function registerEmployeeRoutes(
         return res.status(500).json({ message: "Internal error" });
       }
 
-      const delivery = await maybeDeliverEmployeeAccess(
-        req,
-        provisioned.employee,
-        provisioned.company,
-        provisioned.access,
-        parsed.data.sendCredentialsToAdmin,
-      );
+      const delivery = skipDelivery();
 
       if (provisioned.employee.userId) {
         invalidateLocalAuthIdentity(provisioned.employee.userId, "employee_access");
@@ -250,13 +226,7 @@ export function registerEmployeeRoutes(
         return res.status(500).json({ message: "Internal error" });
       }
 
-      const delivery = await maybeDeliverEmployeeAccess(
-        req,
-        provisioned.employee,
-        provisioned.company,
-        provisioned.access,
-        parsed.data.sendCredentialsToAdmin,
-      );
+      const delivery = skipDelivery();
 
       if (provisioned.employee.userId) {
         invalidateLocalAuthIdentity(provisioned.employee.userId, "employee_access");

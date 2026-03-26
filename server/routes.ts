@@ -11,7 +11,7 @@ import {
   isInvitationExpired,
   normalizeInvitationEmail,
 } from "./companyInvitations.js";
-import { buildCompanyInvitationMutationResponse } from "./companyInvitationDispatch.js";
+import { createInvitationLink } from "./companyInvitations.js";
 import {
   createCompanyInvitationSchema,
   getCurrentUserEmail,
@@ -337,51 +337,20 @@ export async function registerRoutes(
         role: parsed.data.role ?? "employee",
       });
 
-      return res.json(await buildCompanyInvitationMutationResponse(req, invitation, token));
+      const { resolveBaseUrl } = await import("./companyInvitationApi.js");
+      const inviteLink = createInvitationLink(resolveBaseUrl(req), token);
+      return res.json({
+        invitation: toAdminInvitationPayload(invitation),
+        delivery: { status: "link_only", delivered: false, message: "Einladungslink erstellt." },
+        inviteLink,
+      });
     } catch (error) {
       console.error("Error creating company invitation:", error);
       return res.status(500).json({ message: "Internal error" });
     }
   });
 
-  app.post(
-    "/api/company-invitations/:id/resend",
-    isAuthenticated,
-    requireAdmin,
-    async (req: any, res) => {
-      try {
-        const invitation = await storage.getCompanyInvitationForCompany(
-          req.companyId,
-          req.params.id,
-        );
-        if (!invitation) {
-          return res.status(404).json({ message: "Not found" });
-        }
-        if (invitation.revokedAt) {
-          return res.status(410).json({ message: "Diese Einladung wurde bereits widerrufen." });
-        }
-        if (invitation.acceptedAt) {
-          return res.status(410).json({ message: "Diese Einladung wurde bereits angenommen." });
-        }
-
-        const reissued = await storage.reissueCompanyInvitation(req.companyId, req.params.id);
-        if (!reissued) {
-          return res.status(404).json({ message: "Not found" });
-        }
-
-        return res.json(
-          await buildCompanyInvitationMutationResponse(req, reissued.invitation, reissued.token),
-        );
-      } catch (error) {
-        if (error instanceof Error && error.message === "Invitation already claimed") {
-          return res.status(410).json({ message: "Diese Einladung wurde bereits angenommen." });
-        }
-
-        console.error("Error resending company invitation:", error);
-        return res.status(500).json({ message: "Internal error" });
-      }
-    },
-  );
+  // Resend route removed — invitations are now link-only (no email)
 
   app.delete(
     "/api/company-invitations/:id",

@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Mail, Phone, RefreshCcw, X } from "lucide-react";
+import { Mail, Phone, X } from "lucide-react";
 import {
   getInvitationDeliverySummary,
   getInvitationRoleLabel,
@@ -12,18 +12,14 @@ import {
 type PendingInvitationsSectionProps = {
   invitations: InvitationRecord[];
   isLoading: boolean;
-  onResend: (id: string) => void;
   onRevoke: (id: string) => void;
-  resendPending: boolean;
   revokePending: boolean;
 };
 
 export function PendingInvitationsSection({
   invitations,
   isLoading,
-  onResend,
   onRevoke,
-  resendPending,
   revokePending,
 }: PendingInvitationsSectionProps) {
   return (
@@ -104,15 +100,6 @@ export function PendingInvitationsSection({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onResend(invitation.id)}
-                    disabled={resendPending}
-                  >
-                    <RefreshCcw className="mr-1 h-4 w-4" />
-                    Erneut senden
-                  </Button>
                   <Button
                     variant="ghost"
                     size="sm"

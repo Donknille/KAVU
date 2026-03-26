@@ -176,7 +176,6 @@ export default function EmployeesList() {
 
   const {
     createInvitationMutation,
-    resendInvitationMutation,
     revokeInvitationMutation,
   } = useInvitationActions({
     onCreateSuccess: () => {
@@ -244,9 +243,7 @@ export default function EmployeesList() {
       <PendingInvitationsSection
         invitations={pendingInvitations}
         isLoading={invitationsLoading}
-        onResend={(id) => resendInvitationMutation.mutate(id)}
         onRevoke={(id) => revokeInvitationMutation.mutate(id)}
-        resendPending={resendInvitationMutation.isPending}
         revokePending={revokeInvitationMutation.isPending}
       />
 

@@ -113,25 +113,6 @@ export function useInvitationActions(options: UseInvitationActionsOptions = {}) 
     },
   });
 
-  const resendInvitationMutation = useMutation({
-    mutationFn: async (id: string) =>
-      apiRequestJson<InvitationCreateResponse>("POST", `/api/company-invitations/${id}/resend`),
-    onSuccess: async (result) => {
-      await invalidateCompanyInvitations();
-      await showInvitationDeliveryToast(result, {
-        success: "Einladung erneut gesendet",
-        fallback: "Einladung neu erstellt",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Erneutes Senden fehlgeschlagen",
-        description: getErrorMessage(error),
-        variant: "destructive",
-      });
-    },
-  });
-
   const revokeInvitationMutation = useMutation({
     mutationFn: async (id: string) => apiRequest("DELETE", `/api/company-invitations/${id}`),
     onSuccess: async () => {
@@ -148,7 +129,6 @@ export function useInvitationActions(options: UseInvitationActionsOptions = {}) 
 
   return {
     createInvitationMutation,
-    resendInvitationMutation,
     revokeInvitationMutation,
   };
 }
