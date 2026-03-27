@@ -318,6 +318,68 @@ export function registerAuthRoutes(app: Express): void {
     }
   });
 
+  // Forgot password — send reset email
+  app.post("/api/auth/forgot-password", async (req: any, res) => {
+    try {
+      const parsed = z.object({ email: z.string().email() }).safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: "Bitte geben Sie eine gueltige E-Mail-Adresse ein." });
+      }
+
+      const user = await authStorage.getUserByEmail(parsed.data.email);
+      // Always return success to prevent email enumeration
+      if (!user?.passwordHash) {
+        return res.json({ message: "Falls ein Account mit dieser E-Mail existiert, erhalten Sie einen Link." });
+      }
+
+      const resetToken = crypto.randomBytes(32).toString("hex");
+      const resetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+      await authStorage.setPasswordResetToken(user.id, resetToken, resetExpires);
+
+      const { sendPasswordResetEmail } = await import("../../emailVerification.js");
+      void sendPasswordResetEmail({
+        email: parsed.data.email,
+        firstName: user.firstName ?? undefined,
+        token: resetToken,
+        baseUrl: `${req.protocol}://${req.get("host")}`,
+      }).catch((err) => console.error("[password-reset] Failed to send:", err));
+
+      return res.json({ message: "Falls ein Account mit dieser E-Mail existiert, erhalten Sie einen Link." });
+    } catch (error) {
+      console.error("Error in forgot-password:", error);
+      return res.status(500).json({ message: "Anfrage fehlgeschlagen." });
+    }
+  });
+
+  // Reset password with token
+  app.post("/api/auth/reset-password", async (req: any, res) => {
+    try {
+      const parsed = z.object({
+        token: z.string().min(1),
+        password: z.string().min(8, "Mindestens 8 Zeichen"),
+      }).safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: "Ungueltiger Token oder Passwort zu kurz." });
+      }
+
+      const user = await authStorage.getUserByResetToken(parsed.data.token);
+      if (!user) {
+        return res.status(400).json({ message: "Ungueltiger oder abgelaufener Link." });
+      }
+      if (user.passwordResetExpires && new Date(user.passwordResetExpires) < new Date()) {
+        return res.status(400).json({ message: "Der Link ist abgelaufen. Bitte fordern Sie einen neuen an." });
+      }
+
+      await authStorage.updateUserPassword(user.id, hashPassword(parsed.data.password));
+      await authStorage.clearPasswordResetToken(user.id);
+
+      return res.json({ message: "Passwort erfolgreich geaendert. Sie koennen sich jetzt anmelden." });
+    } catch (error) {
+      console.error("Error in reset-password:", error);
+      return res.status(500).json({ message: "Zuruecksetzen fehlgeschlagen." });
+    }
+  });
+
   app.post("/api/auth/employee-login", async (req: any, res) => {
     try {
       const parsed = employeeLoginSchema.safeParse(req.body);

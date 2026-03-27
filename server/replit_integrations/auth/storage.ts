@@ -27,6 +27,9 @@ export interface IAuthStorage {
   updateUserPassword(id: string, passwordHash: string): Promise<User | undefined>;
   markEmailVerified(id: string): Promise<void>;
   setVerifyToken(id: string, token: string, expires: Date): Promise<void>;
+  getUserByResetToken(token: string): Promise<User | undefined>;
+  setPasswordResetToken(id: string, token: string, expires: Date): Promise<void>;
+  clearPasswordResetToken(id: string): Promise<void>;
   deleteUser(id: string): Promise<boolean>;
 }
 
@@ -129,6 +132,27 @@ class AuthStorage implements IAuthStorage {
       .returning();
     return updatedUser;
   }
+  async getUserByResetToken(token: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.passwordResetToken, token));
+    return user;
+  }
+
+  async setPasswordResetToken(id: string, token: string, expires: Date): Promise<void> {
+    await db.update(users).set({
+      passwordResetToken: token,
+      passwordResetExpires: expires,
+      updatedAt: new Date(),
+    }).where(eq(users.id, id));
+  }
+
+  async clearPasswordResetToken(id: string): Promise<void> {
+    await db.update(users).set({
+      passwordResetToken: null,
+      passwordResetExpires: null,
+      updatedAt: new Date(),
+    }).where(eq(users.id, id));
+  }
+
   async deleteUser(id: string): Promise<boolean> {
     const [deleted] = await db.delete(users).where(eq(users.id, id)).returning();
     return !!deleted;

@@ -296,6 +296,11 @@ export default function AdminAuthPage({ mode }: AdminAuthPageProps) {
                 ? "Anmelden und Einladung fortsetzen"
                 : "Admin anmelden"}
           </Button>
+          <div className="text-center">
+            <a href="/forgot-password" className="text-sm text-muted-foreground hover:underline">
+              Passwort vergessen?
+            </a>
+          </div>
         </form>
       )}
     </AuthShell>

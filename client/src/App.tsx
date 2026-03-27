@@ -16,6 +16,8 @@ const LandingPage = lazy(() => import("@/pages/LandingPage"));
 const AdminAuthPage = lazy(() => import("@/pages/AdminAuthPage"));
 const EmployeeLoginPage = lazy(() => import("@/pages/EmployeeLoginPage"));
 const PlatformAdminPage = lazy(() => import("@/pages/PlatformAdminPage"));
+const ForgotPasswordPage = lazy(() => import("@/pages/ForgotPasswordPage"));
+const ResetPasswordPage = lazy(() => import("@/pages/ResetPasswordPage"));
 
 function PublicRouter() {
   return (
@@ -29,6 +31,8 @@ function PublicRouter() {
           {() => <AdminAuthPage mode="register" />}
         </Route>
         <Route path="/login/employee" component={EmployeeLoginPage} />
+        <Route path="/forgot-password" component={ForgotPasswordPage} />
+        <Route path="/reset-password" component={ResetPasswordPage} />
         <Route path="/platform-admin" component={PlatformAdminPage} />
         <Route component={NotFound} />
       </Switch>
