@@ -137,27 +137,6 @@ export async function registerRoutes(
   await setupAuth(app);
   registerAuthRoutes(app);
 
-  // Temporary debug endpoint — remove after DB connection is verified
-  app.get("/api/debug/db-check", async (_req, res) => {
-    try {
-      const { db } = await import("./db.js");
-      const { sql } = await import("drizzle-orm");
-      const result = await db.execute(sql`
-        SELECT column_name FROM information_schema.columns
-        WHERE table_schema = 'public' AND table_name = 'users'
-        ORDER BY ordinal_position
-      `);
-      const dbUrl = process.env.DATABASE_URL?.replace(/:[^@]+@/, ":***@") ?? "not set";
-      res.json({
-        dbUrl,
-        columns: result.rows.map((r: any) => r.column_name),
-        timestamp: new Date().toISOString(),
-      });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message, dbUrl: process.env.DATABASE_URL?.replace(/:[^@]+@/, ":***@") });
-    }
-  });
-
   app.get("/api/me", isAuthenticated, async (req: any, res) => {
     try {
       const employee = await getEmployeeFromReq(req);
