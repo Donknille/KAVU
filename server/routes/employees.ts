@@ -299,4 +299,55 @@ export function registerEmployeeRoutes(
       );
     }),
   );
+
+  // Toggle active/inactive
+  app.patch(
+    "/api/employees/:id/status",
+    isAuthenticated,
+    requireAdmin,
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+      const { isActive } = req.body;
+      if (typeof isActive !== "boolean") {
+        return res.status(400).json({ message: "isActive muss true oder false sein." });
+      }
+
+      const employee = await storage.getEmployeeForCompany(req.companyId, req.params.id);
+      if (!employee) return res.status(404).json({ message: "Mitarbeiter nicht gefunden." });
+
+      // Don't allow deactivating yourself
+      if (employee.id === req.employee?.id) {
+        return res.status(400).json({ message: "Sie koennen sich nicht selbst deaktivieren." });
+      }
+
+      await storage.updateEmployee(req.companyId, req.params.id, { isActive });
+      invalidateCompanyReadCaches(req.companyId);
+      res.json({ ok: true, isActive });
+    }),
+  );
+
+  // Delete employee
+  app.delete(
+    "/api/employees/:id",
+    isAuthenticated,
+    requireAdmin,
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+      const employee = await storage.getEmployeeForCompany(req.companyId, req.params.id);
+      if (!employee) return res.status(404).json({ message: "Mitarbeiter nicht gefunden." });
+
+      // Don't allow deleting yourself
+      if (employee.id === req.employee?.id) {
+        return res.status(400).json({ message: "Sie koennen sich nicht selbst loeschen." });
+      }
+
+      // Delete user account if exists
+      if (employee.userId) {
+        const { authStorage } = await import("../replit_integrations/auth/storage.js");
+        await authStorage.deleteUser(employee.userId);
+      }
+
+      await storage.deleteEmployee(req.companyId, req.params.id);
+      invalidateCompanyReadCaches(req.companyId);
+      res.json({ ok: true });
+    }),
+  );
 }

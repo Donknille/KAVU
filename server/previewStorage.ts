@@ -832,6 +832,15 @@ export class PreviewStorage {
     return employee;
   }
 
+  async deleteEmployee(companyId: string, id: string): Promise<void> {
+    this.data.assignmentWorkers = this.data.assignmentWorkers.filter(
+      (w) => !(w.companyId === companyId && w.employeeId === id),
+    );
+    this.data.employees = this.data.employees.filter(
+      (e) => !(e.id === id && e.companyId === companyId),
+    );
+  }
+
   async provisionEmployeeAccess(data: ProvisionEmployeeAccessData) {
     const employee = await this.getEmployeeForCompany(data.companyId, data.employeeId);
     if (!employee) {

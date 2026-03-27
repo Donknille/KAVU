@@ -126,6 +126,7 @@ export interface IStorage {
     id: string,
     data: Partial<InsertEmployee>,
   ): Promise<Employee | undefined>;
+  deleteEmployee(companyId: string, id: string): Promise<void>;
   provisionEmployeeAccess(
     data: ProvisionEmployeeAccessData,
   ): Promise<{ employee: Employee; company: Company; access: LocalEmployeeAccess }>;
@@ -478,6 +479,15 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(employees.id, id), eq(employees.companyId, companyId)))
       .returning();
     return employee;
+  }
+
+  async deleteEmployee(companyId: string, id: string): Promise<void> {
+    // Delete worker assignments first (FK constraint)
+    await db.delete(assignmentWorkers)
+      .where(and(eq(assignmentWorkers.companyId, companyId), eq(assignmentWorkers.employeeId, id)));
+    // Delete the employee
+    await db.delete(employees)
+      .where(and(eq(employees.id, id), eq(employees.companyId, companyId)));
   }
 
   async provisionEmployeeAccess(data: ProvisionEmployeeAccessData) {

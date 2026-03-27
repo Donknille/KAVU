@@ -186,9 +186,23 @@ export default function EmployeesList() {
 
   const toggleMutation = useMutation({
     mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) =>
-      apiRequest("PATCH", `/api/employees/${id}`, { isActive }),
+      apiRequest("PATCH", `/api/employees/${id}/status`, { isActive }),
     onSuccess: async () => {
       await invalidateEmployeeAdminQueries();
+      queryClient.invalidateQueries({ queryKey: [QK.PLANNING_BOARD] });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) =>
+      apiRequest("DELETE", `/api/employees/${id}`),
+    onSuccess: async () => {
+      await invalidateEmployeeAdminQueries();
+      queryClient.invalidateQueries({ queryKey: [QK.PLANNING_BOARD] });
+      toast({ title: "Mitarbeiter geloescht" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Loeschen fehlgeschlagen", description: error?.message, variant: "destructive" });
     },
   });
 
@@ -356,6 +370,22 @@ export default function EmployeesList() {
                   >
                     {emp.isActive ? "Aktiv" : "Inaktiv"}
                   </Button>
+                  {emp.role !== "admin" && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs text-destructive hover:text-destructive"
+                      onClick={() => {
+                        if (window.confirm(`${emp.firstName} ${emp.lastName} wirklich loeschen? Alle Zuweisungen werden entfernt.`)) {
+                          deleteMutation.mutate(emp.id);
+                        }
+                      }}
+                      disabled={deleteMutation.isPending}
+                      data-testid={`button-delete-${emp.id}`}
+                    >
+                      Loeschen
+                    </Button>
+                  )}
                 </div>
               </div>
             </Card>

@@ -59,6 +59,7 @@ export default function JobDetail() {
       queryClient.invalidateQueries({ queryKey: [QK.JOBS, id] });
       queryClient.invalidateQueries({ queryKey: [QK.JOBS] });
       queryClient.invalidateQueries({ queryKey: [QK.DASHBOARD] });
+      queryClient.invalidateQueries({ queryKey: [QK.PLANNING_BOARD] });
       toast({ title: "Auftrag aktualisiert" });
       setIsEditing(false);
     },
@@ -71,6 +72,7 @@ export default function JobDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QK.JOBS] });
       queryClient.invalidateQueries({ queryKey: [QK.DASHBOARD] });
+      queryClient.invalidateQueries({ queryKey: [QK.PLANNING_BOARD] });
       toast({ title: "Auftrag gelöscht" });
       navigate("/jobs");
     },
