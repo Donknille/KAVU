@@ -157,7 +157,7 @@ export function AuthenticatedShell() {
 
   if (meData.needsSetup) {
     return (
-      <Suspense fallback={<PageFallback />}>
+      <Suspense key="setup" fallback={<PageFallback />}>
         <SetupPage />
       </Suspense>
     );

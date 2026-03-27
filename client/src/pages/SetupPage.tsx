@@ -85,7 +85,7 @@ export default function SetupPage() {
   }
 
   return (
-    <div className="brand-grid-shell flex min-h-screen items-center justify-center p-4">
+    <div className="brand-grid-shell flex min-h-screen items-center justify-center p-4" suppressHydrationWarning>
       <Card className="brand-panel w-full max-w-md p-6">
         <div className="mb-6 flex items-center gap-3">
           <BrandMark size={40} />
@@ -178,7 +178,7 @@ export default function SetupPage() {
         )}
 
         {(!showInvitationCard || ignoreInvite) && (
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
             <div className="rounded-xl border bg-card/60 p-4">
               <div className="mb-3 flex items-center gap-2">
                 <Building2 className="h-4 w-4 text-muted-foreground" />
@@ -193,6 +193,7 @@ export default function SetupPage() {
                   onChange={(e) => setCompanyName(e.target.value)}
                   placeholder="z.B. Mueller Solartechnik"
                   required
+                  autoComplete="off"
                   data-testid="input-company-name"
                 />
               </div>
