@@ -156,6 +156,13 @@ export async function registerRoutes(
             trialDaysLeft: trialDaysLeft(company),
           }
         : null;
+      // Check email verification for admin users
+      let emailVerified = true;
+      if (authMethod === "password" && employee.userId) {
+        const { authStorage } = await import("./replit_integrations/auth/storage.js");
+        const user = await authStorage.getUser(employee.userId);
+        emailVerified = user?.emailVerified ?? true;
+      }
       const responsePayload = {
         employee: toPublicEmployee(employee),
         company: toPublicCompany(company, {
@@ -166,6 +173,7 @@ export async function registerRoutes(
         requiresPasswordChange:
           authMethod === "employee_access" && employee.mustChangePassword === true,
         billing,
+        emailVerified,
       };
       setCachedMeResponse(cacheKey, responsePayload);
       return res.json(responsePayload);

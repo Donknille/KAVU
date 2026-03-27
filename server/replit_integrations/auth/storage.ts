@@ -11,15 +11,22 @@ function normalizeUserEmail(value: string | null | undefined) {
 // (IMPORTANT) These user operations are mandatory for Replit Auth.
 export interface IAuthStorage {
   getUser(id: string): Promise<User | undefined>;
+  getUserById(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByVerifyToken(token: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
   createPasswordUser(user: {
     email: string;
     passwordHash: string;
     firstName?: string | null;
     lastName?: string | null;
+    emailVerified?: boolean;
+    emailVerifyToken?: string;
+    emailVerifyExpires?: Date;
   }): Promise<User>;
   updateUserPassword(id: string, passwordHash: string): Promise<User | undefined>;
+  markEmailVerified(id: string): Promise<void>;
+  setVerifyToken(id: string, token: string, expires: Date): Promise<void>;
   deleteUser(id: string): Promise<boolean>;
 }
 
@@ -59,11 +66,24 @@ class AuthStorage implements IAuthStorage {
     return user;
   }
 
+  async getUserById(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByVerifyToken(token: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.emailVerifyToken, token));
+    return user;
+  }
+
   async createPasswordUser(user: {
     email: string;
     passwordHash: string;
     firstName?: string | null;
     lastName?: string | null;
+    emailVerified?: boolean;
+    emailVerifyToken?: string;
+    emailVerifyExpires?: Date;
   }) {
     const [createdUser] = await db
       .insert(users)
@@ -73,9 +93,29 @@ class AuthStorage implements IAuthStorage {
         firstName: user.firstName ?? null,
         lastName: user.lastName ?? null,
         profileImageUrl: null,
+        emailVerified: user.emailVerified ?? false,
+        emailVerifyToken: user.emailVerifyToken ?? null,
+        emailVerifyExpires: user.emailVerifyExpires ?? null,
       })
       .returning();
     return createdUser;
+  }
+
+  async markEmailVerified(id: string): Promise<void> {
+    await db.update(users).set({
+      emailVerified: true,
+      emailVerifyToken: null,
+      emailVerifyExpires: null,
+      updatedAt: new Date(),
+    }).where(eq(users.id, id));
+  }
+
+  async setVerifyToken(id: string, token: string, expires: Date): Promise<void> {
+    await db.update(users).set({
+      emailVerifyToken: token,
+      emailVerifyExpires: expires,
+      updatedAt: new Date(),
+    }).where(eq(users.id, id));
   }
 
   async updateUserPassword(id: string, passwordHash: string) {

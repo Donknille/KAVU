@@ -46,6 +46,11 @@ export const PREVIEW_AUTH_USER: User = {
   lastName: "Admin",
   profileImageUrl: null,
   passwordHash: null,
+  emailVerified: true,
+  emailVerifyToken: null,
+  emailVerifyExpires: null,
+  passwordResetToken: null,
+  passwordResetExpires: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };

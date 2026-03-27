@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import type { Express } from "express";
 import { z } from "zod";
 import { authStorage } from "./storage.js";
@@ -5,6 +6,7 @@ import { isAuthenticated } from "./replitAuth.js";
 import { invalidateLocalAuthIdentity } from "./replitAuth.js";
 import { hashPassword, verifyPassword } from "../../passwords.js";
 import { invalidateCompanyReadCaches } from "../../readCaches.js";
+import { sendVerificationEmail } from "../../emailVerification.js";
 
 // Constant-time dummy hash to prevent username enumeration via timing attacks.
 // Called even when a user is not found, so response time stays consistent.
@@ -197,17 +199,31 @@ export function registerAuthRoutes(app: Express): void {
         return res.status(409).json({ message: "Diese E-Mail-Adresse ist bereits registriert." });
       }
 
+      const verifyToken = crypto.randomBytes(32).toString("hex");
+      const verifyExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
       const user = await authStorage.createPasswordUser({
         email: parsed.data.email,
         passwordHash: hashPassword(parsed.data.password),
         firstName: parsed.data.firstName,
         lastName: parsed.data.lastName,
+        emailVerified: false,
+        emailVerifyToken: verifyToken,
+        emailVerifyExpires: verifyExpires,
       });
 
       await establishLocalSession(req, {
         userId: user.id,
         kind: "password",
       });
+
+      // Send verification email (fire-and-forget, don't block registration)
+      void sendVerificationEmail({
+        email: parsed.data.email,
+        firstName: parsed.data.firstName,
+        token: verifyToken,
+        baseUrl: `${req.protocol}://${req.get("host")}`,
+      }).catch((err) => console.error("[email-verify] Failed to send:", err));
 
       return res.json({ user: toPublicUser(user, "password") });
     } catch (error) {
@@ -245,6 +261,60 @@ export function registerAuthRoutes(app: Express): void {
     } catch (error) {
       console.error("Error during password login:", error);
       return res.status(500).json({ message: "Login fehlgeschlagen" });
+    }
+  });
+
+  // Email verification
+  app.get("/api/auth/verify-email", async (req: any, res) => {
+    try {
+      const token = String(req.query.token ?? "");
+      if (!token) {
+        return res.status(400).json({ message: "Token fehlt." });
+      }
+
+      const user = await authStorage.getUserByVerifyToken(token);
+      if (!user) {
+        return res.status(400).json({ message: "Ungueltiger oder abgelaufener Link." });
+      }
+      if (user.emailVerifyExpires && new Date(user.emailVerifyExpires) < new Date()) {
+        return res.status(400).json({ message: "Der Link ist abgelaufen. Bitte fordere einen neuen an." });
+      }
+
+      await authStorage.markEmailVerified(user.id);
+      // Redirect to app with success message
+      return res.redirect("/?verified=1");
+    } catch (error) {
+      console.error("Error verifying email:", error);
+      return res.status(500).json({ message: "Verifizierung fehlgeschlagen." });
+    }
+  });
+
+  // Resend verification email
+  app.post("/api/auth/resend-verification", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await authStorage.getUserById(req.session?.localAuth?.userId);
+      if (!user?.email) {
+        return res.status(400).json({ message: "Kein Account gefunden." });
+      }
+      if (user.emailVerified) {
+        return res.json({ message: "E-Mail bereits bestaetigt." });
+      }
+
+      const verifyToken = crypto.randomBytes(32).toString("hex");
+      const verifyExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      await authStorage.setVerifyToken(user.id, verifyToken, verifyExpires);
+
+      await sendVerificationEmail({
+        email: user.email,
+        firstName: user.firstName ?? undefined,
+        token: verifyToken,
+        baseUrl: `${req.protocol}://${req.get("host")}`,
+      });
+
+      return res.json({ message: "Bestaetigungsmail gesendet." });
+    } catch (error) {
+      console.error("Error resending verification:", error);
+      return res.status(500).json({ message: "Senden fehlgeschlagen." });
     }
   });
 

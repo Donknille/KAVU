@@ -41,4 +41,5 @@ export type MeResponse = {
   authMethod?: string;
   requiresPasswordChange?: boolean;
   billing?: BillingInfo | null;
+  emailVerified?: boolean;
 };

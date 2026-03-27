@@ -1,4 +1,7 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState } from "react";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { Mail } from "lucide-react";
 import OnboardingTour, { EmployeeOnboardingTour } from "@/components/OnboardingTour";
 import { Route, Switch } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -91,6 +94,38 @@ function LogoutButton() {
   );
 }
 
+function EmailVerificationBanner() {
+  const { toast } = useToast();
+  const [sending, setSending] = useState(false);
+
+  async function resend() {
+    setSending(true);
+    try {
+      await apiRequest("POST", "/api/auth/resend-verification");
+      toast({ title: "Bestaetigungsmail gesendet", description: "Bitte pruefen Sie Ihren Posteingang." });
+    } catch {
+      toast({ title: "Senden fehlgeschlagen", variant: "destructive" });
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <div className="mx-4 mt-2 flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+      <Mail className="h-4 w-4 shrink-0" />
+      <span className="flex-1">Bitte bestaetigen Sie Ihre E-Mail-Adresse.</span>
+      <button
+        type="button"
+        className="shrink-0 font-medium underline hover:no-underline"
+        onClick={resend}
+        disabled={sending}
+      >
+        {sending ? "Wird gesendet..." : "Erneut senden"}
+      </button>
+    </div>
+  );
+}
+
 export function AuthenticatedShell() {
   const { data: meData, isLoading, error, refetch } = useCurrentSession();
 
@@ -153,6 +188,9 @@ export function AuthenticatedShell() {
       <AppShell role={role} employee={employee}>
         {role === "admin" && <OnboardingTour />}
         {role === "employee" && <EmployeeOnboardingTour />}
+        {role === "admin" && meData.emailVerified === false && (
+          <EmailVerificationBanner />
+        )}
         {meData.requiresPasswordChange ? (
           <Suspense fallback={<PageFallback />}>
             <ChangePasswordPage employee={meData.employee} company={meData.company} required />
