@@ -8,10 +8,10 @@ import {
   USER_TENANT_CONFLICT_MESSAGE,
 } from "./tenantErrors.js";
 import {
+  createInvitationLink,
   isInvitationExpired,
   normalizeInvitationEmail,
 } from "./companyInvitations.js";
-import { createInvitationLink } from "./companyInvitations.js";
 import {
   createCompanyInvitationSchema,
   getCurrentUserEmail,
