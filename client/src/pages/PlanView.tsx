@@ -463,8 +463,12 @@ export default function PlanView() {
                     {header.dateLabel}
                   </p>
                   {!isOverviewMode && (
-                    <p className="text-[8px] brand-ink-muted mt-0.5">
-                      {header.assignmentCount}E {header.freeCount}f
+                    <p className="text-[8px] mt-0.5">
+                      <span className="brand-ink-muted">{header.assignmentCount}E</span>
+                      {" "}
+                      <span className={header.freeCount > 0 ? "text-red-400 font-semibold" : "brand-ink-muted"}>
+                        {header.freeCount}f
+                      </span>
                     </p>
                   )}
                 </div>
