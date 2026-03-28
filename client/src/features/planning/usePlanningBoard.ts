@@ -853,6 +853,29 @@ export function usePlanningBoard() {
     setPendingRemoveBlock(null);
     if (!block) return;
 
+    // Per-employee block: only remove this employee's worker assignment, keep assignments intact
+    const isPerEmployeeBlock = block.id.startsWith("emp:");
+    const employeeId = isPerEmployeeBlock ? block.id.split(":")[1] : null;
+
+    if (isPerEmployeeBlock && employeeId) {
+      // Check if other workers are still on these assignments
+      await runBusyAction("Mitarbeiter wird entfernt...", async () => {
+        await apiRequest("POST", "/api/planning/assign-workers", {
+          assignmentIds: block.assignments.map((a) => a.id),
+          employeeId,
+          mode: "remove",
+        });
+        await refreshPlanningBoard();
+        setSelectedBlockId(null);
+        toast({
+          title: "Mitarbeiter vom Auftrag entfernt",
+          description: `Der Mitarbeiter wurde aus ${block.job.jobNumber} entfernt.`,
+        });
+      });
+      return;
+    }
+
+    // Global block or no other workers: delete assignments entirely
     await runBusyAction("Auftrag wird entfernt...", async () => {
       await apiRequest("POST", "/api/planning/remove-block", {
         assignmentIds: block.assignments.map((assignment) => assignment.id),
