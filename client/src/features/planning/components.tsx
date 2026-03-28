@@ -2,6 +2,7 @@ import { memo, useEffect, useState } from "react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import {
+  BedDouble,
   GripVertical,
   LockKeyhole,
   MapPin,
@@ -33,6 +34,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import {
   CATEGORY_BG,
   CATEGORY_COLORS,
@@ -55,6 +58,7 @@ import type {
   ActiveDrag,
   EmployeeAvailability,
   JobForm,
+  PlanAssignment,
   PlanEmployee,
   PlanJob,
   PlanningDragData,
@@ -678,6 +682,85 @@ export function DragOverlayCard({ activeDrag }: { activeDrag: ActiveDrag | null 
   );
 }
 
+function AccommodationSection({ assignments }: { assignments: PlanAssignment[] }) {
+  const [editing, setEditing] = useState(false);
+  const [note, setNote] = useState("");
+  const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
+
+  // Get existing accommodation note from first assignment that has one
+  const existingNote = assignments.find((a) => a.accommodationNote)?.accommodationNote ?? "";
+
+  function startEdit() {
+    setNote(existingNote);
+    setEditing(true);
+  }
+
+  async function save() {
+    setSaving(true);
+    try {
+      // Save to all assignments in this block
+      await Promise.all(
+        assignments.map((a) =>
+          apiRequest("PATCH", `/api/assignments/${a.id}`, { accommodationNote: note || null }),
+        ),
+      );
+      toast({ title: "Übernachtungsinfo gespeichert" });
+      setEditing(false);
+    } catch {
+      toast({ title: "Fehler beim Speichern", variant: "destructive" });
+    }
+    setSaving(false);
+  }
+
+  if (editing) {
+    return (
+      <div className="space-y-2">
+        <p className="text-xs font-medium brand-ink-muted flex items-center gap-1.5">
+          <BedDouble className="h-3.5 w-3.5" />
+          Übernachtung
+        </p>
+        <Textarea
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="z.B. Hotel Ibis Stuttgart, Zimmer 312, Pin: 4829"
+          className="text-xs min-h-[60px]"
+        />
+        <div className="flex gap-2">
+          <Button size="sm" className="h-7 text-xs" onClick={save} disabled={saving}>
+            {saving ? "..." : "Speichern"}
+          </Button>
+          <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setEditing(false)}>
+            Abbrechen
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (existingNote) {
+    return (
+      <div className="space-y-1">
+        <p className="text-xs font-medium brand-ink-muted flex items-center gap-1.5">
+          <BedDouble className="h-3.5 w-3.5" />
+          Übernachtung
+        </p>
+        <p className="text-xs brand-ink whitespace-pre-line">{existingNote}</p>
+        <Button size="sm" variant="ghost" className="h-6 text-[10px] px-1.5" onClick={startEdit}>
+          Bearbeiten
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <Button size="sm" variant="ghost" className="w-full gap-1.5 text-xs brand-ink-muted" onClick={startEdit}>
+      <BedDouble className="h-3.5 w-3.5" />
+      Übernachtung hinzufügen
+    </Button>
+  );
+}
+
 export function SelectedBlockPanel({
   selectedBlock,
   availableEmployees = [],
@@ -1188,6 +1271,8 @@ export function SelectedBlockPanel({
             ? "Bei laufenden Aufträgen bleiben vergangene oder bereits begonnene Tage unverändert. Weitere Mitarbeitende können ab heute für offene Tage ergänzt oder entfernt werden."
             : "Mehrere Einsätze pro Tag sind möglich. Reihenfolge und Uhrzeiten sollten in der Disposition beachtet werden."}
         </div>
+
+        <AccommodationSection assignments={selectedBlock.assignments} />
 
         {selectedBlock.canDelete && (
           <Button variant="destructive" className="w-full gap-2" onClick={onRemoveBlock}>

@@ -33,6 +33,7 @@ export type PlanAssignment = {
   plannedEndTime?: string | null;
   sortOrder: number;
   note?: string | null;
+  accommodationNote?: string | null;
   status: string;
   job?: PlanJob;
   workers?: PlanEmployee[];

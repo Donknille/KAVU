@@ -452,6 +452,7 @@ function buildPreviewData() {
       status: "on_site",
       createdAt: new Date(now.getTime() - 48 * 60 * 60 * 1000),
       updatedAt: now,
+      accommodationNote: null,
     },
     {
       id: createId(),
@@ -465,6 +466,7 @@ function buildPreviewData() {
       status: "planned",
       createdAt: new Date(now.getTime() - 36 * 60 * 60 * 1000),
       updatedAt: now,
+      accommodationNote: null,
     },
     {
       id: createId(),
@@ -478,6 +480,7 @@ function buildPreviewData() {
       status: "on_site",
       createdAt: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       updatedAt: now,
+      accommodationNote: null,
     },
     {
       id: createId(),
@@ -491,6 +494,7 @@ function buildPreviewData() {
       status: "planned",
       createdAt: new Date(now.getTime() - 18 * 60 * 60 * 1000),
       updatedAt: now,
+      accommodationNote: null,
     },
     {
       id: createId(),
@@ -501,6 +505,7 @@ function buildPreviewData() {
       plannedEndTime: "15:30",
       sortOrder: 0,
       note: "Archivierter Einsatz als Referenz.",
+      accommodationNote: null,
       status: "completed",
       createdAt: new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000),
       updatedAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000),
@@ -1261,6 +1266,7 @@ export class PreviewStorage {
       plannedEndTime: data.plannedEndTime ?? null,
       sortOrder: nextSortOrder,
       note: data.note ?? null,
+      accommodationNote: data.accommodationNote ?? null,
       status: data.status ?? "planned",
       createdAt: new Date(),
       updatedAt: new Date(),
