@@ -7,7 +7,7 @@ import type {
   PlanningBoardResponse,
   ViewSpan,
 } from "@/features/planning/types";
-import { getEmployeeLabel, uniqueSortedDates } from "@/features/planning/utils";
+import { buildPlanningBlocks, getEmployeeLabel, uniqueSortedDates } from "@/features/planning/utils";
 import { QK } from "@/lib/queryKeys";
 
 export const JOBS_QUERY_KEY = QK.JOBS;
@@ -195,19 +195,38 @@ export type EmployeePlanRow = {
 
 export function buildEmployeePlanRows(
   employees: PlanEmployee[],
-  blocks: PlanningBlock[],
+  assignments: PlanAssignment[],
+  visibleDays: string[],
 ): EmployeePlanRow[] {
+  // Index: which employees are assigned to which assignment
+  const assignmentWorkerMap = new Map<string, Set<string>>();
+  for (const a of assignments) {
+    if (a.workers) {
+      for (const w of a.workers) {
+        let empSet = assignmentWorkerMap.get(a.id);
+        if (!empSet) {
+          empSet = new Set();
+          assignmentWorkerMap.set(a.id, empSet);
+        }
+        empSet.add(w.id);
+      }
+    }
+  }
+
   let globalRowOffset = 0;
-  const assignedBlockIds = new Set<string>();
 
   const rows = employees.map((emp) => {
-    // Find all blocks where this employee is assigned
-    const empBlocks = blocks.filter((b) =>
-      b.workerCoverage.some((c) => c.employee.id === emp.id),
-    );
-    for (const b of empBlocks) assignedBlockIds.add(b.id);
+    // Filter assignments to ONLY those where this employee is a worker
+    const empAssignments = assignments.filter((a) => {
+      const workers = assignmentWorkerMap.get(a.id);
+      return workers?.has(emp.id);
+    });
 
-    // Lane allocation within the employee row (greedy, same as buildPlanningBlocks)
+    // Build blocks from this employee's assignments only
+    // Each employee gets independent blocks they can resize/move independently
+    const empBlocks = buildPlanningBlocks(empAssignments, visibleDays, undefined, `emp:${emp.id}:`);
+
+    // Lane allocation within the employee row
     const sorted = [...empBlocks].sort((a, b) =>
       a.startIndex !== b.startIndex ? a.startIndex - b.startIndex : b.span - a.span,
     );

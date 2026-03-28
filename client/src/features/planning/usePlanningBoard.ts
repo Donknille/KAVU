@@ -99,6 +99,22 @@ export function usePlanningBoard() {
 
   const { assignments, activeEmployees, backlogJobs, blocks, daySummaries } = planningBoard;
   const blocksById = useMemo(() => new Map(blocks.map((block) => [block.id, block])), [blocks]);
+
+  // Per-employee blocks: each MA gets independent blocks for resize/move
+  const employeePlanRows = useMemo(
+    () => buildEmployeePlanRows(activeEmployees, assignments, visibleDays),
+    [activeEmployees, assignments, visibleDays],
+  );
+  const employeeBlocksById = useMemo(() => {
+    const map = new Map<string, PlanningBlock>();
+    for (const row of employeePlanRows) {
+      for (const block of row.blocks) {
+        map.set(block.id, block);
+      }
+    }
+    return map;
+  }, [employeePlanRows]);
+
   const jobsById = useMemo(() => {
     const next = new Map<string, PlanJob>();
     for (const job of backlogJobs) {
@@ -119,9 +135,13 @@ export function usePlanningBoard() {
     () => new Map(visibleDays.map((date, index) => [date, index])),
     [visibleDays],
   );
+  // selectedBlock: prefer per-employee block (has filtered assignments for resize/move)
   const selectedBlock = useMemo(
-    () => (selectedBlockId ? blocksById.get(selectedBlockId) ?? null : null),
-    [blocksById, selectedBlockId],
+    () => {
+      if (!selectedBlockId) return null;
+      return employeeBlocksById.get(selectedBlockId) ?? blocksById.get(selectedBlockId) ?? null;
+    },
+    [blocksById, employeeBlocksById, selectedBlockId],
   );
   const plannedJobIds = useMemo(
     () => new Set(assignments.map((a) => a.jobId)),
@@ -166,7 +186,7 @@ export function usePlanningBoard() {
   );
 
   useEffect(() => {
-    if (selectedBlockId && !blocksById.has(selectedBlockId)) {
+    if (selectedBlockId && !blocksById.has(selectedBlockId) && !employeeBlocksById.has(selectedBlockId)) {
       setSelectedBlockId(null);
     }
   }, [blocksById, selectedBlockId]);
@@ -885,7 +905,7 @@ export function usePlanningBoard() {
     }
 
     if (data?.dragType === "block-move") {
-      const block = blocksById.get(data.blockId);
+      const block = employeeBlocksById.get(data.blockId) ?? blocksById.get(data.blockId);
       if (block) {
         setActiveDrag({ type: "block-move", block });
       }
@@ -893,7 +913,7 @@ export function usePlanningBoard() {
     }
 
     if (data?.dragType === "block-resize-start") {
-      const block = blocksById.get(data.blockId);
+      const block = employeeBlocksById.get(data.blockId) ?? blocksById.get(data.blockId);
       if (block) {
         setActiveDrag({ type: "block-resize-start", block });
       }
@@ -901,7 +921,7 @@ export function usePlanningBoard() {
     }
 
     if (data?.dragType === "block-resize-end") {
-      const block = blocksById.get(data.blockId);
+      const block = employeeBlocksById.get(data.blockId) ?? blocksById.get(data.blockId);
       if (block) {
         setActiveDrag({ type: "block-resize-end", block });
       }
@@ -925,7 +945,8 @@ export function usePlanningBoard() {
     }
 
     if (id.startsWith("block-move:")) {
-      const block = blocksById.get(id.slice(11));
+      const blockId = id.slice(11);
+      const block = employeeBlocksById.get(blockId) ?? blocksById.get(blockId);
       if (block) {
         setActiveDrag({ type: "block-move", block });
       }
@@ -933,7 +954,8 @@ export function usePlanningBoard() {
     }
 
     if (id.startsWith("block-resize-start:")) {
-      const block = blocksById.get(id.slice(19));
+      const blockId = id.slice(19);
+      const block = employeeBlocksById.get(blockId) ?? blocksById.get(blockId);
       if (block) {
         setActiveDrag({ type: "block-resize-start", block });
       }
@@ -941,12 +963,13 @@ export function usePlanningBoard() {
     }
 
     if (id.startsWith("block-resize-end:")) {
-      const block = blocksById.get(id.slice(17));
+      const blockId = id.slice(17);
+      const block = employeeBlocksById.get(blockId) ?? blocksById.get(blockId);
       if (block) {
         setActiveDrag({ type: "block-resize-end", block });
       }
     }
-  }, [blocksById, employeesById, jobsById]);
+  }, [blocksById, employeeBlocksById, employeesById, jobsById]);
 
   function getActiveCenterX(event: DragOverEvent | DragEndEvent) {
     const translated = event.active.rect.current.translated;
@@ -1093,7 +1116,7 @@ export function usePlanningBoard() {
 
       if (currentDrag.type === "employee" && (overData?.dropType === "block" || overId.startsWith("block:"))) {
         const blockId = overData?.dropType === "block" ? overData.blockId : overId.slice(6);
-        const block = blocksById.get(blockId);
+        const block = employeeBlocksById.get(blockId) ?? blocksById.get(blockId);
         if (block) {
           await assignEmployeeToBlock(block, currentDrag.employee, {
             mode: "from-date",
@@ -1128,6 +1151,7 @@ export function usePlanningBoard() {
     activeDrag,
     assignEmployeeToBlock,
     blocksById,
+    employeeBlocksById,
     busyLabel,
     createBlockFromBacklog,
     moveBlock,
@@ -1137,10 +1161,6 @@ export function usePlanningBoard() {
     toast,
   ]);
 
-  const employeePlanRows = useMemo(
-    () => buildEmployeePlanRows(activeEmployees, blocks),
-    [activeEmployees, blocks],
-  );
   const totalEmployeeLanes = useMemo(
     () => employeePlanRows.reduce((sum, row) => sum + row.laneCount, 0),
     [employeePlanRows],
