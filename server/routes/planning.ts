@@ -25,6 +25,7 @@ const batchAssignWorkersSchema = z.object({
   assignmentIds: z.array(z.string().uuid()).min(1),
   employeeId: z.string().uuid(),
   mode: z.enum(["add", "remove"]),
+  cleanupOrphans: z.boolean().optional(),
 });
 
 const moveBlockSchema = z.object({
@@ -145,21 +146,39 @@ export function registerPlanningRoutes(
         return res.status(404).json({ message: "Assignment not found" });
       }
 
+      const validAssignments = assignmentsForCompany.filter((a): a is Assignment => !!a);
+
       await Promise.all(
-        assignmentsForCompany.filter((a): a is Assignment => !!a).map((assignment) =>
+        validAssignments.map((assignment) =>
           parsed.data.mode === "add"
             ? storage.addWorkerToAssignment({
                 companyId: req.companyId,
-                assignmentId: assignment!.id,
+                assignmentId: assignment.id,
                 employeeId: parsed.data.employeeId,
               })
             : storage.removeWorkerFromAssignment(
                 req.companyId,
-                assignment!.id,
+                assignment.id,
                 parsed.data.employeeId,
               ),
         ),
       );
+
+      // After removing a worker: delete assignments that now have 0 workers
+      if (parsed.data.mode === "remove" && parsed.data.cleanupOrphans !== false) {
+        const orphanedIds: string[] = [];
+        for (const assignment of validAssignments) {
+          const remainingWorkers = await storage.getWorkersForAssignment(req.companyId, assignment.id);
+          if (remainingWorkers.length === 0) {
+            orphanedIds.push(assignment.id);
+          }
+        }
+        if (orphanedIds.length > 0) {
+          await Promise.all(
+            orphanedIds.map((id) => storage.deleteAssignment(req.companyId, id)),
+          );
+        }
+      }
 
       invalidateCompanyReadCaches(req.companyId);
       res.json({ ok: true });
