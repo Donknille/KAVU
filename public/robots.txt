@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /platform-admin
+Disallow: /login/
+Disallow: /register/
+Disallow: /setup
+Disallow: /change-password
+Disallow: /forgot-password
+Disallow: /reset-password
+
+Sitemap: https://masterplaner-three.vercel.app/sitemap.xml
