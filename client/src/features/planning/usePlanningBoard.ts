@@ -858,13 +858,29 @@ export function usePlanningBoard() {
     const employeeId = isPerEmployeeBlock ? block.id.split(":")[1] : null;
 
     if (isPerEmployeeBlock && employeeId) {
-      // Check if other workers are still on these assignments
       await runBusyAction("Mitarbeiter wird entfernt...", async () => {
+        // 1. Remove this employee as worker from all block assignments
         await apiRequest("POST", "/api/planning/assign-workers", {
           assignmentIds: block.assignments.map((a) => a.id),
           employeeId,
           mode: "remove",
         });
+
+        // 2. Delete assignments where this employee was the ONLY worker
+        //    (otherwise they become orphaned with 0 workers)
+        const onlyMineIds = block.assignments
+          .filter((a) => {
+            const workers = a.workers ?? [];
+            return workers.length <= 1 && workers.every((w) => w.id === employeeId);
+          })
+          .map((a) => a.id);
+
+        if (onlyMineIds.length > 0) {
+          await apiRequest("POST", "/api/planning/remove-block", {
+            assignmentIds: onlyMineIds,
+          });
+        }
+
         await refreshPlanningBoard();
         setSelectedBlockId(null);
         toast({
