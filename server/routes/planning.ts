@@ -148,6 +148,8 @@ export function registerPlanningRoutes(
 
       const validAssignments = assignmentsForCompany.filter((a): a is Assignment => !!a);
 
+      console.info(`[assign-workers] mode=${parsed.data.mode} employeeId=${parsed.data.employeeId} assignments=${validAssignments.map(a => `${a.id}(${a.assignmentDate})`).join(",")}`);
+
       await Promise.all(
         validAssignments.map((assignment) =>
           parsed.data.mode === "add"
@@ -169,10 +171,12 @@ export function registerPlanningRoutes(
         const orphanedIds: string[] = [];
         for (const assignment of validAssignments) {
           const remainingWorkers = await storage.getWorkersForAssignment(req.companyId, assignment.id);
+          console.info(`[assign-workers] assignment=${assignment.id}(${assignment.assignmentDate}) remainingWorkers=${remainingWorkers.length} ids=${remainingWorkers.map(w => w.id).join(",")}`);
           if (remainingWorkers.length === 0) {
             orphanedIds.push(assignment.id);
           }
         }
+        console.info(`[assign-workers] orphanedIds=${orphanedIds.length > 0 ? orphanedIds.join(",") : "none"}`);
         if (orphanedIds.length > 0) {
           await Promise.all(
             orphanedIds.map((id) => storage.deleteAssignment(req.companyId, id)),
