@@ -178,7 +178,8 @@ export function getPlanningDaySummaries(
 export function buildPlanningBlocks(
   assignments: PlanningBoardAssignment[],
   visibleDays: string[],
-  today = toDateStr(new Date())
+  today = toDateStr(new Date()),
+  idPrefix = "",
 ) {
   const dayIndexByDate = new Map(visibleDays.map((day, index) => [day, index]));
   const grouped = new Map<string, PlanningBoardAssignment[]>();
@@ -207,7 +208,7 @@ export function buildPlanningBlocks(
       if (previousIndex === null || currentIndex === previousIndex + 1) {
         currentChunk.push(assignment);
       } else {
-        blocks.push(createBlockFromAssignments(currentChunk, dayIndexByDate, today));
+        blocks.push(createBlockFromAssignments(currentChunk, dayIndexByDate, today, idPrefix));
         currentChunk = [assignment];
       }
       previousIndex = currentIndex;
@@ -239,7 +240,8 @@ export function buildPlanningBlocks(
 function createBlockFromAssignments(
   chunk: PlanningBoardAssignment[],
   dayIndexByDate: Map<string, number>,
-  today: string
+  today: string,
+  idPrefix = "",
 ): PlanningBoardBlock {
   const orderedAssignments = [...chunk].sort((left, right) =>
     left.assignmentDate.localeCompare(right.assignmentDate)
@@ -282,7 +284,7 @@ function createBlockFromAssignments(
   );
 
   return {
-    id: assignmentIds.join("|"),
+    id: `${idPrefix}${assignmentIds.join("|")}`,
     jobId: first.jobId,
     job: first.job!,
     startDate: first.assignmentDate,
