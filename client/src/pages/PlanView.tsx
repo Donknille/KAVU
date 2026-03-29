@@ -1065,15 +1065,9 @@ export default function PlanView() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              {planning.pendingRemoveBlock?.id.startsWith("emp:")
-                ? "Mitarbeiter vom Auftrag entfernen?"
-                : "Auftrag aus Planung entfernen?"}
-            </AlertDialogTitle>
+            <AlertDialogTitle>Mitarbeiter vom Auftrag entfernen?</AlertDialogTitle>
             <AlertDialogDescription>
-              {planning.pendingRemoveBlock?.id.startsWith("emp:")
-                ? <>Soll der Mitarbeiter aus <strong>{planning.pendingRemoveBlock?.job.jobNumber}</strong> entfernt werden? Der Auftrag bleibt fuer andere Mitarbeiter bestehen.</>
-                : <>Soll <strong>{planning.pendingRemoveBlock?.job.jobNumber}</strong> komplett aus der Planung entfernt werden? Der Auftrag wird zurueck ins Backlog verschoben.</>}
+              Soll der Mitarbeiter aus <strong>{planning.pendingRemoveBlock?.job.jobNumber}</strong> entfernt werden? Wenn keine weiteren Mitarbeiter zugewiesen sind, wird der Auftrag zurueck ins Backlog verschoben.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

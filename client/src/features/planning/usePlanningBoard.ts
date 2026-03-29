@@ -853,51 +853,51 @@ export function usePlanningBoard() {
     setPendingRemoveBlock(null);
     if (!block) return;
 
-    // Per-employee block: only remove this employee's worker assignment, keep assignments intact
-    const isPerEmployeeBlock = block.id.startsWith("emp:");
-    const employeeId = isPerEmployeeBlock ? block.id.split(":")[1] : null;
+    // Find which employee owns this block by checking employee plan rows
+    let employeeId: string | null = null;
+    if (block.id.startsWith("emp:")) {
+      employeeId = block.id.split(":")[1];
+    } else {
+      // Fallback: find the employee row that contains this block
+      for (const row of employeePlanRows) {
+        if (row.blocks.some((b) => b.id === block.id)) {
+          employeeId = row.employee.id;
+          break;
+        }
+      }
+    }
 
-    if (isPerEmployeeBlock && employeeId) {
-      await runBusyAction("Mitarbeiter wird entfernt...", async () => {
-        // Server removes worker + deletes orphaned assignments atomically
+    // Always use server-side atomic worker removal + orphan cleanup
+    await runBusyAction("Auftrag wird entfernt...", async () => {
+      if (employeeId) {
+        // Per-employee block: remove only this employee's worker assignment
+        // Server handles orphan cleanup (deletes assignments with 0 workers)
         await apiRequest("POST", "/api/planning/assign-workers", {
           assignmentIds: block.assignments.map((a) => a.id),
           employeeId,
           mode: "remove",
           cleanupOrphans: true,
         });
-
-        await refreshPlanningBoard();
-        setSelectedBlockId(null);
         toast({
           title: "Mitarbeiter vom Auftrag entfernt",
           description: `Der Mitarbeiter wurde aus ${block.job.jobNumber} entfernt.`,
         });
-      });
-      return;
-    }
-
-    // Global block or no other workers: delete assignments entirely
-    await runBusyAction("Auftrag wird entfernt...", async () => {
-      await apiRequest("POST", "/api/planning/remove-block", {
-        assignmentIds: block.assignments.map((assignment) => assignment.id),
-      });
-      const assignmentIds = new Set(block.assignmentIds);
-      updateAssignmentsCache((current) =>
-        current.filter((assignment) => !assignmentIds.has(assignment.id))
-      );
-      updateBacklogCache((current) => {
-        if (current.some((job) => job.id === block.job.id)) {
-          return current;
-        }
-        return [block.job, ...current];
-      });
+      } else {
+        // No employee context: delete all assignments entirely
+        await apiRequest("POST", "/api/planning/remove-block", {
+          assignmentIds: block.assignments.map((a) => a.id),
+        });
+        updateBacklogCache((current) => {
+          if (current.some((job) => job.id === block.job.id)) return current;
+          return [block.job, ...current];
+        });
+        toast({
+          title: "Auftrag entfernt",
+          description: "Der Auftrag liegt wieder nur noch im Backlog.",
+        });
+      }
       await refreshPlanningBoard();
       setSelectedBlockId(null);
-      toast({
-        title: "Auftrag entfernt",
-        description: "Der Auftrag liegt wieder nur noch im Backlog.",
-      });
     });
   }
 
