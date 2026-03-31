@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AssignmentCard } from "@/components/AssignmentCard";
 import { ConnectionStatusBadge } from "@/components/ConnectionStatusBadge";
 import { InstallAppCard } from "@/components/InstallAppCard";
 import { AssignmentTeamPreview, TeamContactList, getAssignmentTeamNames } from "@/features/employee/AssignmentTeamPreview";
@@ -16,7 +15,7 @@ import {
 } from "@/features/employee/assignmentSchedule";
 import { OfflineQueueAlert } from "@/features/employee-offline/OfflineQueueAlert";
 import { useEmployeeOfflineQueue } from "@/features/employee-offline/EmployeeOfflineQueueProvider";
-import { ArrowRight, CalendarDays, ClipboardList, Clock3, Sun, Users } from "lucide-react";
+import { ArrowRight, Clock3, Users } from "lucide-react";
 import { useLocation } from "wouter";
 import { formatDate, toDateStr } from "@/lib/constants";
 
@@ -85,30 +84,26 @@ export default function EmployeeDayView() {
             <ConnectionStatusBadge isOnline={isOnline} compact className="brand-outline-chip" />
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <span className="brand-outline-chip rounded-full px-3 py-1 text-xs font-medium brand-ink">
-              {activeAssignments.length} aktiv
-            </span>
-            <span className="brand-outline-chip rounded-full px-3 py-1 text-xs font-medium brand-ink">
-              {todayAssignments.length} danach
-            </span>
-            <span className="brand-outline-chip rounded-full px-3 py-1 text-xs font-medium brand-ink">
-              {upcomingAssignments.length} kommend
-            </span>
-          </div>
+          <p className="text-sm brand-ink-soft">
+            {totalAssignments === 0
+              ? "Heute frei"
+              : activeAssignments.length + todayAssignments.length > 0
+                ? `Heute: ${activeAssignments.length + todayAssignments.length} ${activeAssignments.length + todayAssignments.length === 1 ? "Einsatz" : "Einsaetze"}`
+                : `Naechster Einsatz: ${formatDate(upcomingAssignments[0]?.assignmentDate)}`}
+          </p>
 
           <div className="brand-navy-panel rounded-[26px] p-4">
             {focusAssignment ? (
               <div className="space-y-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-300">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-200/90">
                       {focusLabel}
                     </p>
-                    <p className="mt-1 truncate text-lg font-semibold">
+                    <p className="mt-1 truncate text-lg font-bold text-white">
                       {focusAssignment.job?.title || "Auftrag"}
                     </p>
-                    <p className="truncate text-sm text-slate-300">
+                    <p className="truncate text-sm text-slate-200">
                       {focusAssignment.job?.customerName || "Kunde offen"}
                     </p>
                   </div>
@@ -120,11 +115,11 @@ export default function EmployeeDayView() {
                 </div>
 
                 <div className="rounded-2xl border border-white/12 bg-white/8 p-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-300">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-200/90">
                     Zeitfenster
                   </p>
-                  <div className="mt-2 flex items-center gap-2 text-sm text-slate-100">
-                    <Clock3 className="h-4 w-4" />
+                  <div className="mt-2 flex items-center gap-2 text-sm text-white">
+                    <Clock3 className="h-4 w-4 text-white/80" />
                     <span>{formatPlannedWindow(focusAssignment)}</span>
                   </div>
                 </div>
@@ -162,7 +157,10 @@ export default function EmployeeDayView() {
                   onClick={() => navigate(`/assignment/${focusAssignment.id}`)}
                   data-testid={`button-open-focus-assignment-${focusAssignment.id}`}
                 >
-                  Zum Einsatz
+                  <span className="flex items-center gap-2">
+                    <Clock3 className="h-4 w-4" />
+                    Zeiterfassung & Details
+                  </span>
                   <ArrowRight className="h-4 w-4" />
                 </Button>
 
@@ -198,110 +196,33 @@ export default function EmployeeDayView() {
         </section>
       )}
 
-      {/* Wochenvorschau */}
-      {upcomingAssignments.length > 0 && (
-        <section className="space-y-3">
-          <div className="flex items-center gap-2">
-            <CalendarDays className="h-4 w-4 text-[#173d66]" />
-            <h2 className="font-semibold text-[#173d66]">Deine nächsten Tage</h2>
-          </div>
-          <div className="space-y-2">
-            {(() => {
-              // Group upcoming assignments by date
-              const byDate = new Map<string, any[]>();
-              for (const a of upcomingAssignments) {
-                const list = byDate.get(a.assignmentDate) ?? [];
-                list.push(a);
-                byDate.set(a.assignmentDate, list);
-              }
-              return [...byDate.entries()].slice(0, 10).map(([date, dayAssignments]) => (
-                <Card key={date} className="brand-soft-card rounded-2xl p-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] brand-ink-muted">
-                    {date === today ? "Heute" : formatDate(date)}
-                  </p>
-                  {dayAssignments.map((a: any) => (
-                    <div
-                      key={a.id}
-                      className="mt-2 flex items-start justify-between gap-2 cursor-pointer"
-                      onClick={() => navigate(`/assignment/${a.id}`)}
-                    >
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium brand-ink truncate">
-                          {a.job?.title || "Auftrag"}
-                        </p>
-                        <p className="text-xs brand-ink-soft truncate">
-                          {a.job?.customerName}
-                          {a.workers?.length > 0 && ` | Mit: ${getAssignmentTeamNames(a, 2)}`}
-                        </p>
-                      </div>
-                      <ArrowRight className="h-3.5 w-3.5 shrink-0 brand-ink-muted mt-0.5" />
-                    </div>
-                  ))}
-                </Card>
-              ));
-            })()}
-          </div>
-        </section>
-      )}
-
-      {activeAssignments.length > 0 && (
-        <section className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Sun className="h-4 w-4 text-[#173d66]" />
-            <h2 className="font-semibold text-[#173d66]">Jetzt dran</h2>
-          </div>
-          <div className="space-y-3">
-            {activeAssignments.map((assignment) => (
-              <Card
-                key={assignment.id}
-                className="brand-panel cursor-pointer rounded-[26px] p-4 ring-2 ring-[#68d5c8]/50"
-                onClick={() => navigate(`/assignment/${assignment.id}`)}
-                data-testid={`card-active-assignment-${assignment.id}`}
-              >
-                <div className="mb-2 flex items-center justify-between gap-2">
-                  <p className="brand-kicker text-[#173d66]">Aktiver Einsatz</p>
-                  {assignment.assignmentDate !== today && (
-                    <p className="text-[11px] text-[#173d66]/64">
-                      Geplant für {formatDate(assignment.assignmentDate)}
-                    </p>
-                  )}
-                </div>
-                <AssignmentCard assignment={assignment} compact emphasizeTeam />
-              </Card>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {(todayAssignments.length > 0 || activeAssignments.length > 0) && (
-        <section className="space-y-3">
-          <div className="flex items-center gap-2">
-            <ClipboardList className="h-4 w-4 text-[#173d66]" />
-            <h2 className="font-semibold text-[#173d66]">
-              {activeAssignments.length > 0 ? "Danach heute" : "Als Nächstes heute"}
-            </h2>
-          </div>
-
-          {todayAssignments.length === 0 ? (
-            <Card className="brand-soft-card rounded-[26px] p-6 text-center">
-              <p className="font-medium text-[#173d66]/76">
-                Alle Einsätze für heute laufen bereits.
-              </p>
-            </Card>
-          ) : (
-            <div className="space-y-3">
-              {todayAssignments.map((assignment) => (
-                <AssignmentCard
-                  key={assignment.id}
-                  assignment={assignment}
-                  emphasizeTeam
-                  onClick={() => navigate(`/assignment/${assignment.id}`)}
-                />
-              ))}
+      {/* Morgen-Vorschau */}
+      {(() => {
+        const tomorrow = toDateStr(addDays(new Date(), 1));
+        const tomorrowAssignments = effectiveAssignments.filter((a: any) => a.assignmentDate === tomorrow);
+        if (tomorrowAssignments.length === 0) return null;
+        const first = tomorrowAssignments[0];
+        return (
+          <Card className="brand-soft-card rounded-2xl p-4">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] brand-ink-muted">Morgen</p>
+                <p className="mt-1 text-sm font-semibold brand-ink truncate">
+                  {first.job?.title || "Auftrag"}
+                </p>
+                <p className="text-xs brand-ink-soft truncate">
+                  {first.job?.customerName}
+                  {first.workers?.length > 1 && ` | Mit: ${getAssignmentTeamNames(first, 2)}`}
+                </p>
+              </div>
+              <p className="shrink-0 text-xs brand-ink-muted">{formatDate(tomorrow)}</p>
             </div>
-          )}
-        </section>
-      )}
+            {tomorrowAssignments.length > 1 && (
+              <p className="mt-2 text-xs brand-ink-soft">+ {tomorrowAssignments.length - 1} weitere</p>
+            )}
+          </Card>
+        );
+      })()}
 
     </div>
   );

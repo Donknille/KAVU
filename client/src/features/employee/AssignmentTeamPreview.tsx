@@ -46,7 +46,7 @@ export function getAssignmentTeamHeadline(assignment: AssignmentWithWorkers | nu
   }
 
   if (workers.length === 1) {
-    return "Heute alleine eingeplant";
+    return null; // Solo — no team display needed
   }
 
   return `${workers.length} Personen auf diesem Einsatz`;
@@ -89,17 +89,11 @@ export function TeamContactList({
   className?: string;
 }) {
   const workers = getAssignmentWorkers(assignment);
-  if (workers.length === 0) {
-    return (
-      <div className={cn("rounded-2xl border brand-outline-chip px-3 py-2.5", className)}>
-        <div className="flex items-center gap-1.5">
-          <Users className="h-3.5 w-3.5 brand-ink-muted" />
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] brand-ink-muted">Team</p>
-        </div>
-        <p className="mt-2 text-sm brand-ink-soft">Team wird noch abgestimmt</p>
-      </div>
-    );
-  }
+
+  // Solo or no team: don't show contact list
+  if (workers.length <= 1) return null;
+
+  // workers.length >= 2 guaranteed from here
 
   return (
     <div className={cn("rounded-2xl border brand-outline-chip px-3 py-2.5 space-y-2", className)}>
@@ -162,6 +156,10 @@ export function AssignmentTeamPreview({
   className?: string;
 }) {
   const workers = getAssignmentWorkers(assignment);
+
+  // Solo: don't show team section when alone
+  if (workers.length <= 1) return null;
+
   const visibleWorkers = workers.slice(0, compact ? 3 : 4);
   const hiddenCount = workers.length - visibleWorkers.length;
 
