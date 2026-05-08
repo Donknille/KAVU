@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -15,6 +15,7 @@ import { ArrowLeft, Plus } from "lucide-react";
 import { useLocation } from "wouter";
 import { apiRequest, queryClient, SubscriptionRequiredError } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { usePostalCodeLookup } from "@/hooks/use-postal-code-lookup";
 import { JOB_CATEGORY_LABELS } from "@/lib/constants";
 import { QK } from "@/lib/queryKeys";
 
@@ -39,6 +40,21 @@ export default function CreateJob() {
   const update = (field: string, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
+
+  const { result: postalLookup } = usePostalCodeLookup(form.addressZip);
+  const lastAutoFilledCity = useRef<string>("");
+
+  useEffect(() => {
+    if (!postalLookup) return;
+    setForm((prev) => {
+      const trimmed = prev.addressCity.trim();
+      if (trimmed !== "" && trimmed !== lastAutoFilledCity.current) {
+        return prev;
+      }
+      lastAutoFilledCity.current = postalLookup.city;
+      return { ...prev, addressCity: postalLookup.city };
+    });
+  }, [postalLookup]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

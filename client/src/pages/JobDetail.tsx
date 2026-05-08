@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { usePostalCodeLookup } from "@/hooks/use-postal-code-lookup";
 import { QK } from "@/lib/queryKeys";
 import {
   formatTime,
@@ -50,6 +51,29 @@ export default function JobDetail() {
 
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<Record<string, string>>({});
+
+  const { result: postalLookup } = usePostalCodeLookup(
+    isEditing ? editForm.addressZip ?? "" : "",
+  );
+  const lastAutoFilledCity = useRef<string>("");
+
+  useEffect(() => {
+    if (!postalLookup) return;
+    setEditForm((prev) => {
+      const trimmed = (prev.addressCity ?? "").trim();
+      if (trimmed !== "" && trimmed !== lastAutoFilledCity.current) {
+        return prev;
+      }
+      lastAutoFilledCity.current = postalLookup.city;
+      return { ...prev, addressCity: postalLookup.city };
+    });
+  }, [postalLookup]);
+
+  useEffect(() => {
+    if (!isEditing) {
+      lastAutoFilledCity.current = "";
+    }
+  }, [isEditing]);
 
   const updateMutation = useMutation({
     mutationFn: async (data: any) => {
