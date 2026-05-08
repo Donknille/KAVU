@@ -31,7 +31,7 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", "data:", "blob:"],
         connectSrc: ["'self'"],
@@ -61,13 +61,34 @@ const authLimiter = rateLimit({
   message: { message: "Zu viele Anmeldeversuche, bitte warten." },
 });
 
+// Throttle mail-sending endpoints: any route that can trigger an outgoing
+// email to a user-controlled address is a spam and enumeration vector.
+const emailTriggerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 3,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Zu viele Versuche. Bitte in einer Stunde erneut versuchen." },
+});
+
+const invitationLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Zu viele Einladungen in kurzer Zeit. Bitte später erneut versuchen." },
+});
+
 app.use("/api/", apiLimiter);
 app.use("/api/login", authLimiter);
 app.use("/api/auth/register", authLimiter);
 app.use("/api/auth/login/password", authLimiter);
 app.use("/api/auth/employee-login", authLimiter);
+app.use("/api/auth/forgot-password", emailTriggerLimiter);
+app.use("/api/auth/resend-verification", emailTriggerLimiter);
 app.use("/api/setup", authLimiter);
 app.use("/api/auth/change-password", authLimiter);
+app.use("/api/company-invitations", invitationLimiter);
 app.use("/admin/", authLimiter);
 
 // CSRF protection: mutating API requests must carry a JSON or custom content type.
@@ -181,7 +202,14 @@ async function bootstrapApp() {
         const status = err.status || err.statusCode || 500;
         const message = err.message || "Internal Server Error";
 
-        console.error("Internal Server Error:", err);
+        // Deliberately avoid logging the full error object: err can transitively
+        // reference the request body, which may carry credentials or tokens.
+        console.error("Internal Server Error:", {
+          status,
+          message,
+          name: err?.name,
+          stack: err?.stack,
+        });
 
         if (res.headersSent) {
           return next(err);

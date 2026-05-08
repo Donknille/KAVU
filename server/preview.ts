@@ -25,12 +25,22 @@ function hasConfiguredAuthProvider() {
   );
 }
 
+const NODE_ENV_NORMALIZED = process.env.NODE_ENV?.trim().toLowerCase();
+const IS_PRODUCTION_RUNTIME = NODE_ENV_NORMALIZED === "production";
+
+if (IS_PRODUCTION_RUNTIME && process.env.LOCAL_PREVIEW === "1") {
+  throw new Error(
+    "LOCAL_PREVIEW=1 is not permitted when NODE_ENV=production. " +
+      "Preview mode bypasses authentication and must never run in production.",
+  );
+}
+
 export const PREVIEW_MODE =
-  process.env.LOCAL_PREVIEW === "1" ||
-  (process.env.NODE_ENV !== "production" &&
-    (!process.env.DATABASE_URL ||
-      !process.env.SESSION_SECRET ||
-      !hasConfiguredAuthProvider()));
+  !IS_PRODUCTION_RUNTIME &&
+  (process.env.LOCAL_PREVIEW === "1" ||
+    !process.env.DATABASE_URL ||
+    !process.env.SESSION_SECRET ||
+    !hasConfiguredAuthProvider());
 
 export const PREVIEW_COMPANY_ID = "preview-company";
 export const PREVIEW_ADMIN_USER_ID = "7a3677db-c6d6-4dd3-9ef9-2fd7987b3f9d";

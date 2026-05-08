@@ -83,83 +83,11 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="alternate icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/pwa-icon.svg" />
-    <script>
-      (function () {
-        const storageKey = "meisterplaner-theme";
-        const storedTheme = localStorage.getItem(storageKey);
-        const resolvedTheme =
-          storedTheme === "light" || storedTheme === "dark"
-            ? storedTheme
-            : window.matchMedia("(prefers-color-scheme: dark)").matches
-              ? "dark"
-              : "light";
-
-        if (resolvedTheme === "dark") {
-          document.documentElement.classList.add("dark");
-        } else {
-          document.documentElement.classList.remove("dark");
-        }
-
-        document.documentElement.style.colorScheme = resolvedTheme;
-      })();
-    </script>
+    <script src="/theme-init.js"></script>
     <style>
       .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 0); }
     </style>
-    <script>
-      (function () {
-        const reloadKey = "meisterplaner-asset-recovery";
-
-        async function clearRuntimeCaches() {
-          if ("serviceWorker" in navigator) {
-            const registrations = await navigator.serviceWorker.getRegistrations();
-            await Promise.all(registrations.map((registration) => registration.unregister()));
-          }
-
-          if ("caches" in window) {
-            const cacheKeys = await caches.keys();
-            await Promise.all(cacheKeys.map((cacheKey) => caches.delete(cacheKey)));
-          }
-        }
-
-        function markHealthyLoad() {
-          sessionStorage.removeItem(reloadKey);
-        }
-
-        async function recoverFromMissingAsset() {
-          if (sessionStorage.getItem(reloadKey) === "1") {
-            return;
-          }
-
-          sessionStorage.setItem(reloadKey, "1");
-          await clearRuntimeCaches();
-
-          const targetUrl = new URL(window.location.href);
-          targetUrl.searchParams.set("_asset_refresh", Date.now().toString());
-          window.location.replace(targetUrl.toString());
-        }
-
-        window.addEventListener("load", markHealthyLoad, { once: true });
-
-        window.addEventListener(
-          "error",
-          (event) => {
-            const target = event.target;
-            if (!(target instanceof HTMLScriptElement || target instanceof HTMLLinkElement)) {
-              return;
-            }
-
-            const source = target.src || target.href || "";
-            if (!source.includes("/assets/")) {
-              return;
-            }
-
-            void recoverFromMissingAsset();
-          },
-          true,
-        );
-      })();
-    </script>
+    <script src="/asset-recovery.js"></script>
   </head>
   <body>
     <div id="root"></div>
