@@ -23,6 +23,7 @@ export type PlanJob = {
   internalNote?: string | null;
   category?: string | null;
   status: string;
+  plannedDurationMinutes?: number | null;
 };
 
 export type PlanAssignment = {

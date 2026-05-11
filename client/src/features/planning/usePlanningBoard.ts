@@ -48,6 +48,7 @@ import {
   type ViewSpan,
   type WorkerDaySelection,
 } from "@/features/planning/types";
+import { expandJobIntoWorkdays } from "@/features/planning/expandJobDays";
 import {
   addCalendarDays,
   formatCompactDate,
@@ -485,27 +486,55 @@ export function usePlanningBoard() {
   }
 
   async function createBlockFromBacklog(job: PlanJob, targetDate: string) {
-    if (getJobConflictDates(job.id, [targetDate]).length > 0) {
+    // T-202 stage 2: a job with a planned duration > 1 workday is dropped
+    // as a multi-day block. The first cell honors the user's drop target;
+    // following cells skip Sat/Sun.
+    const days = expandJobIntoWorkdays(targetDate, job.plannedDurationMinutes);
+
+    const conflicts = getJobConflictDates(job.id, days);
+    if (conflicts.length > 0) {
       toast({
         title: "Auftrag bereits eingeplant",
-        description: "Für diesen Tag existiert bereits ein Eintrag.",
+        description:
+          conflicts.length === days.length
+            ? "Für diese Tage existiert bereits ein Eintrag."
+            : `Konflikte an: ${conflicts.map(formatCompactDate).join(", ")}.`,
         variant: "destructive",
       });
       return;
     }
 
     await runBusyAction("Auftrag wird eingeplant...", async () => {
-      const createdAssignment = await apiRequestJson<PlanAssignment>("POST", "/api/assignments", {
-        jobId: job.id,
-        assignmentDate: targetDate,
-      });
+      let placed = 0;
+      try {
+        for (const day of days) {
+          await apiRequestJson<PlanAssignment>("POST", "/api/assignments", {
+            jobId: job.id,
+            assignmentDate: day,
+          });
+          placed += 1;
+        }
+      } catch (error: any) {
+        toast({
+          title: "Fehler beim Einplanen",
+          description:
+            placed === 0
+              ? error?.message
+              : `Nach ${placed} von ${days.length} Tagen abgebrochen: ${error?.message ?? "Unbekannt"}.`,
+          variant: "destructive",
+        });
+      }
 
-      // Refresh from server to get correct block/employee data
       await refreshPlanningBoard();
-      toast({
-        title: "Auftrag eingeplant",
-        description: `${job.jobNumber} liegt am ${formatCompactDate(targetDate)}. Ziehe einen Mitarbeiter auf den Block um ihn zuzuweisen.`,
-      });
+      if (placed > 0) {
+        toast({
+          title: "Auftrag eingeplant",
+          description:
+            placed === 1
+              ? `${job.jobNumber} liegt am ${formatCompactDate(days[0])}. Ziehe einen Mitarbeiter auf den Block um ihn zuzuweisen.`
+              : `${job.jobNumber} läuft über ${placed} Tage (${formatCompactDate(days[0])}–${formatCompactDate(days[placed - 1])}). Ziehe einen Mitarbeiter auf den Block um ihn zuzuweisen.`,
+        });
+      }
     });
   }
 
