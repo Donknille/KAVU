@@ -68,6 +68,8 @@ export const employees = pgTable("employees", {
   passwordHash: text("password_hash"),
   mustChangePassword: boolean("must_change_password").notNull().default(false),
   passwordIssuedAt: timestamp("password_issued_at"),
+  failedLoginAttempts: integer("failed_login_attempts").notNull().default(0),
+  lockedUntil: timestamp("locked_until"),
   role: roleEnum("role").notNull().default("employee"),
   isActive: boolean("is_active").notNull().default(true),
   color: varchar("color", { length: 7 }),

@@ -61,6 +61,8 @@ export const PREVIEW_AUTH_USER: User = {
   emailVerifyExpires: null,
   passwordResetToken: null,
   passwordResetExpires: null,
+  failedLoginAttempts: 0,
+  lockedUntil: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };

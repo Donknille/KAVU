@@ -13,6 +13,7 @@ obvious in `ls`.
 | File | Purpose | Status |
 |---|---|---|
 | `2026-05-08-revoke-postgrest-public-access.sql` | T-100 — revoke anon/authenticated CRUD on public schema | not applied |
+| `2026-05-08-account-lockout-columns.sql` | T-107 — add failed_login_attempts + locked_until on users + employees | not applied |
 
 ## Verification scripts
 

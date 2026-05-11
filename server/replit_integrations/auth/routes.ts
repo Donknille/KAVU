@@ -7,6 +7,12 @@ import { invalidateLocalAuthIdentity } from "./replitAuth.js";
 import { hashPassword, verifyPassword } from "../../passwords.js";
 import { invalidateCompanyReadCaches } from "../../readCaches.js";
 import { sendVerificationEmail } from "../../emailVerification.js";
+import {
+  ensureMinResponseTime,
+  isLocked,
+  recordUserFailedLogin,
+  recordUserSuccessfulLogin,
+} from "./lockout.js";
 
 // Constant-time dummy hash to prevent username enumeration via timing attacks.
 // Called even when a user is not found, so response time stays consistent.
@@ -233,6 +239,7 @@ export function registerAuthRoutes(app: Express): void {
   });
 
   app.post("/api/auth/login/password", async (req: any, res) => {
+    const startMs = Date.now();
     try {
       const parsed = passwordLoginSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -243,15 +250,29 @@ export function registerAuthRoutes(app: Express): void {
       }
 
       const user = await authStorage.getUserByEmail(parsed.data.email);
+
+      // Unknown user OR no password: dummy-verify to hide which branch was taken.
       if (!user?.passwordHash || !user.email) {
-        verifyPassword(parsed.data.password, DUMMY_HASH); // constant-time: prevent username enumeration
+        verifyPassword(parsed.data.password, DUMMY_HASH);
+        await ensureMinResponseTime(startMs);
+        return res.status(401).json({ message: "E-Mail oder Passwort ist ungültig." });
+      }
+
+      // Locked account: also dummy-verify so a locked vs. unlocked account
+      // can't be distinguished by timing or response.
+      if (isLocked(user.lockedUntil)) {
+        verifyPassword(parsed.data.password, DUMMY_HASH);
+        await ensureMinResponseTime(startMs);
         return res.status(401).json({ message: "E-Mail oder Passwort ist ungültig." });
       }
 
       if (!verifyPassword(parsed.data.password, user.passwordHash)) {
+        await recordUserFailedLogin(user.id);
+        await ensureMinResponseTime(startMs);
         return res.status(401).json({ message: "E-Mail oder Passwort ist ungültig." });
       }
 
+      await recordUserSuccessfulLogin(user.id);
       await establishLocalSession(req, {
         userId: user.id,
         kind: "password",
@@ -260,6 +281,7 @@ export function registerAuthRoutes(app: Express): void {
       return res.json({ user: toPublicUser(user, "password") });
     } catch (error) {
       console.error("Error during password login:", error);
+      await ensureMinResponseTime(startMs);
       return res.status(500).json({ message: "Login fehlgeschlagen" });
     }
   });

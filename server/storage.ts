@@ -46,6 +46,11 @@ import {
 } from "./employeeAccess.js";
 import { authStorage } from "./replit_integrations/auth/storage.js";
 import { users } from "../shared/models/auth.js";
+import {
+  isLocked,
+  recordEmployeeFailedLogin,
+  recordEmployeeSuccessfulLogin,
+} from "./replit_integrations/auth/lockout.js";
 
 type CreateJobData = Omit<InsertJob, "jobNumber">;
 export type CreateCompanyWithAdminData = {
@@ -577,9 +582,16 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Employee access is inactive");
     }
 
+    if (isLocked(employee.lockedUntil)) {
+      throw new Error("Employee access is locked");
+    }
+
     if (!verifyEmployeePassword(data.password, employee.passwordHash)) {
+      await recordEmployeeFailedLogin(employee.id);
       throw new Error("Invalid password");
     }
+
+    await recordEmployeeSuccessfulLogin(employee.id);
 
     const existingUser = await authStorage.getUser(employee.userId);
     await authStorage.upsertUser({
