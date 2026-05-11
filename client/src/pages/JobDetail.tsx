@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
@@ -51,6 +51,58 @@ export default function JobDetail() {
 
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<Record<string, string>>({});
+  const [activeTab, setActiveTab] = useState<"details" | "times">("details");
+
+  const timeSummary = useMemo(() => {
+    if (!timeEntries || timeEntries.length === 0) return null;
+    type Bucket = {
+      employeeId: string;
+      employeeName: string;
+      entryCount: number;
+      totalMinutes: number;
+      breakMinutes: number;
+    };
+    const perEmployee = new Map<string, Bucket>();
+    let grandTotalMinutes = 0;
+    let grandBreakMinutes = 0;
+    for (const entry of timeEntries) {
+      const minutes = Number(entry.totalMinutes ?? 0);
+      const breaks = Array.isArray(entry.breaks) ? entry.breaks : [];
+      const breakSum = breaks.reduce(
+        (sum: number, b: any) => sum + Number(b.totalMinutes ?? 0),
+        0,
+      );
+      grandTotalMinutes += minutes;
+      grandBreakMinutes += breakSum;
+      const id = entry.employeeId ?? entry.employee?.id ?? "unknown";
+      const name = entry.employee
+        ? `${entry.employee.firstName ?? ""} ${entry.employee.lastName ?? ""}`.trim()
+        : "Unbekannt";
+      const existing = perEmployee.get(id);
+      if (existing) {
+        existing.entryCount += 1;
+        existing.totalMinutes += minutes;
+        existing.breakMinutes += breakSum;
+      } else {
+        perEmployee.set(id, {
+          employeeId: id,
+          employeeName: name || "Unbekannt",
+          entryCount: 1,
+          totalMinutes: minutes,
+          breakMinutes: breakSum,
+        });
+      }
+    }
+    return {
+      buckets: Array.from(perEmployee.values()).sort((a, b) =>
+        a.employeeName.localeCompare(b.employeeName),
+      ),
+      grandTotalMinutes,
+      grandBreakMinutes,
+      grandNetMinutes: Math.max(0, grandTotalMinutes - grandBreakMinutes),
+      totalEntries: timeEntries.length,
+    };
+  }, [timeEntries]);
 
   const { result: postalLookup } = usePostalCodeLookup(
     isEditing ? editForm.addressZip ?? "" : "",
@@ -233,7 +285,11 @@ export default function JobDetail() {
         </div>
       )}
 
-      <Tabs defaultValue="details" className="w-full">
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as "details" | "times")}
+        className="w-full"
+      >
         <TabsList className="w-full">
           <TabsTrigger value="details" className="flex-1" data-testid="tab-details">
             Details
@@ -379,7 +435,56 @@ export default function JobDetail() {
               <p className="text-sm text-muted-foreground">Noch keine Zeiten erfasst</p>
             </Card>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
+              {timeSummary && (
+                <Card className="p-4 space-y-3">
+                  <div className="flex items-center justify-between border-b pb-2">
+                    <span className="text-sm font-semibold">Gesamt</span>
+                    <span className="font-mono text-sm font-semibold">
+                      {formatDuration(timeSummary.grandNetMinutes)}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
+                    <div>
+                      <p>Einsätze</p>
+                      <p className="font-mono text-foreground">{timeSummary.totalEntries}</p>
+                    </div>
+                    <div>
+                      <p>Brutto</p>
+                      <p className="font-mono text-foreground">
+                        {formatDuration(timeSummary.grandTotalMinutes)}
+                      </p>
+                    </div>
+                    <div>
+                      <p>Pausen</p>
+                      <p className="font-mono text-foreground">
+                        {formatDuration(timeSummary.grandBreakMinutes)}
+                      </p>
+                    </div>
+                  </div>
+                  {timeSummary.buckets.length > 1 && (
+                    <div className="space-y-1.5 border-t pt-2 text-xs">
+                      <p className="font-medium text-muted-foreground">Pro Mitarbeiter</p>
+                      {timeSummary.buckets.map((bucket) => {
+                        const net = Math.max(0, bucket.totalMinutes - bucket.breakMinutes);
+                        return (
+                          <div
+                            key={bucket.employeeId}
+                            className="flex items-center justify-between"
+                            data-testid={`time-summary-${bucket.employeeId}`}
+                          >
+                            <span>
+                              {bucket.employeeName}{" "}
+                              <span className="text-muted-foreground">({bucket.entryCount})</span>
+                            </span>
+                            <span className="font-mono">{formatDuration(net)}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </Card>
+              )}
               {timeEntries.map((entry: any) => (
                 <Card key={entry.id} className="p-3">
                   <div className="flex items-center justify-between gap-2 mb-1">
