@@ -159,6 +159,10 @@ export default function JobDetail() {
 
   function startEditing() {
     if (!job) return;
+    const plannedHours =
+      typeof job.plannedDurationMinutes === "number" && job.plannedDurationMinutes > 0
+        ? String(job.plannedDurationMinutes / 60)
+        : "";
     setEditForm({
       title: job.title ?? "",
       customerName: job.customerName ?? "",
@@ -169,8 +173,17 @@ export default function JobDetail() {
       addressCity: job.addressCity ?? "",
       contactName: job.contactName ?? "",
       contactPhone: job.contactPhone ?? "",
+      plannedDurationHours: plannedHours,
     });
     setIsEditing(true);
+  }
+
+  function submitEdit() {
+    const { plannedDurationHours, ...rest } = editForm;
+    const hours = Number(plannedDurationHours);
+    const plannedDurationMinutes =
+      Number.isFinite(hours) && hours > 0 ? Math.round(hours * 60) : null;
+    updateMutation.mutate({ ...rest, plannedDurationMinutes });
   }
 
   if (isLoading) {
@@ -335,6 +348,17 @@ export default function JobDetail() {
                 </div>
               </div>
               <div>
+                <Label>Geplante Dauer (h)</Label>
+                <Input
+                  type="number"
+                  min={0.5}
+                  step={0.5}
+                  value={editForm.plannedDurationHours ?? ""}
+                  onChange={(e) => setEditForm({ ...editForm, plannedDurationHours: e.target.value })}
+                  placeholder="8"
+                />
+              </div>
+              <div>
                 <Label>Beschreibung</Label>
                 <Textarea value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} />
               </div>
@@ -343,7 +367,7 @@ export default function JobDetail() {
                 <Textarea value={editForm.internalNote} onChange={(e) => setEditForm({ ...editForm, internalNote: e.target.value })} />
               </div>
               <div className="flex gap-2">
-                <Button onClick={() => updateMutation.mutate(editForm)} disabled={updateMutation.isPending}>
+                <Button onClick={submitEdit} disabled={updateMutation.isPending}>
                   {updateMutation.isPending ? "Wird gespeichert..." : "Speichern"}
                 </Button>
                 <Button variant="outline" onClick={() => setIsEditing(false)}>Abbrechen</Button>
@@ -390,6 +414,12 @@ export default function JobDetail() {
                 <p className="text-sm brand-ink-soft">
                   {formatDate(job.startDate)}
                   {job.endDate && ` - ${formatDate(job.endDate)}`}
+                </p>
+              )}
+              {typeof job.plannedDurationMinutes === "number" && job.plannedDurationMinutes > 0 && (
+                <p className="text-sm brand-ink-soft">
+                  <Clock className="mr-1 inline h-3.5 w-3.5" />
+                  Geplante Dauer: {(job.plannedDurationMinutes / 60).toLocaleString("de-DE", { maximumFractionDigits: 1 })} h
                 </p>
               )}
             </Card>

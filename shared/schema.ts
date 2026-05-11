@@ -129,6 +129,7 @@ export const jobs = pgTable("jobs", {
   status: jobStatusEnum("status").notNull().default("planned"),
   startDate: date("start_date"),
   endDate: date("end_date"),
+  plannedDurationMinutes: integer("planned_duration_minutes"),
   isArchived: boolean("is_archived").notNull().default(false),
   createdBy: varchar("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),

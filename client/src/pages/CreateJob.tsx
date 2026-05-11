@@ -35,6 +35,7 @@ export default function CreateJob() {
     internalNote: "",
     category: "",
     startDate: "",
+    plannedDurationHours: "8",
   });
 
   const update = (field: string, value: string) => {
@@ -61,10 +62,18 @@ export default function CreateJob() {
     if (!form.title || !form.customerName) return;
     setIsLoading(true);
     try {
+      const plannedDurationHoursNum = Number(form.plannedDurationHours);
+      const plannedDurationMinutes =
+        Number.isFinite(plannedDurationHoursNum) && plannedDurationHoursNum > 0
+          ? Math.round(plannedDurationHoursNum * 60)
+          : undefined;
+      const { plannedDurationHours: _drop, ...formRest } = form;
+      void _drop;
       await apiRequest("POST", "/api/jobs", {
-        ...form,
+        ...formRest,
         category: form.category || undefined,
         startDate: form.startDate || undefined,
+        plannedDurationMinutes,
       });
       queryClient.invalidateQueries({ queryKey: [QK.JOBS] });
       queryClient.invalidateQueries({ queryKey: [QK.JOBS_UNASSIGNED] });
@@ -113,14 +122,28 @@ export default function CreateJob() {
               data-testid="input-job-title"
             />
           </div>
-          <div>
-            <Label>Geplanter Start</Label>
-            <Input
-              type="date"
-              value={form.startDate}
-              onChange={(e) => update("startDate", e.target.value)}
-              data-testid="input-start-date"
-            />
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label>Geplanter Start</Label>
+              <Input
+                type="date"
+                value={form.startDate}
+                onChange={(e) => update("startDate", e.target.value)}
+                data-testid="input-start-date"
+              />
+            </div>
+            <div>
+              <Label>Geplante Dauer (h)</Label>
+              <Input
+                type="number"
+                min={0.5}
+                step={0.5}
+                value={form.plannedDurationHours}
+                onChange={(e) => update("plannedDurationHours", e.target.value)}
+                placeholder="8"
+                data-testid="input-planned-duration"
+              />
+            </div>
           </div>
           <div>
             <Label>Kundenname *</Label>
