@@ -92,6 +92,9 @@ export const IS_PRODUCTION = process.env.NODE_ENV === "production";
 // Platform admin
 export const PLATFORM_ADMIN_SECRET = process.env.PLATFORM_ADMIN_SECRET?.trim() || undefined;
 
+// Cron jobs (Vercel Cron sends Authorization: Bearer <secret>)
+export const CRON_SECRET = process.env.CRON_SECRET?.trim() || undefined;
+
 
 export function getRuntimeConfigIssues(): RuntimeConfigIssue[] {
   if (PREVIEW_MODE) {

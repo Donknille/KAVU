@@ -13,5 +13,11 @@
       "src": "/(.*)",
       "dest": "/server.ts"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/cleanup-sessions",
+      "schedule": "0 3 * * *"
+    }
   ]
 }
