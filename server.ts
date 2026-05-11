@@ -1,3 +1,4 @@
+import "./server/instrument.js";
 import express from "express";
 import app from "./server/app.js";
 

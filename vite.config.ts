@@ -8,7 +8,15 @@ const buildOutDir =
     ? path.resolve(import.meta.dirname, "public")
     : path.resolve(import.meta.dirname, "dist", "public");
 
+const gitSha =
+  process.env.VERCEL_GIT_COMMIT_SHA ||
+  process.env.GITHUB_SHA ||
+  "dev";
+
 export default defineConfig({
+  define: {
+    "import.meta.env.VITE_GIT_SHA": JSON.stringify(gitSha),
+  },
   plugins: [
     react(),
     runtimeErrorOverlay(),

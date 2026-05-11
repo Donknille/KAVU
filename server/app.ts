@@ -2,6 +2,7 @@ import express, { type NextFunction, type Request, type Response } from "express
 import compression from "compression";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import * as Sentry from "@sentry/node";
 import { createServer } from "http";
 import { pingDatabase } from "./db.js";
 import { PREVIEW_MODE } from "./preview.js";
@@ -197,6 +198,10 @@ async function bootstrapApp() {
       } catch (error) {
         console.error("Seed error:", error);
       }
+
+      // Sentry must hook in before any user-defined error middleware that
+      // ends the response, otherwise the error never reaches Sentry.
+      Sentry.setupExpressErrorHandler(app);
 
       app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
         const status = err.status || err.statusCode || 500;
