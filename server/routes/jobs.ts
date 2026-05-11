@@ -45,7 +45,11 @@ export function registerJobRoutes(
       if (!qParsed.success) {
         return res.status(400).json({ message: "Suchbegriff ist zu lang." });
       }
-      const list = await storage.searchJobs(req.companyId, qParsed.data);
+      const limitParsed = z.coerce.number().int().min(1).max(50).safeParse(
+        req.query.limit ?? 20,
+      );
+      const limit = limitParsed.success ? limitParsed.data : 20;
+      const list = await storage.searchJobs(req.companyId, qParsed.data, limit);
       res.json(list);
     }),
   );

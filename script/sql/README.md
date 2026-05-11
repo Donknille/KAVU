@@ -16,6 +16,7 @@ obvious in `ls`.
 | `2026-05-08-account-lockout-columns.sql` | T-107 — add failed_login_attempts + locked_until on users + employees | not applied |
 | `2026-05-08-rls-tenant-context.sql` | T-103 — RLS helper functions + (commented) tenant policies | helper block only; ENABLE block must wait until full storage refactor |
 | `2026-05-08-jobs-planned-duration.sql` | T-202 — add planned_duration_minutes to jobs | not applied |
+| `2026-05-11-jobs-search-trgm.sql` | T-205 — pg_trgm extension + GIN search index (optional perf boost) | not applied |
 
 ## Verification scripts
 

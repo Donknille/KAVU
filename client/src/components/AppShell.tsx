@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
+import { useEffect, useState } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -22,9 +23,11 @@ import {
 
   KeyRound,
   LogOut,
+  Search,
   Sun,
   Users,
 } from "lucide-react";
+import { JobSearchPalette } from "@/components/JobSearchPalette";
 import { Link, useLocation } from "wouter";
 import { ConnectionStatusBadge } from "@/components/ConnectionStatusBadge";
 import { BrandMark } from "@/components/BrandMark";
@@ -70,6 +73,19 @@ function isItemActive(
 export function AppShell({ children, role, employee }: AppShellProps) {
   const [location] = useLocation();
   const items = role === "admin" ? adminItems : employeeItems;
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  useEffect(() => {
+    if (role !== "admin") return;
+    function onKeyDown(event: KeyboardEvent) {
+      const isShortcut = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k";
+      if (!isShortcut) return;
+      event.preventDefault();
+      setSearchOpen((current) => !current);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [role]);
   const previewToken = getPreviewEmployeeToken();
   const { isOnline, pendingCount, conflictCount } = useEmployeeOfflineQueue();
   const activeItem = items.find((item) => isItemActive(location, item.url, role)) ?? items[0];
@@ -213,6 +229,17 @@ export function AppShell({ children, role, employee }: AppShellProps) {
               </p>
               <p className="truncate text-sm font-semibold">{mobileTitle}</p>
             </div>
+            {role === "admin" && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSearchOpen(true)}
+                aria-label="Aufträge durchsuchen"
+                data-testid="button-search-open"
+              >
+                <Search className="h-4 w-4" />
+              </Button>
+            )}
             <ThemeToggle compact />
             {role === "employee" && <ConnectionStatusBadge isOnline={isOnline} compact />}
           </header>
@@ -259,6 +286,9 @@ export function AppShell({ children, role, employee }: AppShellProps) {
           )}
         </div>
       </div>
+      {role === "admin" && (
+        <JobSearchPalette open={searchOpen} onOpenChange={setSearchOpen} />
+      )}
     </SidebarProvider>
   );
 }

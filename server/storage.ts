@@ -25,7 +25,7 @@ import {
 import { db } from "./db.js";
 import { PREVIEW_MODE } from "./preview.js";
 import { PreviewStorage } from "./previewStorage.js";
-import { eq, and, gte, lte, or, like, desc, asc, isNull, sql, inArray } from "drizzle-orm";
+import { eq, and, gte, lte, or, like, ilike, desc, asc, isNull, sql, inArray } from "drizzle-orm";
 import { UserTenantConflictError } from "./tenantErrors.js";
 import {
   createInvitationToken,
@@ -177,7 +177,7 @@ export interface IStorage {
     id: string,
     data: Partial<InsertJob>,
   ): Promise<Job | undefined>;
-  searchJobs(companyId: string, query: string): Promise<Job[]>;
+  searchJobs(companyId: string, query: string, limit?: number): Promise<Job[]>;
   deleteJob(companyId: string, id: string): Promise<boolean>;
   getAssignmentsByJob(companyId: string, jobId: string): Promise<Assignment[]>;
 
@@ -945,8 +945,17 @@ export class DatabaseStorage implements IStorage {
     return job;
   }
 
-  async searchJobs(companyId: string, query: string): Promise<Job[]> {
-    const q = `%${query}%`;
+  async searchJobs(companyId: string, query: string, limit = 20): Promise<Job[]> {
+    const trimmed = query.trim();
+    if (trimmed.length === 0) {
+      return db
+        .select()
+        .from(jobs)
+        .where(eq(jobs.companyId, companyId))
+        .orderBy(desc(jobs.createdAt))
+        .limit(limit);
+    }
+    const q = `%${trimmed}%`;
     return db
       .select()
       .from(jobs)
@@ -954,15 +963,16 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(jobs.companyId, companyId),
           or(
-            like(jobs.customerName, q),
-            like(jobs.title, q),
-            like(jobs.addressCity, q),
-            like(jobs.addressStreet, q),
-            like(jobs.jobNumber, q)
-          )
-        )
+            ilike(jobs.customerName, q),
+            ilike(jobs.title, q),
+            ilike(jobs.addressCity, q),
+            ilike(jobs.addressStreet, q),
+            ilike(jobs.jobNumber, q),
+          ),
+        ),
       )
-      .orderBy(desc(jobs.createdAt));
+      .orderBy(desc(jobs.createdAt))
+      .limit(limit);
   }
 
   async deleteJob(companyId: string, id: string): Promise<boolean> {

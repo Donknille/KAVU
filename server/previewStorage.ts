@@ -1168,10 +1168,13 @@ export class PreviewStorage {
     return job;
   }
 
-  async searchJobs(companyId: string, query: string) {
+  async searchJobs(companyId: string, query: string, limit = 20) {
     const term = query.trim().toLowerCase();
-    if (!term) return this.getJobsByCompany(companyId, true);
-    return this.data.jobs.filter((job) => {
+    if (!term) {
+      const all = await this.getJobsByCompany(companyId, true);
+      return all.slice(0, limit);
+    }
+    const matches = this.data.jobs.filter((job) => {
       if (job.companyId !== companyId) return false;
       return [
         job.customerName,
@@ -1181,6 +1184,7 @@ export class PreviewStorage {
         job.jobNumber,
       ].some((value) => value?.toLowerCase().includes(term));
     });
+    return matches.slice(0, limit);
   }
 
   async deleteJob(companyId: string, id: string) {
