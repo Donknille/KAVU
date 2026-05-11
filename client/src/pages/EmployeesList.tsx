@@ -13,6 +13,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -31,6 +36,11 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, apiRequestJson, queryClient } from "@/lib/queryClient";
 import { QK } from "@/lib/queryKeys";
+import { EmployeeColorPicker } from "@/components/EmployeeColorPicker";
+import {
+  EMPLOYEE_COLOR_PALETTE,
+  pickDefaultEmployeeColor,
+} from "@/lib/employee-colors";
 import {
   FileDown,
   KeyRound,
@@ -89,6 +99,7 @@ const INITIAL_EMPLOYEE_FORM = {
   lastName: "",
   phone: "",
   role: "employee" as "admin" | "employee",
+  color: EMPLOYEE_COLOR_PALETTE[0] as string,
   createAccess: true,
   loginId: "",
   sendCredentialsToAdmin: false,
@@ -193,6 +204,22 @@ export default function EmployeesList() {
     },
   });
 
+  const colorMutation = useMutation({
+    mutationFn: async ({ id, color }: { id: string; color: string }) =>
+      apiRequest("PATCH", `/api/employees/${id}`, { color }),
+    onSuccess: async () => {
+      await invalidateEmployeeAdminQueries();
+      queryClient.invalidateQueries({ queryKey: [QK.PLANNING_BOARD] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Farbe konnte nicht gespeichert werden",
+        description: error instanceof Error ? error.message.replace(/^\d+:\s*/, "") : undefined,
+        variant: "destructive",
+      });
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) =>
       apiRequest("DELETE", `/api/employees/${id}`),
@@ -227,7 +254,13 @@ export default function EmployeesList() {
           </Button>
           <Button
             size="sm"
-            onClick={() => setShowCreate(true)}
+            onClick={() => {
+              const defaultColor = pickDefaultEmployeeColor(
+                employees?.map((employee) => employee.color) ?? [],
+              );
+              setForm({ ...INITIAL_EMPLOYEE_FORM, color: defaultColor });
+              setShowCreate(true);
+            }}
             data-testid="button-add-employee"
           >
             <Plus className="mr-1 h-4 w-4" />
@@ -278,13 +311,29 @@ export default function EmployeesList() {
             <Card key={emp.id} className="p-3" data-testid={`card-employee-${emp.id}`}>
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div className="flex items-start gap-3">
-                  <div
-                    className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white"
-                    style={{ backgroundColor: emp.color || "#6b7280" }}
-                  >
-                    {emp.firstName.charAt(0)}
-                    {emp.lastName.charAt(0)}
-                  </div>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white transition hover:ring-2 hover:ring-foreground/30 focus:outline-none focus:ring-2 focus:ring-foreground/40"
+                        style={{ backgroundColor: emp.color || "#6b7280" }}
+                        aria-label="Farbe ändern"
+                        data-testid={`button-employee-color-${emp.id}`}
+                      >
+                        {emp.firstName.charAt(0)}
+                        {emp.lastName.charAt(0)}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-3" align="start">
+                      <p className="mb-2 text-xs font-medium">Farbe im Plan</p>
+                      <EmployeeColorPicker
+                        value={emp.color}
+                        onChange={(color) => colorMutation.mutate({ id: emp.id, color })}
+                        disabled={colorMutation.isPending}
+                        size="sm"
+                      />
+                    </PopoverContent>
+                  </Popover>
                   <div>
                     <p className="text-sm font-medium">
                       {emp.firstName} {emp.lastName}
@@ -534,6 +583,14 @@ export default function EmployeesList() {
                   <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div>
+              <Label>Farbe im Plan</Label>
+              <EmployeeColorPicker
+                value={form.color}
+                onChange={(color) => setForm((current) => ({ ...current, color }))}
+                className="mt-2"
+              />
             </div>
 
             <div className="space-y-3 rounded-xl border bg-card/60 p-4">

@@ -19,6 +19,10 @@ const createEmployeeSchema = z.object({
   lastName: z.string().min(1).max(100),
   phone: z.string().max(50).optional(),
   role: z.enum(["admin", "employee"]).default("employee"),
+  color: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/, "Farbe muss als #RRGGBB angegeben werden.")
+    .optional(),
   createAccess: z.boolean().default(false),
   loginId: z.string().trim().max(80).optional(),
   sendCredentialsToAdmin: z.boolean().default(false),
@@ -100,6 +104,7 @@ export function registerEmployeeRoutes(
           lastName: parsed.data.lastName,
           phone: parsed.data.phone,
           role: parsed.data.role,
+          color: parsed.data.color,
           isActive: true,
           companyId: req.companyId,
         });
