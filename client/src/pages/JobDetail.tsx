@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/StatusBadge";
+import { JobStatusPicker } from "@/components/JobStatusPicker";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -29,8 +30,6 @@ import {
   Phone,
   FileText,
   Clock,
-  CheckCircle,
-  DollarSign,
   Navigation,
   Calendar,
 } from "lucide-react";
@@ -234,7 +233,11 @@ export default function JobDetail() {
           <p className="text-muted-foreground">{job.customerName}</p>
         </div>
         <div className="flex flex-col items-end gap-1.5">
-          <StatusBadge status={job.status} type="job" />
+          <JobStatusPicker
+            status={job.status}
+            disabled={updateMutation.isPending}
+            onChange={(next) => updateMutation.mutate({ status: next })}
+          />
           <Button
             variant="outline"
             size="sm"
@@ -268,35 +271,6 @@ export default function JobDetail() {
           )}
         </div>
       </div>
-
-      {(job.status === "completed" || job.status === "reviewed") && (
-        <div className="flex gap-2">
-          {job.status === "completed" && (
-            <Button
-              size="sm"
-              variant="secondary"
-              className="gap-1"
-              onClick={() => updateMutation.mutate({ status: "reviewed" })}
-              data-testid="button-mark-reviewed"
-            >
-              <CheckCircle className="w-4 h-4" />
-              Als geprüft markieren
-            </Button>
-          )}
-          {job.status === "reviewed" && (
-            <Button
-              size="sm"
-              variant="secondary"
-              className="gap-1"
-              onClick={() => updateMutation.mutate({ status: "billable" })}
-              data-testid="button-mark-billable"
-            >
-              <DollarSign className="w-4 h-4" />
-              Abrechenbar
-            </Button>
-          )}
-        </div>
-      )}
 
       <Tabs
         value={activeTab}

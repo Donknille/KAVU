@@ -7,6 +7,7 @@ import { invalidateCompanyReadCaches } from "../readCaches.js";
 import { requireNotFrozen } from "../billing.js";
 import { isAuthenticated } from "../replit_integrations/auth/index.js";
 import { insertJobSchema, assignments, assignmentWorkers, employees } from "../../shared/schema.js";
+import { canTransitionJobStatus, isJobStatus } from "../../shared/jobStatusMachine.js";
 import { db } from "../db.js";
 import { eq, and, inArray } from "drizzle-orm";
 
@@ -132,6 +133,19 @@ export function registerJobRoutes(
       if (!parsed.success) {
         return res.status(400).json({ message: "Validation error", errors: parsed.error.flatten().fieldErrors });
       }
+
+      if (parsed.data.status && parsed.data.status !== existing.status) {
+        if (
+          !isJobStatus(existing.status) ||
+          !isJobStatus(parsed.data.status) ||
+          !canTransitionJobStatus(existing.status, parsed.data.status)
+        ) {
+          return res.status(400).json({
+            message: `Statuswechsel von "${existing.status}" zu "${parsed.data.status}" ist nicht erlaubt.`,
+          });
+        }
+      }
+
       const job = await storage.updateJob(req.companyId, req.params.id, parsed.data);
       invalidateCompanyReadCaches(req.companyId);
       res.json(job);
