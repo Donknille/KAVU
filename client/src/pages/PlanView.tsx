@@ -2,6 +2,8 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DndContext, DragOverlay } from "@dnd-kit/core";
 import type { ImperativePanelHandle } from "react-resizable-panels";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { calcUtilization, utilizationDetailLabel, utilizationLabel } from "@/lib/utilization";
 import {
   ArrowLeft,
   ArrowRight,
@@ -188,6 +190,8 @@ export default function PlanView() {
           }),
           assignmentCount: summary.assignments,
           freeCount: Math.max(0, planning.activeEmployees.length - summary.workers),
+          busyCount: Math.min(summary.workers, planning.activeEmployees.length),
+          totalCount: planning.activeEmployees.length,
         };
       }),
     [
@@ -443,36 +447,76 @@ export default function PlanView() {
                   </PopoverContent>
                 </Popover>
               </div>
-              {dayHeaders.map((header) => (
-                <div
-                  key={header.day}
-                  className={cn(
-                    "planning-board-header min-w-0 px-1 py-1.5 brand-ink transition-colors text-center",
-                    header.isPreviewDay &&
-                      (header.previewTone === "valid" ? "planning-preview-valid" : "planning-preview-invalid"),
-                    header.isToday && "bg-[#173d66]/10 font-bold",
-                    header.isSaturday && "bg-muted/30",
-                    header.isMonday && "border-l-2 border-l-[#173d66]/20",
-                    planning.dragOverDate === header.day && "bg-[#68d5c8]/20 ring-1 ring-inset ring-[#68d5c8]",
-                  )}
-                >
-                  <p className="text-[8px] font-semibold uppercase tracking-[0.1em] brand-ink-muted">
-                    {header.weekdayLabel}
-                  </p>
-                  <p className={cn("font-semibold leading-none mt-0.5", isOverviewMode ? "text-[10px]" : "text-xs")}>
-                    {header.dateLabel}
-                  </p>
-                  {!isOverviewMode && (
-                    <p className="text-[8px] mt-0.5">
-                      <span className="brand-ink-muted">{header.assignmentCount}E</span>
-                      {" "}
-                      <span className={header.freeCount > 0 ? "text-red-400 font-semibold" : "brand-ink-muted"}>
-                        {header.freeCount}f
-                      </span>
-                    </p>
-                  )}
-                </div>
-              ))}
+              {dayHeaders.map((header) => {
+                const utilization = calcUtilization(header.totalCount, header.busyCount);
+                const barColor =
+                  utilization.level === "green"
+                    ? "bg-emerald-500"
+                    : utilization.level === "yellow"
+                      ? "bg-amber-500"
+                      : "bg-red-500";
+                const textColor =
+                  utilization.level === "green"
+                    ? "text-emerald-700"
+                    : utilization.level === "yellow"
+                      ? "text-amber-700"
+                      : "text-red-700";
+                return (
+                  <Tooltip key={header.day}>
+                    <TooltipTrigger asChild>
+                      <div
+                        className={cn(
+                          "planning-board-header min-w-0 px-1 py-1.5 brand-ink transition-colors text-center",
+                          header.isPreviewDay &&
+                            (header.previewTone === "valid"
+                              ? "planning-preview-valid"
+                              : "planning-preview-invalid"),
+                          header.isToday && "bg-[#173d66]/10 font-bold",
+                          header.isSaturday && "bg-muted/30",
+                          header.isMonday && "border-l-2 border-l-[#173d66]/20",
+                          planning.dragOverDate === header.day &&
+                            "bg-[#68d5c8]/20 ring-1 ring-inset ring-[#68d5c8]",
+                        )}
+                      >
+                        <p className="text-[8px] font-semibold uppercase tracking-[0.1em] brand-ink-muted">
+                          {header.weekdayLabel}
+                        </p>
+                        <p
+                          className={cn(
+                            "font-semibold leading-none mt-0.5",
+                            isOverviewMode ? "text-[10px]" : "text-xs",
+                          )}
+                        >
+                          {header.dateLabel}
+                        </p>
+                        {!isOverviewMode && utilization.total > 0 && (
+                          <>
+                            <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-muted">
+                              <div
+                                className={cn("h-full transition-all", barColor)}
+                                style={{ width: `${(utilization.busy / utilization.total) * 100}%` }}
+                              />
+                            </div>
+                            <p className={cn("text-[8px] mt-0.5 font-medium", textColor)}>
+                              {utilizationLabel(utilization)}
+                            </p>
+                          </>
+                        )}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs">
+                      <p className="font-medium">{header.weekdayLabel}, {header.dateLabel}</p>
+                      <p className="text-muted-foreground">{utilizationDetailLabel(utilization)}</p>
+                      {header.assignmentCount > 0 && (
+                        <p className="text-muted-foreground">
+                          {header.assignmentCount}{" "}
+                          {header.assignmentCount === 1 ? "Auftrag" : "Aufträge"}
+                        </p>
+                      )}
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              })}
             </div>
 
             {/* Employee rows + global DnD overlay */}
