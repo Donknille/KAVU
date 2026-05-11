@@ -51,6 +51,7 @@ import {
   recordEmployeeFailedLogin,
   recordEmployeeSuccessfulLogin,
 } from "./replit_integrations/auth/lockout.js";
+import { withTenantContext } from "./db/withTenantContext.js";
 
 type CreateJobData = Omit<InsertJob, "jobNumber">;
 export type CreateCompanyWithAdminData = {
@@ -885,15 +886,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getJobsByCompany(companyId: string, includeArchived = false): Promise<Job[]> {
-    const conditions = [eq(jobs.companyId, companyId)];
-    if (!includeArchived) {
-      conditions.push(eq(jobs.isArchived, false));
-    }
-    return db
-      .select()
-      .from(jobs)
-      .where(and(...conditions))
-      .orderBy(desc(jobs.createdAt));
+    // T-103 pilot: this method is the demo for the withTenantContext pattern.
+    // The redundant company_id WHERE clause stays in place until RLS is
+    // actually enabled (see script/sql/2026-05-08-rls-tenant-context.sql).
+    return withTenantContext({ companyId }, async (tx) => {
+      const conditions = [eq(jobs.companyId, companyId)];
+      if (!includeArchived) {
+        conditions.push(eq(jobs.isArchived, false));
+      }
+      return tx
+        .select()
+        .from(jobs)
+        .where(and(...conditions))
+        .orderBy(desc(jobs.createdAt));
+    });
   }
 
   async getUnassignedJobs(companyId: string): Promise<Job[]> {
