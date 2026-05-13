@@ -164,6 +164,32 @@ const getOidcConfig = memoize(
   { maxAge: 3600 * 1000 },
 );
 
+// Idle-timeout in milliseconds: an authenticated session that sees no API
+// activity for this long is destroyed on the next request. Floor: 1 minute,
+// ceiling: 7 days (matches the absolute session TTL).
+const IDLE_TIMEOUT_MS = (() => {
+  const fromEnv = parsePositiveInt(process.env.SESSION_IDLE_TIMEOUT_MS, 60 * 60 * 1000);
+  return Math.max(60 * 1000, Math.min(7 * 24 * 60 * 60 * 1000, fromEnv));
+})();
+
+export function enforceSessionIdleTimeout(
+  req: any,
+  _res: import("express").Response,
+  next: import("express").NextFunction,
+) {
+  const session = req.session;
+  if (!session) return next();
+  const hasAuthContext = Boolean(session.localAuth || session.passport?.user);
+  if (!hasAuthContext) return next();
+
+  const lastActivity = typeof session.lastActivity === "number" ? session.lastActivity : null;
+  if (lastActivity && Date.now() - lastActivity > IDLE_TIMEOUT_MS) {
+    return session.destroy(() => next());
+  }
+  session.lastActivity = Date.now();
+  return next();
+}
+
 export function getSession() {
   const sessionTtlMs = 7 * 24 * 60 * 60 * 1000;
   const sessionTtlSeconds = Math.floor(sessionTtlMs / 1000);
@@ -357,6 +383,7 @@ export async function setupAuth(app: Express) {
 
   app.set("trust proxy", TRUST_PROXY ? 1 : 0);
   app.use("/api", getSession());
+  app.use("/api", enforceSessionIdleTimeout);
 
   if (AUTH_PROVIDER === "local") {
     app.use("/api", async (req: any, _res, next) => {
