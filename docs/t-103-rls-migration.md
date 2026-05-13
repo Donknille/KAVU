@@ -1,14 +1,45 @@
 # T-103 — RLS migration
 
-## Pilot status (2026-05-08)
+## Status (2026-05-11)
+
+Wave 1 (D.1–D.5) of the storage refactor has shipped. Every method that
+routes can reach for jobs, assignments, time entries, break entries,
+employees, the company-self-update, and company invitations now opens a
+`withTenantContext` transaction with `app.current_company_id` set.
 
 | Building block | State |
 |---|---|
 | `withTenantContext(context, fn)` helper | ✅ in `server/db/withTenantContext.ts` |
-| `app.current_company_id()` / `app.current_user_id()` Postgres functions | ✅ SQL ready, **HELPER block applies safely**, ENABLE block is commented |
-| Demo migration of one storage method (`getJobsByCompany`) | ✅ wraps query in `withTenantContext` |
-| Remaining storage methods refactored | ❌ **~80 still need migration** |
-| RLS policies enabled in Supabase | ❌ deliberately not applied |
+| `app.current_company_id()` / `app.current_user_id()` Postgres functions | ✅ SQL ready, HELPER block applies safely, ENABLE block is commented |
+| jobs storage methods | ✅ (D.1, commit 65713ea) |
+| assignments + assignment_workers (reads + simple writes) | 🟡 (D.2, commit 1fc20a1) — enrichAssignments-dependent reads parked |
+| time_entries + break_entries | ✅ (D.3, commit 2ca2840) |
+| employees | ✅ (D.4, commit 12eca73) |
+| companies (self-update) + company_invitations | ✅ (D.5 in current commit) |
+| RLS policies enabled in Supabase | ❌ still gated behind the ENABLE block |
+
+## Methods deliberately left raw
+
+These call internal helpers (enrichAssignments, getNextAssignmentSortOrder)
+that themselves run queries against multiple tables. To keep them
+RLS-safe we have to thread the transaction handle into the helpers and
+their callees -- worth a focused follow-up PR rather than smuggling it
+into a refactor commit.
+
+- `getAssignmentsByDate(companyId, date)`
+- `getAssignmentsByDateRange(companyId, from, to)`
+- `getAssignmentsByEmployee(...)`
+- `createAssignment(...)` (calls getNextAssignmentSortOrder internally)
+- `enrichAssignments(...)` (private helper)
+- Naked getters with no companyId argument: `getJob(id)`, `getEmployee(id)`,
+  `getEmployeeByUserId(userId)`, `getAssignment(id)`, `getTimeEntry(id)`,
+  `getCompany(id)`, `getCompanyByAccessCode(code)`, `getCompanyByUserId(uid)`,
+  `getCompanyInvitationByToken(token)`. These run before a tenant context
+  exists (auth bootstrap, token lookup) and stay outside the wrapper.
+
+Until those land, **do not apply the ENABLE block**: the remaining
+methods would return zero rows once RLS forces tenant context on every
+query.
 
 ## Why RLS, given the audit already shows app-level isolation is clean?
 

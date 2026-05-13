@@ -364,12 +364,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateCompany(id: string, data: Partial<InsertCompany>): Promise<Company | undefined> {
-    const [company] = await db
-      .update(companies)
-      .set({ ...data, updatedAt: new Date() })
-      .where(eq(companies.id, id))
-      .returning();
-    return company;
+    return withTenantContext({ companyId: id }, async (tx) => {
+      const [company] = await tx
+        .update(companies)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(companies.id, id))
+        .returning();
+      return company;
+    });
   }
 
   async deleteCompanyWithAllData(id: string): Promise<boolean> {
@@ -661,16 +663,18 @@ export class DatabaseStorage implements IStorage {
     companyId: string,
     id: string,
   ): Promise<CompanyInvitation | undefined> {
-    const [invitation] = await db
-      .select()
-      .from(companyInvitations)
-      .where(
-        and(
-          eq(companyInvitations.id, id),
-          eq(companyInvitations.companyId, companyId),
-        ),
-      );
-    return invitation;
+    return withTenantContext({ companyId }, async (tx) => {
+      const [invitation] = await tx
+        .select()
+        .from(companyInvitations)
+        .where(
+          and(
+            eq(companyInvitations.id, id),
+            eq(companyInvitations.companyId, companyId),
+          ),
+        );
+      return invitation;
+    });
   }
 
   async getCompanyInvitationByToken(token: string): Promise<CompanyInvitation | undefined> {
@@ -690,11 +694,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCompanyInvitationsByCompany(companyId: string): Promise<CompanyInvitation[]> {
-    return db
-      .select()
-      .from(companyInvitations)
-      .where(eq(companyInvitations.companyId, companyId))
-      .orderBy(desc(companyInvitations.createdAt));
+    return withTenantContext({ companyId }, async (tx) =>
+      tx
+        .select()
+        .from(companyInvitations)
+        .where(eq(companyInvitations.companyId, companyId))
+        .orderBy(desc(companyInvitations.createdAt)),
+    );
   }
 
   async createCompanyInvitation(
@@ -867,20 +873,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   async revokeCompanyInvitation(companyId: string, id: string) {
-    const [invitation] = await db
-      .update(companyInvitations)
-      .set({
-        revokedAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(
-        and(
-          eq(companyInvitations.id, id),
-          eq(companyInvitations.companyId, companyId),
-        ),
-      )
-      .returning();
-    return invitation;
+    return withTenantContext({ companyId }, async (tx) => {
+      const [invitation] = await tx
+        .update(companyInvitations)
+        .set({
+          revokedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(companyInvitations.id, id),
+            eq(companyInvitations.companyId, companyId),
+          ),
+        )
+        .returning();
+      return invitation;
+    });
   }
 
   async getJob(id: string): Promise<Job | undefined> {
