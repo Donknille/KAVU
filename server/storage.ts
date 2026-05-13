@@ -878,11 +878,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getJobForCompany(companyId: string, id: string): Promise<Job | undefined> {
-    const [job] = await db
-      .select()
-      .from(jobs)
-      .where(and(eq(jobs.id, id), eq(jobs.companyId, companyId)));
-    return job;
+    return withTenantContext({ companyId }, async (tx) => {
+      const [job] = await tx
+        .select()
+        .from(jobs)
+        .where(and(eq(jobs.id, id), eq(jobs.companyId, companyId)));
+      return job;
+    });
   }
 
   async getJobsByCompany(companyId: string, includeArchived = false): Promise<Job[]> {
@@ -905,31 +907,35 @@ export class DatabaseStorage implements IStorage {
   async getUnassignedJobs(companyId: string): Promise<Job[]> {
     // Return all open (non-archived, planned) jobs — they stay in backlog
     // even after assignments exist, until status changes to completed/reviewed
-    return db
-      .select()
-      .from(jobs)
-      .where(
-        and(
-          eq(jobs.companyId, companyId),
-          eq(jobs.status, "planned"),
-          eq(jobs.isArchived, false),
+    return withTenantContext({ companyId }, async (tx) => {
+      return tx
+        .select()
+        .from(jobs)
+        .where(
+          and(
+            eq(jobs.companyId, companyId),
+            eq(jobs.status, "planned"),
+            eq(jobs.isArchived, false),
+          ),
         )
-      )
-      .orderBy(desc(jobs.createdAt));
+        .orderBy(desc(jobs.createdAt));
+    });
   }
 
   async createJob(data: CreateJobData): Promise<Job> {
-    const count = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(jobs)
-      .where(eq(jobs.companyId, data.companyId));
-    const num = Number(count[0].count) + 1;
-    const jobNumber = `A-${String(num).padStart(4, "0")}`;
-    const [job] = await db
-      .insert(jobs)
-      .values({ ...data, jobNumber })
-      .returning();
-    return job;
+    return withTenantContext({ companyId: data.companyId }, async (tx) => {
+      const count = await tx
+        .select({ count: sql<number>`count(*)` })
+        .from(jobs)
+        .where(eq(jobs.companyId, data.companyId));
+      const num = Number(count[0].count) + 1;
+      const jobNumber = `A-${String(num).padStart(4, "0")}`;
+      const [job] = await tx
+        .insert(jobs)
+        .values({ ...data, jobNumber })
+        .returning();
+      return job;
+    });
   }
 
   async updateJob(
@@ -937,49 +943,55 @@ export class DatabaseStorage implements IStorage {
     id: string,
     data: Partial<InsertJob>,
   ): Promise<Job | undefined> {
-    const [job] = await db
-      .update(jobs)
-      .set({ ...data, updatedAt: new Date() })
-      .where(and(eq(jobs.id, id), eq(jobs.companyId, companyId)))
-      .returning();
-    return job;
+    return withTenantContext({ companyId }, async (tx) => {
+      const [job] = await tx
+        .update(jobs)
+        .set({ ...data, updatedAt: new Date() })
+        .where(and(eq(jobs.id, id), eq(jobs.companyId, companyId)))
+        .returning();
+      return job;
+    });
   }
 
   async searchJobs(companyId: string, query: string, limit = 20): Promise<Job[]> {
     const trimmed = query.trim();
-    if (trimmed.length === 0) {
-      return db
+    return withTenantContext({ companyId }, async (tx) => {
+      if (trimmed.length === 0) {
+        return tx
+          .select()
+          .from(jobs)
+          .where(eq(jobs.companyId, companyId))
+          .orderBy(desc(jobs.createdAt))
+          .limit(limit);
+      }
+      const q = `%${trimmed}%`;
+      return tx
         .select()
         .from(jobs)
-        .where(eq(jobs.companyId, companyId))
+        .where(
+          and(
+            eq(jobs.companyId, companyId),
+            or(
+              ilike(jobs.customerName, q),
+              ilike(jobs.title, q),
+              ilike(jobs.addressCity, q),
+              ilike(jobs.addressStreet, q),
+              ilike(jobs.jobNumber, q),
+            ),
+          ),
+        )
         .orderBy(desc(jobs.createdAt))
         .limit(limit);
-    }
-    const q = `%${trimmed}%`;
-    return db
-      .select()
-      .from(jobs)
-      .where(
-        and(
-          eq(jobs.companyId, companyId),
-          or(
-            ilike(jobs.customerName, q),
-            ilike(jobs.title, q),
-            ilike(jobs.addressCity, q),
-            ilike(jobs.addressStreet, q),
-            ilike(jobs.jobNumber, q),
-          ),
-        ),
-      )
-      .orderBy(desc(jobs.createdAt))
-      .limit(limit);
+    });
   }
 
   async deleteJob(companyId: string, id: string): Promise<boolean> {
-    const result = await db
-      .delete(jobs)
-      .where(and(eq(jobs.companyId, companyId), eq(jobs.id, id)));
-    return (result.rowCount ?? 0) > 0;
+    return withTenantContext({ companyId }, async (tx) => {
+      const result = await tx
+        .delete(jobs)
+        .where(and(eq(jobs.companyId, companyId), eq(jobs.id, id)));
+      return (result.rowCount ?? 0) > 0;
+    });
   }
 
   async getAssignmentsByJob(companyId: string, jobId: string): Promise<Assignment[]> {
