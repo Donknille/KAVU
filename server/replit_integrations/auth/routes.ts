@@ -384,16 +384,16 @@ export function registerAuthRoutes(app: Express): void {
         return res.status(400).json({ message: "Ungueltiger Token oder Passwort zu kurz." });
       }
 
-      const user = await authStorage.getUserByResetToken(parsed.data.token);
+      // Atomic consume: single UPDATE that succeeds only if the token is
+      // still valid and unexpired. Closes the race window between lookup
+      // and clear that the prior two-step flow had.
+      const user = await authStorage.consumePasswordResetToken(
+        parsed.data.token,
+        hashPassword(parsed.data.password),
+      );
       if (!user) {
         return res.status(400).json({ message: "Ungueltiger oder abgelaufener Link." });
       }
-      if (user.passwordResetExpires && new Date(user.passwordResetExpires) < new Date()) {
-        return res.status(400).json({ message: "Der Link ist abgelaufen. Bitte fordern Sie einen neuen an." });
-      }
-
-      await authStorage.updateUserPassword(user.id, hashPassword(parsed.data.password));
-      await authStorage.clearPasswordResetToken(user.id);
 
       return res.json({ message: "Passwort erfolgreich geaendert. Sie koennen sich jetzt anmelden." });
     } catch (error) {

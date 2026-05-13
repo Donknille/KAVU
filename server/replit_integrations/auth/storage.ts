@@ -1,6 +1,6 @@
 import { users, type User, type UpsertUser } from "../../../shared/models/auth.js";
 import { db } from "../../db.js";
-import { eq } from "drizzle-orm";
+import { and, eq, gt } from "drizzle-orm";
 
 function normalizeUserEmail(value: string | null | undefined) {
   const normalized = value?.trim().toLowerCase();
@@ -30,6 +30,14 @@ export interface IAuthStorage {
   getUserByResetToken(token: string): Promise<User | undefined>;
   setPasswordResetToken(id: string, token: string, expires: Date): Promise<void>;
   clearPasswordResetToken(id: string): Promise<void>;
+  /**
+   * Atomically consume a password-reset token: swaps in the new password
+   * hash and clears the token, but only if the token is still valid and
+   * unexpired. Returns the updated user when successful, undefined when
+   * the token was already used, expired, or unknown. Prevents the race
+   * window between getUserByResetToken and clearPasswordResetToken.
+   */
+  consumePasswordResetToken(token: string, newPasswordHash: string): Promise<User | undefined>;
   deleteUser(id: string): Promise<boolean>;
 }
 
@@ -151,6 +159,30 @@ class AuthStorage implements IAuthStorage {
       passwordResetExpires: null,
       updatedAt: new Date(),
     }).where(eq(users.id, id));
+  }
+
+  async consumePasswordResetToken(
+    token: string,
+    newPasswordHash: string,
+  ): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({
+        passwordHash: newPasswordHash,
+        passwordResetToken: null,
+        passwordResetExpires: null,
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(users.passwordResetToken, token),
+          gt(users.passwordResetExpires, new Date()),
+        ),
+      )
+      .returning();
+    return updatedUser;
   }
 
   async deleteUser(id: string): Promise<boolean> {
