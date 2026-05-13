@@ -406,11 +406,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getEmployeeForCompany(companyId: string, id: string): Promise<Employee | undefined> {
-    const [employee] = await db
-      .select()
-      .from(employees)
-      .where(and(eq(employees.id, id), eq(employees.companyId, companyId)));
-    return employee;
+    return withTenantContext({ companyId }, async (tx) => {
+      const [employee] = await tx
+        .select()
+        .from(employees)
+        .where(and(eq(employees.id, id), eq(employees.companyId, companyId)));
+      return employee;
+    });
   }
 
   async getEmployeeByUserId(userId: string): Promise<Employee | undefined> {
@@ -426,40 +428,44 @@ export class DatabaseStorage implements IStorage {
     if (!normalizedLoginId) {
       return undefined;
     }
-
-    const [employee] = await db
-      .select()
-      .from(employees)
-      .where(
-        and(
-          eq(employees.companyId, companyId),
-          eq(employees.loginId, normalizedLoginId),
-        ),
-      );
-    return employee;
+    return withTenantContext({ companyId }, async (tx) => {
+      const [employee] = await tx
+        .select()
+        .from(employees)
+        .where(
+          and(
+            eq(employees.companyId, companyId),
+            eq(employees.loginId, normalizedLoginId),
+          ),
+        );
+      return employee;
+    });
   }
 
   async getEmployeesByCompany(companyId: string): Promise<Employee[]> {
-    return db
-      .select()
-      .from(employees)
-      .where(eq(employees.companyId, companyId))
-      .orderBy(asc(employees.firstName));
+    return withTenantContext({ companyId }, async (tx) =>
+      tx
+        .select()
+        .from(employees)
+        .where(eq(employees.companyId, companyId))
+        .orderBy(asc(employees.firstName)),
+    );
   }
 
   async createEmployee(data: InsertEmployee): Promise<Employee> {
     if (data.userId) {
       await this.ensureUserLinkAvailable(data.userId);
     }
-
-    const [employee] = await db
-      .insert(employees)
-      .values({
-        ...data,
-        loginId: data.loginId ? normalizeEmployeeLoginId(data.loginId) : null,
-      })
-      .returning();
-    return employee;
+    return withTenantContext({ companyId: data.companyId }, async (tx) => {
+      const [employee] = await tx
+        .insert(employees)
+        .values({
+          ...data,
+          loginId: data.loginId ? normalizeEmployeeLoginId(data.loginId) : null,
+        })
+        .returning();
+      return employee;
+    });
   }
 
   async updateEmployee(
@@ -470,30 +476,35 @@ export class DatabaseStorage implements IStorage {
     if (data.userId) {
       await this.ensureUserLinkAvailable(data.userId, id);
     }
-
-    const [employee] = await db
-      .update(employees)
-      .set({
-        ...data,
-        loginId: data.loginId === undefined
-          ? undefined
-          : data.loginId
-            ? normalizeEmployeeLoginId(data.loginId)
-            : null,
-        updatedAt: new Date(),
-      })
-      .where(and(eq(employees.id, id), eq(employees.companyId, companyId)))
-      .returning();
-    return employee;
+    return withTenantContext({ companyId }, async (tx) => {
+      const [employee] = await tx
+        .update(employees)
+        .set({
+          ...data,
+          loginId: data.loginId === undefined
+            ? undefined
+            : data.loginId
+              ? normalizeEmployeeLoginId(data.loginId)
+              : null,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(employees.id, id), eq(employees.companyId, companyId)))
+        .returning();
+      return employee;
+    });
   }
 
   async deleteEmployee(companyId: string, id: string): Promise<void> {
-    // Delete worker assignments first (FK constraint)
-    await db.delete(assignmentWorkers)
-      .where(and(eq(assignmentWorkers.companyId, companyId), eq(assignmentWorkers.employeeId, id)));
-    // Delete the employee
-    await db.delete(employees)
-      .where(and(eq(employees.id, id), eq(employees.companyId, companyId)));
+    await withTenantContext({ companyId }, async (tx) => {
+      // Delete worker assignments first (FK constraint)
+      await tx
+        .delete(assignmentWorkers)
+        .where(and(eq(assignmentWorkers.companyId, companyId), eq(assignmentWorkers.employeeId, id)));
+      // Delete the employee
+      await tx
+        .delete(employees)
+        .where(and(eq(employees.id, id), eq(employees.companyId, companyId)));
+    });
   }
 
   async provisionEmployeeAccess(data: ProvisionEmployeeAccessData) {
