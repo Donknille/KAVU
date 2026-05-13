@@ -234,6 +234,26 @@ export const breakEntries = pgTable("break_entries", {
 ]);
 
 
+export const recurringJobTemplates = pgTable("recurring_job_templates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  companyId: varchar("company_id")
+    .notNull()
+    .references(() => companies.id, { onDelete: "cascade" }),
+  customerId: varchar("customer_id"),
+  title: varchar("title", { length: 255 }).notNull(),
+  category: jobCategoryEnum("category"),
+  description: text("description"),
+  plannedDurationMinutes: integer("planned_duration_minutes").notNull().default(480),
+  recurrenceIntervalMonths: integer("recurrence_interval_months").notNull().default(12),
+  nextRunAt: date("next_run_at").notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_recurring_company").on(table.companyId),
+  index("idx_recurring_next_run").on(table.isActive, table.nextRunAt),
+]);
+
 export const auditEvents = pgTable("audit_events", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   occurredAt: timestamp("occurred_at").notNull().defaultNow(),

@@ -20,6 +20,7 @@ obvious in `ls`.
 | `2026-05-11-holidays-and-workhours.sql` | T-302 — holidays table + region_code on companies + weekly_hours/start_date/vacation_days_per_year on employees | not applied |
 | `2026-05-11-customers.sql` | T-303 — customers table + jobs.customer_id (nullable, transitional) | not applied |
 | `2026-05-11-audit-events.sql` | T-305 — append-only audit_events table + non-owner UPDATE/DELETE revoke | not applied |
+| `2026-05-11-recurring-jobs.sql` | T-304 — recurring_job_templates table | not applied |
 
 ## Verification scripts
 
