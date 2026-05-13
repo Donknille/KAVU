@@ -51,6 +51,7 @@ import { registerDataExportRoutes } from "./routes/dataExport.js";
 import { registerCustomerRoutes } from "./routes/customers.js";
 import { registerRecurringJobRoutes } from "./routes/recurringJobs.js";
 import { registerSkillRoutes } from "./routes/skills.js";
+import { registerVacationRoutes } from "./routes/vacations.js";
 
 const setupSchema = z.object({
   companyName: z.string().min(1).max(255),
@@ -455,6 +456,7 @@ export async function registerRoutes(
   registerCustomerRoutes(app, requireAdmin);
   registerRecurringJobRoutes(app, requireAdmin);
   registerSkillRoutes(app, requireAuth, requireAdmin);
+  registerVacationRoutes(app, requireAuth, requireAdmin);
 
   return httpServer;
 }

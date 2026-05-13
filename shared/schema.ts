@@ -20,6 +20,12 @@ import { z } from "zod";
 import { users } from "./models/auth.js";
 
 export const roleEnum = pgEnum("role", ["admin", "employee"]);
+export const vacationStatusEnum = pgEnum("vacation_status", [
+  "pending",
+  "approved",
+  "rejected",
+  "canceled",
+]);
 export const jobStatusEnum = pgEnum("job_status", [
   "planned",
   "in_progress",
@@ -233,6 +239,27 @@ export const breakEntries = pgTable("break_entries", {
   index("idx_break_entries_time_entry_id").on(table.timeEntryId),
 ]);
 
+
+export const vacations = pgTable("vacations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  companyId: varchar("company_id")
+    .notNull()
+    .references(() => companies.id, { onDelete: "cascade" }),
+  employeeId: varchar("employee_id")
+    .notNull()
+    .references(() => employees.id, { onDelete: "cascade" }),
+  startDate: date("start_date").notNull(),
+  endDate: date("end_date").notNull(),
+  status: vacationStatusEnum("status").notNull().default("pending"),
+  reason: text("reason"),
+  approvedBy: varchar("approved_by"),
+  approvedAt: timestamp("approved_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_vacations_employee_date").on(table.employeeId, table.startDate, table.endDate),
+  index("idx_vacations_company_date").on(table.companyId, table.startDate, table.endDate),
+]);
 
 export const skills = pgTable("skills", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
