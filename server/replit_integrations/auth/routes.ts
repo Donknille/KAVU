@@ -13,6 +13,7 @@ import {
   recordUserFailedLogin,
   recordUserSuccessfulLogin,
 } from "./lockout.js";
+import { logAuditEvent } from "../../audit.js";
 
 // Constant-time dummy hash to prevent username enumeration via timing attacks.
 // Called even when a user is not found, so response time stays consistent.
@@ -268,6 +269,13 @@ export function registerAuthRoutes(app: Express): void {
 
       if (!verifyPassword(parsed.data.password, user.passwordHash)) {
         await recordUserFailedLogin(user.id);
+        logAuditEvent({
+          actorUserId: user.id,
+          eventType: "auth.login.failed",
+          resourceType: "user",
+          resourceId: user.id,
+          request: req,
+        });
         await ensureMinResponseTime(startMs);
         return res.status(401).json({ message: "E-Mail oder Passwort ist ungültig." });
       }
@@ -276,6 +284,14 @@ export function registerAuthRoutes(app: Express): void {
       await establishLocalSession(req, {
         userId: user.id,
         kind: "password",
+      });
+      logAuditEvent({
+        actorUserId: user.id,
+        eventType: "auth.login.success",
+        resourceType: "user",
+        resourceId: user.id,
+        payload: { method: "password" },
+        request: req,
       });
 
       return res.json({ user: toPublicUser(user, "password") });

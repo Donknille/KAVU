@@ -234,6 +234,23 @@ export const breakEntries = pgTable("break_entries", {
 ]);
 
 
+export const auditEvents = pgTable("audit_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  occurredAt: timestamp("occurred_at").notNull().defaultNow(),
+  companyId: varchar("company_id"),
+  actorUserId: varchar("actor_user_id"),
+  actorEmployeeId: varchar("actor_employee_id"),
+  actorIp: varchar("actor_ip", { length: 64 }),
+  eventType: varchar("event_type", { length: 80 }).notNull(),
+  resourceType: varchar("resource_type", { length: 40 }),
+  resourceId: varchar("resource_id"),
+  payload: text("payload"),
+  userAgent: text("user_agent"),
+}, (table) => [
+  index("idx_audit_company_time").on(table.companyId, table.occurredAt),
+  index("idx_audit_event_type").on(table.eventType, table.occurredAt),
+]);
+
 export const customers = pgTable("customers", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   companyId: varchar("company_id")
