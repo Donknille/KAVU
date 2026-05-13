@@ -1298,17 +1298,19 @@ export class DatabaseStorage implements IStorage {
     assignmentId: string,
     employeeId: string
   ): Promise<TimeEntry | undefined> {
-    const [entry] = await db
-      .select()
-      .from(timeEntries)
-      .where(
-        and(
-          eq(timeEntries.companyId, companyId),
-          eq(timeEntries.assignmentId, assignmentId),
-          eq(timeEntries.employeeId, employeeId)
-        )
-      );
-    return entry;
+    return withTenantContext({ companyId }, async (tx) => {
+      const [entry] = await tx
+        .select()
+        .from(timeEntries)
+        .where(
+          and(
+            eq(timeEntries.companyId, companyId),
+            eq(timeEntries.assignmentId, assignmentId),
+            eq(timeEntries.employeeId, employeeId),
+          ),
+        );
+      return entry;
+    });
   }
 
   async createTimeEntry(data: InsertTimeEntry): Promise<TimeEntry> {
@@ -1320,8 +1322,10 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Cross-tenant time entry blocked");
     }
 
-    const [entry] = await db.insert(timeEntries).values(data).returning();
-    return entry;
+    return withTenantContext({ companyId: data.companyId }, async (tx) => {
+      const [entry] = await tx.insert(timeEntries).values(data).returning();
+      return entry;
+    });
   }
 
   async updateTimeEntry(
@@ -1329,72 +1333,82 @@ export class DatabaseStorage implements IStorage {
     id: string,
     data: Partial<TimeEntry>
   ): Promise<TimeEntry | undefined> {
-    const [entry] = await db
-      .update(timeEntries)
-      .set({ ...data, updatedAt: new Date() })
-      .where(and(eq(timeEntries.id, id), eq(timeEntries.companyId, companyId)))
-      .returning();
-    return entry;
+    return withTenantContext({ companyId }, async (tx) => {
+      const [entry] = await tx
+        .update(timeEntries)
+        .set({ ...data, updatedAt: new Date() })
+        .where(and(eq(timeEntries.id, id), eq(timeEntries.companyId, companyId)))
+        .returning();
+      return entry;
+    });
   }
 
   async getTimeEntriesByJob(companyId: string, jobId: string): Promise<TimeEntry[]> {
-    return db
-      .select()
-      .from(timeEntries)
-      .where(and(eq(timeEntries.companyId, companyId), eq(timeEntries.jobId, jobId)))
-      .orderBy(asc(timeEntries.startedAt));
+    return withTenantContext({ companyId }, async (tx) =>
+      tx
+        .select()
+        .from(timeEntries)
+        .where(and(eq(timeEntries.companyId, companyId), eq(timeEntries.jobId, jobId)))
+        .orderBy(asc(timeEntries.startedAt)),
+    );
   }
 
   async createBreakEntry(companyId: string, timeEntryId: string): Promise<BreakEntry> {
-    const [timeEntry] = await db
-      .select()
-      .from(timeEntries)
-      .where(and(eq(timeEntries.id, timeEntryId), eq(timeEntries.companyId, companyId)));
+    return withTenantContext({ companyId }, async (tx) => {
+      const [timeEntry] = await tx
+        .select()
+        .from(timeEntries)
+        .where(and(eq(timeEntries.id, timeEntryId), eq(timeEntries.companyId, companyId)));
 
-    if (!timeEntry) {
-      throw new Error("Cross-tenant break entry blocked");
-    }
+      if (!timeEntry) {
+        throw new Error("Cross-tenant break entry blocked");
+      }
 
-    const [entry] = await db
-      .insert(breakEntries)
-      .values({ companyId, timeEntryId, breakStart: new Date() })
-      .returning();
-    return entry;
+      const [entry] = await tx
+        .insert(breakEntries)
+        .values({ companyId, timeEntryId, breakStart: new Date() })
+        .returning();
+      return entry;
+    });
   }
 
   async endBreakEntry(companyId: string, timeEntryId: string): Promise<BreakEntry | undefined> {
-    const openBreaks = await db
-      .select()
-      .from(breakEntries)
-      .where(
-        and(
-          eq(breakEntries.companyId, companyId),
-          eq(breakEntries.timeEntryId, timeEntryId),
-          isNull(breakEntries.breakEnd)
-        )
+    return withTenantContext({ companyId }, async (tx) => {
+      const openBreaks = await tx
+        .select()
+        .from(breakEntries)
+        .where(
+          and(
+            eq(breakEntries.companyId, companyId),
+            eq(breakEntries.timeEntryId, timeEntryId),
+            isNull(breakEntries.breakEnd),
+          ),
+        );
+      if (openBreaks.length === 0) return undefined;
+      const breakEntry = openBreaks[0];
+      const now = new Date();
+      const duration = Math.round(
+        (now.getTime() - breakEntry.breakStart.getTime()) / 60000,
       );
-    if (openBreaks.length === 0) return undefined;
-    const breakEntry = openBreaks[0];
-    const now = new Date();
-    const duration = Math.round(
-      (now.getTime() - breakEntry.breakStart.getTime()) / 60000
-    );
-    const [updated] = await db
-      .update(breakEntries)
-      .set({ breakEnd: now, durationMinutes: duration })
-      .where(eq(breakEntries.id, breakEntry.id))
-      .returning();
-    return updated;
+      const [updated] = await tx
+        .update(breakEntries)
+        .set({ breakEnd: now, durationMinutes: duration })
+        .where(eq(breakEntries.id, breakEntry.id))
+        .returning();
+      return updated;
+    });
   }
 
   async getBreakEntriesByTimeEntry(companyId: string, timeEntryId: string): Promise<BreakEntry[]> {
-    return db
-      .select()
-      .from(breakEntries)
-      .where(
-        and(eq(breakEntries.companyId, companyId), eq(breakEntries.timeEntryId, timeEntryId))
-      )
-      .orderBy(asc(breakEntries.breakStart));
+    return withTenantContext({ companyId }, async (tx) =>
+      tx
+        .select()
+        .from(breakEntries)
+        .where(
+          and(eq(breakEntries.companyId, companyId), eq(breakEntries.timeEntryId, timeEntryId)),
+        )
+        .orderBy(asc(breakEntries.breakStart)),
+    );
   }
 
   async getDashboardStats(companyId: string): Promise<any> {
