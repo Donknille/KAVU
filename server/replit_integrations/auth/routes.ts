@@ -409,9 +409,11 @@ export function registerAuthRoutes(app: Express): void {
   });
 
   app.post("/api/auth/employee-login", async (req: any, res) => {
+    const startMs = Date.now();
     try {
       const parsed = employeeLoginSchema.safeParse(req.body);
       if (!parsed.success) {
+        await ensureMinResponseTime(startMs);
         return res.status(400).json({
           message: "Validation error",
           errors: parsed.error.flatten().fieldErrors,
@@ -424,6 +426,7 @@ export function registerAuthRoutes(app: Express): void {
         kind: "employee_access",
       });
 
+      await ensureMinResponseTime(startMs);
       return res.json({
         employee: toPublicEmployee(result.employee),
         company: toPublicCompany(result.company),
@@ -436,13 +439,19 @@ export function registerAuthRoutes(app: Express): void {
           message === "Company access not found" ||
           message === "Employee access not found" ||
           message === "Invalid password" ||
-          message === "Employee access is inactive"
+          message === "Employee access is inactive" ||
+          message === "Employee access is locked"
         ) {
+          // Equalize timing across early-exit (company/employee not found)
+          // and late-exit (bcrypt verify) branches so an attacker can't tell
+          // which one rejected the request.
+          await ensureMinResponseTime(startMs);
           return res.status(401).json({ message: "Betriebscode, Benutzername oder Passwort ist ungültig." });
         }
       }
 
       console.error("Error during employee login:", error);
+      await ensureMinResponseTime(startMs);
       return res.status(500).json({ message: "Login fehlgeschlagen" });
     }
   });
