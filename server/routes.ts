@@ -47,6 +47,7 @@ import { registerBillingRoutes } from "./routes/billing.js";
 import { registerPlatformAdminRoutes } from "./routes/platformAdmin.js";
 import { registerPostalCodeRoutes } from "./routes/postalCode.js";
 import { registerCronRoutes } from "./routes/cron.js";
+import { registerDataExportRoutes } from "./routes/dataExport.js";
 
 const setupSchema = z.object({
   companyName: z.string().min(1).max(255),
@@ -447,6 +448,7 @@ export async function registerRoutes(
   registerPlatformAdminRoutes(app);
   registerPostalCodeRoutes(app, requireAuth);
   registerCronRoutes(app);
+  registerDataExportRoutes(app, requireAuth, requireAdmin);
 
   return httpServer;
 }
