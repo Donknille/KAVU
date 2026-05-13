@@ -995,10 +995,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAssignmentsByJob(companyId: string, jobId: string): Promise<Assignment[]> {
-    return db
-      .select()
-      .from(assignments)
-      .where(and(eq(assignments.companyId, companyId), eq(assignments.jobId, jobId)));
+    return withTenantContext({ companyId }, async (tx) =>
+      tx
+        .select()
+        .from(assignments)
+        .where(and(eq(assignments.companyId, companyId), eq(assignments.jobId, jobId))),
+    );
   }
 
   async getAssignment(id: string): Promise<Assignment | undefined> {
@@ -1010,21 +1012,25 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAssignmentForCompany(companyId: string, id: string): Promise<Assignment | undefined> {
-    const [assignment] = await db
-      .select()
-      .from(assignments)
-      .where(and(eq(assignments.id, id), eq(assignments.companyId, companyId)));
-    return assignment;
+    return withTenantContext({ companyId }, async (tx) => {
+      const [assignment] = await tx
+        .select()
+        .from(assignments)
+        .where(and(eq(assignments.id, id), eq(assignments.companyId, companyId)));
+      return assignment;
+    });
   }
 
   async getAssignmentsForCompanyByIds(companyId: string, ids: string[]): Promise<(Assignment | undefined)[]> {
     if (ids.length === 0) return [];
-    const rows = await db
-      .select()
-      .from(assignments)
-      .where(and(eq(assignments.companyId, companyId), inArray(assignments.id, ids)));
-    const byId = new Map(rows.map((r) => [r.id, r]));
-    return ids.map((id) => byId.get(id));
+    return withTenantContext({ companyId }, async (tx) => {
+      const rows = await tx
+        .select()
+        .from(assignments)
+        .where(and(eq(assignments.companyId, companyId), inArray(assignments.id, ids)));
+      const byId = new Map(rows.map((r) => [r.id, r]));
+      return ids.map((id) => byId.get(id));
+    });
   }
 
   async getAssignmentsByDate(companyId: string, date: string): Promise<any[]> {
@@ -1203,28 +1209,32 @@ export class DatabaseStorage implements IStorage {
     id: string,
     data: Partial<InsertAssignment>
   ): Promise<Assignment | undefined> {
-    const [assignment] = await db
-      .update(assignments)
-      .set({ ...data, updatedAt: new Date() })
-      .where(and(eq(assignments.id, id), eq(assignments.companyId, companyId)))
-      .returning();
-    return assignment;
+    return withTenantContext({ companyId }, async (tx) => {
+      const [assignment] = await tx
+        .update(assignments)
+        .set({ ...data, updatedAt: new Date() })
+        .where(and(eq(assignments.id, id), eq(assignments.companyId, companyId)))
+        .returning();
+      return assignment;
+    });
   }
 
   async deleteAssignment(companyId: string, id: string): Promise<boolean> {
-    await db
-      .delete(assignmentWorkers)
-      .where(
-        and(
-          eq(assignmentWorkers.assignmentId, id),
-          eq(assignmentWorkers.companyId, companyId),
-        ),
-      );
-    const [deleted] = await db
-      .delete(assignments)
-      .where(and(eq(assignments.id, id), eq(assignments.companyId, companyId)))
-      .returning();
-    return !!deleted;
+    return withTenantContext({ companyId }, async (tx) => {
+      await tx
+        .delete(assignmentWorkers)
+        .where(
+          and(
+            eq(assignmentWorkers.assignmentId, id),
+            eq(assignmentWorkers.companyId, companyId),
+          ),
+        );
+      const [deleted] = await tx
+        .delete(assignments)
+        .where(and(eq(assignments.id, id), eq(assignments.companyId, companyId)))
+        .returning();
+      return !!deleted;
+    });
   }
 
   async addWorkerToAssignment(data: InsertAssignmentWorker): Promise<void> {
@@ -1237,7 +1247,9 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Cross-tenant worker assignment blocked");
     }
 
-    await db.insert(assignmentWorkers).values(data).onConflictDoNothing();
+    await withTenantContext({ companyId: data.companyId }, async (tx) => {
+      await tx.insert(assignmentWorkers).values(data).onConflictDoNothing();
+    });
   }
 
   async removeWorkerFromAssignment(
@@ -1245,15 +1257,17 @@ export class DatabaseStorage implements IStorage {
     assignmentId: string,
     employeeId: string
   ): Promise<void> {
-    await db
-      .delete(assignmentWorkers)
-      .where(
-        and(
-          eq(assignmentWorkers.companyId, companyId),
-          eq(assignmentWorkers.assignmentId, assignmentId),
-          eq(assignmentWorkers.employeeId, employeeId)
-        )
-      );
+    await withTenantContext({ companyId }, async (tx) => {
+      await tx
+        .delete(assignmentWorkers)
+        .where(
+          and(
+            eq(assignmentWorkers.companyId, companyId),
+            eq(assignmentWorkers.assignmentId, assignmentId),
+            eq(assignmentWorkers.employeeId, employeeId),
+          ),
+        );
+    });
   }
 
   async getWorkersForAssignment(companyId: string, assignmentId: string): Promise<Employee[]> {
