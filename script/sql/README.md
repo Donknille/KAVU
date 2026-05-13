@@ -23,6 +23,7 @@ obvious in `ls`.
 | `2026-05-11-recurring-jobs.sql` | T-304 — recurring_job_templates table | not applied |
 | `2026-05-11-skills.sql` | T-300 — skills + employee_skills + job_required_skills | not applied |
 | `2026-05-11-vacations.sql` | T-301 — vacations table + btree_gist overlap constraint | not applied |
+| `2026-05-11-job-categories.sql` | T-308 stage 1 — job_categories table + jobs.category_id parallel to legacy enum | not applied |
 
 ## Verification scripts
 

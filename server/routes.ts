@@ -53,6 +53,7 @@ import { registerRecurringJobRoutes } from "./routes/recurringJobs.js";
 import { registerSkillRoutes } from "./routes/skills.js";
 import { registerVacationRoutes } from "./routes/vacations.js";
 import { registerUtilizationRoutes } from "./routes/utilization.js";
+import { registerJobCategoryRoutes } from "./routes/jobCategories.js";
 
 const setupSchema = z.object({
   companyName: z.string().min(1).max(255),
@@ -459,6 +460,7 @@ export async function registerRoutes(
   registerSkillRoutes(app, requireAuth, requireAdmin);
   registerVacationRoutes(app, requireAuth, requireAdmin);
   registerUtilizationRoutes(app, requireAdmin);
+  registerJobCategoryRoutes(app, requireAuth, requireAdmin);
 
   return httpServer;
 }

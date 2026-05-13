@@ -142,6 +142,7 @@ export const jobs = pgTable("jobs", {
   endDate: date("end_date"),
   plannedDurationMinutes: integer("planned_duration_minutes"),
   customerId: varchar("customer_id").references(() => customers.id),
+  categoryId: varchar("category_id"),
   isArchived: boolean("is_archived").notNull().default(false),
   createdBy: varchar("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
@@ -259,6 +260,23 @@ export const vacations = pgTable("vacations", {
 }, (table) => [
   index("idx_vacations_employee_date").on(table.employeeId, table.startDate, table.endDate),
   index("idx_vacations_company_date").on(table.companyId, table.startDate, table.endDate),
+]);
+
+export const jobCategories = pgTable("job_categories", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  companyId: varchar("company_id")
+    .notNull()
+    .references(() => companies.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 100 }).notNull(),
+  color: varchar("color", { length: 7 }),
+  sortOrder: integer("sort_order").notNull().default(0),
+  isActive: boolean("is_active").notNull().default(true),
+  legacyEnumValue: jobCategoryEnum("legacy_enum_value"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  uniqueIndex("uq_job_categories_company_name").on(table.companyId, table.name),
+  index("idx_job_categories_company").on(table.companyId, table.isActive),
 ]);
 
 export const skills = pgTable("skills", {
