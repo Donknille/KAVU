@@ -234,6 +234,51 @@ export const breakEntries = pgTable("break_entries", {
 ]);
 
 
+export const skills = pgTable("skills", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  companyId: varchar("company_id")
+    .notNull()
+    .references(() => companies.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 100 }).notNull(),
+  color: varchar("color", { length: 7 }),
+  sortOrder: integer("sort_order").notNull().default(0),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_skills_company").on(table.companyId, table.isActive),
+  uniqueIndex("uq_skills_company_name").on(table.companyId, table.name),
+]);
+
+export const employeeSkills = pgTable("employee_skills", {
+  employeeId: varchar("employee_id")
+    .notNull()
+    .references(() => employees.id, { onDelete: "cascade" }),
+  skillId: varchar("skill_id")
+    .notNull()
+    .references(() => skills.id, { onDelete: "cascade" }),
+  companyId: varchar("company_id")
+    .notNull()
+    .references(() => companies.id, { onDelete: "cascade" }),
+  level: integer("level").notNull().default(1),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  uniqueIndex("uq_employee_skills").on(table.employeeId, table.skillId),
+  index("idx_employee_skills_skill").on(table.skillId),
+]);
+
+export const jobRequiredSkills = pgTable("job_required_skills", {
+  jobId: varchar("job_id")
+    .notNull()
+    .references(() => jobs.id, { onDelete: "cascade" }),
+  skillId: varchar("skill_id")
+    .notNull()
+    .references(() => skills.id, { onDelete: "cascade" }),
+}, (table) => [
+  uniqueIndex("uq_job_required_skills").on(table.jobId, table.skillId),
+  index("idx_job_required_skills_skill").on(table.skillId),
+]);
+
 export const recurringJobTemplates = pgTable("recurring_job_templates", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   companyId: varchar("company_id")
