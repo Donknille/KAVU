@@ -204,6 +204,21 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Validation error", errors: parsed.error.flatten().fieldErrors });
       }
 
+      // H4: password admins must verify their email before they can spin up
+      // a company. OIDC users come in pre-verified by their identity provider,
+      // so we skip the gate for them.
+      const authMethod = req.user?.auth_method ?? "oidc";
+      if (authMethod === "password") {
+        const passwordUser = await authStorage.getUser(userId);
+        if (!passwordUser?.emailVerified) {
+          return res.status(403).json({
+            message:
+              "Bitte bestaetige zuerst deine E-Mail-Adresse. Pruefe den Bestaetigungslink in deinem Postfach oder fordere einen neuen an.",
+            code: "email_not_verified",
+          });
+        }
+      }
+
       const { companyName, firstName, lastName, phone } = parsed.data;
 
       const { company, employee } = await storage.createCompanyWithAdmin({
@@ -338,6 +353,20 @@ export async function registerRoutes(
           message: "Validation error",
           errors: parsed.error.flatten().fieldErrors,
         });
+      }
+
+      // H4: a password admin must have verified their email before they can
+      // invite other people. OIDC admins arrive pre-verified.
+      const authMethod = req.user?.auth_method ?? "oidc";
+      if (authMethod === "password" && req.employee.userId) {
+        const inviter = await authStorage.getUser(req.employee.userId);
+        if (!inviter?.emailVerified) {
+          return res.status(403).json({
+            message:
+              "Bitte bestaetige zuerst deine E-Mail-Adresse, bevor du andere einlaedst.",
+            code: "email_not_verified",
+          });
+        }
       }
 
       const { invitation, token } = await storage.createCompanyInvitation({
