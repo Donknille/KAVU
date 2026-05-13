@@ -7,6 +7,7 @@ import {
   text,
   boolean,
   integer,
+  numeric,
   timestamp,
   date,
   time,
@@ -49,6 +50,7 @@ export const companies = pgTable("companies", {
   accessCode: varchar("access_code", { length: 16 }),
   logoUrl: varchar("logo_url"),
   phone: varchar("phone", { length: 50 }),
+  regionCode: varchar("region_code", { length: 5 }).notNull().default("DE-BY"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
@@ -73,6 +75,9 @@ export const employees = pgTable("employees", {
   role: roleEnum("role").notNull().default("employee"),
   isActive: boolean("is_active").notNull().default(true),
   color: varchar("color", { length: 7 }),
+  weeklyHours: numeric("weekly_hours", { precision: 4, scale: 2 }).notNull().default("40.00"),
+  startDate: date("start_date"),
+  vacationDaysPerYear: integer("vacation_days_per_year").notNull().default(25),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
@@ -227,6 +232,17 @@ export const breakEntries = pgTable("break_entries", {
   index("idx_break_entries_time_entry_id").on(table.timeEntryId),
 ]);
 
+
+export const holidays = pgTable("holidays", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  regionCode: varchar("region_code", { length: 5 }).notNull(),
+  date: date("date").notNull(),
+  name: varchar("name", { length: 100 }).notNull(),
+  isHalfDay: boolean("is_half_day").notNull().default(false),
+}, (table) => [
+  uniqueIndex("uq_holidays_region_date").on(table.regionCode, table.date),
+  index("idx_holidays_date").on(table.date),
+]);
 
 export const companiesRelations = relations(companies, ({ many }) => ({
   employees: many(employees),
