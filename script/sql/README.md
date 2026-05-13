@@ -18,6 +18,7 @@ obvious in `ls`.
 | `2026-05-08-jobs-planned-duration.sql` | T-202 — add planned_duration_minutes to jobs | not applied |
 | `2026-05-11-jobs-search-trgm.sql` | T-205 — pg_trgm extension + GIN search index (optional perf boost) | not applied |
 | `2026-05-11-holidays-and-workhours.sql` | T-302 — holidays table + region_code on companies + weekly_hours/start_date/vacation_days_per_year on employees | not applied |
+| `2026-05-11-customers.sql` | T-303 — customers table + jobs.customer_id (nullable, transitional) | not applied |
 
 ## Verification scripts
 

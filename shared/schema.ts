@@ -135,6 +135,7 @@ export const jobs = pgTable("jobs", {
   startDate: date("start_date"),
   endDate: date("end_date"),
   plannedDurationMinutes: integer("planned_duration_minutes"),
+  customerId: varchar("customer_id").references(() => customers.id),
   isArchived: boolean("is_archived").notNull().default(false),
   createdBy: varchar("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
@@ -232,6 +233,28 @@ export const breakEntries = pgTable("break_entries", {
   index("idx_break_entries_time_entry_id").on(table.timeEntryId),
 ]);
 
+
+export const customers = pgTable("customers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  companyId: varchar("company_id")
+    .notNull()
+    .references(() => companies.id),
+  customerNumber: varchar("customer_number", { length: 50 }),
+  name: varchar("name", { length: 255 }).notNull(),
+  contactName: varchar("contact_name", { length: 255 }),
+  contactPhone: varchar("contact_phone", { length: 50 }),
+  contactEmail: varchar("contact_email", { length: 255 }),
+  addressStreet: varchar("address_street", { length: 255 }),
+  addressZip: varchar("address_zip", { length: 20 }),
+  addressCity: varchar("address_city", { length: 100 }),
+  notes: text("notes"),
+  isArchived: boolean("is_archived").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_customers_company_id").on(table.companyId),
+  index("idx_customers_company_archived").on(table.companyId, table.isArchived),
+]);
 
 export const holidays = pgTable("holidays", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
