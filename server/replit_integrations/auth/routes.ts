@@ -342,33 +342,39 @@ export function registerAuthRoutes(app: Express): void {
 
   // Forgot password — send reset email
   app.post("/api/auth/forgot-password", async (req: any, res) => {
+    const startMs = Date.now();
     try {
       const parsed = z.object({ email: z.string().email() }).safeParse(req.body);
       if (!parsed.success) {
+        await ensureMinResponseTime(startMs);
         return res.status(400).json({ message: "Bitte geben Sie eine gueltige E-Mail-Adresse ein." });
       }
 
+      // Always do the same up-front work whether the account exists or not.
+      // This closes the timing side channel that previously revealed which
+      // email addresses are registered.
+      const resetToken = crypto.randomBytes(32).toString("hex");
+      const resetExpires = new Date(Date.now() + 60 * 60 * 1000);
+
       const user = await authStorage.getUserByEmail(parsed.data.email);
-      // Always return success to prevent email enumeration
-      if (!user?.passwordHash) {
-        return res.json({ message: "Falls ein Account mit dieser E-Mail existiert, erhalten Sie einen Link." });
+      if (user?.passwordHash && user.email) {
+        await authStorage.setPasswordResetToken(user.id, resetToken, resetExpires);
+        const { sendPasswordResetEmail } = await import("../../emailVerification.js");
+        void sendPasswordResetEmail({
+          email: parsed.data.email,
+          firstName: user.firstName ?? undefined,
+          token: resetToken,
+          baseUrl: `${req.protocol}://${req.get("host")}`,
+        }).catch((err) => console.error("[password-reset] Failed to send:", err));
       }
 
-      const resetToken = crypto.randomBytes(32).toString("hex");
-      const resetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-      await authStorage.setPasswordResetToken(user.id, resetToken, resetExpires);
-
-      const { sendPasswordResetEmail } = await import("../../emailVerification.js");
-      void sendPasswordResetEmail({
-        email: parsed.data.email,
-        firstName: user.firstName ?? undefined,
-        token: resetToken,
-        baseUrl: `${req.protocol}://${req.get("host")}`,
-      }).catch((err) => console.error("[password-reset] Failed to send:", err));
-
+      // Always return the same message after a constant minimum delay so
+      // unknown emails can't be distinguished from registered ones.
+      await ensureMinResponseTime(startMs);
       return res.json({ message: "Falls ein Account mit dieser E-Mail existiert, erhalten Sie einen Link." });
     } catch (error) {
       console.error("Error in forgot-password:", error);
+      await ensureMinResponseTime(startMs);
       return res.status(500).json({ message: "Anfrage fehlgeschlagen." });
     }
   });
