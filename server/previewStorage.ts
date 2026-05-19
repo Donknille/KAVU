@@ -1166,12 +1166,14 @@ export class PreviewStorage {
   }
 
   async getUnassignedJobs(companyId: string) {
-    return this.data.jobs.filter((job) => {
-      if (job.companyId !== companyId || job.isArchived || job.status !== "planned") {
-        return false;
-      }
-      return !this.data.assignments.some((assignment) => assignment.jobId === job.id);
-    });
+    // Keep parity with DatabaseStorage.getUnassignedJobs: backlog shows every
+    // open (planned / in_progress / problem) job that is not archived,
+    // regardless of whether assignments already exist. Admin needs the job
+    // to stay visible so additional days can be added.
+    const open = new Set(["planned", "in_progress", "problem"]);
+    return this.data.jobs.filter(
+      (job) => job.companyId === companyId && !job.isArchived && open.has(job.status),
+    );
   }
 
   async createJob(data: CreateJobData) {

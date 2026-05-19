@@ -924,8 +924,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUnassignedJobs(companyId: string): Promise<Job[]> {
-    // Return all open (non-archived, planned) jobs — they stay in backlog
-    // even after assignments exist, until status changes to completed/reviewed
+    // Backlog: every non-archived job that is not finished. "planned" and
+    // "in_progress" jobs both belong here so an admin can keep scheduling
+    // additional days for a job that has already been started. "problem"
+    // also stays in the backlog so it stays visible until someone resolves
+    // it. Only completed / reviewed / billable drop out.
     return withTenantContext({ companyId }, async (tx) => {
       return tx
         .select()
@@ -933,7 +936,7 @@ export class DatabaseStorage implements IStorage {
         .where(
           and(
             eq(jobs.companyId, companyId),
-            eq(jobs.status, "planned"),
+            inArray(jobs.status, ["planned", "in_progress", "problem"]),
             eq(jobs.isArchived, false),
           ),
         )
